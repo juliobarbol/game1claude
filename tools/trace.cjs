@@ -7,6 +7,11 @@
 // Uso:  node tools/trace.cjs 3          → dibuja el nivel 3 y traza el bot
 //       node tools/trace.cjs 3 --map    → solo el mapa (rápido)
 //       node tools/trace.cjs --all      → mapas de todos
+//
+// Leyenda del trazado:  • camino del bot   ˙ dónde MÁS puede llegar (vivo)
+//                       ★ estrella que se puede juntar   * estrella imposible
+// Las casillas se marcan por donde pasa el CUERPO del jugador (no su esquina),
+// que es lo que decide si toca una estrella.
 
 const { loadGame } = require('../test/_load.cjs');
 const G = loadGame();
@@ -78,8 +83,12 @@ for (const i of idxs){
         const w = G.cloneWorld(n.w);
         for (let f = 0; f < K && !w.p.dead && !w.p.win; f++) G.stepWorld(w, A[ai]);
         expanded++;
-        reach.add(Math.floor(w.p.y/16)*100 + Math.floor(w.p.x/16));
         if (w.p.dead) continue;
+        // Todas las casillas que toca el cuerpo, no solo la de la esquina:
+        // una estrella se junta por superposición de cajas.
+        for (let ty = Math.floor(w.p.y/16); ty <= Math.floor((w.p.y + G.PH - 1)/16); ty++)
+          for (let tx = Math.floor(w.p.x/16); tx <= Math.floor((w.p.x + G.PW - 1)/16); tx++)
+            reach.add(ty*100 + tx);
         if (w.p.win){ win = { w, path:n.path.concat(ai) }; break; }
         const k = key(w);
         if (seen.has(k)) continue;
@@ -93,8 +102,11 @@ for (const i of idxs){
   // Marcar lo alcanzado y el camino
   for (const v of reach){
     const y = Math.floor(v/100), x = v % 100;
-    if (g[y] && g[y][x] === '·') g[y][x] = '˙';
+    if (!g[y]) continue;
+    if (g[y][x] === '·') g[y][x] = '˙';
+    else if (g[y][x] === '*') g[y][x] = '★';     // estrella que sí se toca
   }
+  const perdidas = L.stars.filter(s => g[s.ty][s.tx] === '*');
   if (win){
     const w = G.newWorld(i);
     for (const ai of win.path){
@@ -104,7 +116,8 @@ for (const i of idxs){
         if (g[y] && (g[y][x] === '·' || g[y][x] === '˙')) g[y][x] = '•';
       }
     }
-    print(g, `#${i+1} ${L.name} — RESUELTO en ${(win.w.timer/60).toFixed(2)}s (${expanded} estados)`);
+    print(g, `#${i+1} ${L.name} — RESUELTO en ${(win.w.timer/60).toFixed(2)}s (${expanded} estados)` +
+      (perdidas.length ? `  ⚠ ESTRELLA FUERA DE ALCANCE en ${perdidas.map(s => '(' + s.tx + ',' + s.ty + ')').join(' ')}` : ''));
   } else {
     print(g, `#${i+1} ${L.name} — SIN SALIDA (${expanded} estados). '˙' = a dónde llega el bot`);
   }

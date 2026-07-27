@@ -11,21 +11,57 @@
 // vuelve a jugar desde cero sobre un mundo nuevo: si ahí también gana, el
 // nivel es terminable de verdad (no es un artefacto de la búsqueda).
 //
-// Además imprime el tiempo del bot por nivel: es el piso sobre el que se
-// calibran los tiempos de las medallas (`par` en LEVELS).
+// Hace DOS pasadas por nivel:
+//   1. llegar a la meta   → el tiempo de esa pasada es el piso de las medallas;
+//   2. llegar a la meta CON la estrella → una estrella que no se puede juntar
+//      es una promesa rota (y no hay forma de darse cuenta jugando: se ve, se
+//      intenta veinte veces y no está).
 //
 // Uso:  node test/solver.test.cjs            (todos)
 //       node test/solver.test.cjs 12         (solo el nivel 12)
 //       node test/solver.test.cjs --par      (sugiere tiempos de medallas)
+//       node test/solver.test.cjs --rapido   (saltea la pasada de estrellas)
 
 const { loadGame } = require('./_load.cjs');
 const G = loadGame();
 
 const { K, solve, replay } = require('./_bot.cjs');
 
+// ── Revisión de estructura ──────────────────────────────────────────
+// Barata y ANTES que el bot: agarra las metidas de pata que no se ven
+// jugando (una sala sin marca de inicio arranca en la esquina de arriba a
+// la izquierda y "funciona"; una fila de 27 caracteres corre medio nivel).
+function revisarEstructura(G){
+  let ok = true;
+  const mal = (i, m) => { ok = false; console.log(`FAIL  estructura L${i+1}: ${m}`); };
+  G.LEVELS.forEach((L, i) => {
+    if (L.rows.length !== 15) mal(i, `tiene ${L.rows.length} filas (tienen que ser 15)`);
+    L.rows.forEach((r, y) => {
+      if (r.length !== 28) mal(i, `la fila y${y+1} mide ${r.length} (tienen que ser 28)`);
+      const raro = r.replace(/[ #^v<>=sco*PG]/g, '');
+      if (raro) mal(i, `la fila y${y+1} usa símbolos desconocidos: "${raro}"`);
+    });
+    const txt = L.rows.join('');
+    const cuenta = c => (txt.split(c).length - 1);
+    if (cuenta('P') !== 1) mal(i, `tiene ${cuenta('P')} marcas de inicio (P)`);
+    if (cuenta('G') !== 1) mal(i, `tiene ${cuenta('G')} metas (G)`);
+    if (cuenta('*') > 1) mal(i, `tiene ${cuenta('*')} estrellas (el juego muestra una)`);
+    const par = L.par || [];
+    if (par.length !== 3 || !(par[0] < par[1] && par[1] < par[2]))
+      mal(i, `los tiempos de medalla no van de menor a mayor: ${JSON.stringify(par)}`);
+    const P = G.parseLevel(L);
+    const enSolido = (x, y) => P.tiles[Math.floor(y/G.TS)*P.w + Math.floor(x/G.TS)] === G.T_SOLID;
+    if (enSolido(P.spawn.x + 5, P.spawn.y + 7)) mal(i, 'el inicio está dentro de una pared');
+    if (enSolido(P.goal.x + 8, P.goal.y + 8)) mal(i, 'la meta está dentro de una pared');
+  });
+  console.log(ok ? 'PASS  estructura de los 15 niveles' : '');
+  return ok;
+}
+
 const only = process.argv.find(a => /^\d+$/.test(a));
 const wantPar = process.argv.includes('--par');
-let allOk = true;
+const rapido = process.argv.includes('--rapido');
+let allOk = revisarEstructura(G);
 const rows = [];
 const list = only ? [ +only - 1 ] : G.LEVELS.map((_, i) => i);
 
@@ -53,6 +89,21 @@ for (const i of list){
   console.log(`${okPar ? 'PASS' : 'FAIL'}  ${line} bot ${bot.toFixed(2)}s  ` +
     `medallas ${par.map(p => p.toFixed(1)).join('/')}  ` +
     `(${r.expanded} estados, ${((Date.now()-t0)/1000).toFixed(1)}s)`);
+
+  // ── Segunda pasada: la estrella ──
+  if (rapido || !L.rows.join('').includes('*')) continue;
+  const t1 = Date.now();
+  const e = solve(G, i, 3000000, { estrella:true });
+  if (!e.ok){
+    allOk = false;
+    console.log(`FAIL  ${' '.repeat(line.length)} ★ LA ESTRELLA NO SE PUEDE JUNTAR ` +
+      `(${e.why}, ${e.expanded} estados)`);
+    continue;
+  }
+  const er = replay(G, i, e.path, { estrella:true });
+  if (!er.ok){ allOk = false; console.log(`FAIL  ${' '.repeat(line.length)} ★ ${er.why}`); continue; }
+  console.log(`PASS  ${' '.repeat(line.length)} ★ con estrella ${(er.frames/60).toFixed(2)}s ` +
+    `(+${((er.frames - rp.frames)/60).toFixed(2)}s de desvío, ${((Date.now()-t1)/1000).toFixed(1)}s)`);
 }
 
 if (wantPar){

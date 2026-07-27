@@ -30,13 +30,14 @@ servicio de eso.
 ## Estructura de archivos
 
 - `index.html` — **todo el juego** (markup + `<style>` + `<script>`).
-- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v1`**.
+- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v2`**.
 - `manifest.webmanifest`, `icon-*.png` — PWA (instalación, iconos).
 - `test/` — `_load.cjs` (carga el juego en node), `_bot.cjs` (el bot),
   `solver.test.cjs` (¿se pueden terminar los niveles?), `pwa.test.cjs`
   (navegador real: SW, offline, paridad de física, persistencia).
 - `tools/trace.cjs` — dibuja una sala y el camino del bot en la terminal.
   **Es la herramienta de diseño de niveles.**
+- `tools/star-spots.cjs` — prueba posiciones para la estrella de un nivel.
 - `tools/make-icons.py` — genera los PNG de los iconos (sin dependencias).
 
 ## Mapa del código dentro de `index.html`
@@ -96,12 +97,31 @@ aparte, en `movers`/`saws`, en coordenadas de tile.
 **El error más caro es publicar un nivel imposible.** Por eso hay un bot:
 
 ```bash
-node test/solver.test.cjs            # los 15 niveles
+node test/solver.test.cjs            # los 15 niveles (meta + estrella)
 node test/solver.test.cjs 12         # uno solo
+node test/solver.test.cjs --rapido   # saltea la pasada de estrellas (más rápido)
 node test/solver.test.cjs --par      # + sugerencia de tiempos de medalla
 node tools/trace.cjs 12              # dibuja la sala y el camino del bot
 node tools/trace.cjs --all           # todos los mapas
+node tools/star-spots.cjs 8 20,1 6,6 # prueba dónde poner la estrella
 ```
+
+El test hace **dos pasadas por nivel**: llegar a la meta, y llegar a la meta
+**con la estrella**. La segunda existe porque una estrella que no se puede
+juntar es una promesa rota que no se detecta jugando: se ve, se intenta
+veinte veces y no está.
+
+**Ojo con las estrellas:** que se puedan TOCAR no alcanza. El error típico es
+ponerlas colgadas sobre los pinchos: el jugador la toca... y se muere, o
+queda sin lugar donde caer. La estrella tiene que estar donde se pueda
+juntar **y seguir vivo hasta la meta** — eso es lo que mide
+`tools/star-spots.cjs`, y por eso el bot es el que decide, no el ojo.
+
+Como las salas son de una pantalla, el camino óptimo del bot barre casi todo
+el aire: el "desvío en segundos" que informa la herramienta casi siempre da
+cero y **no mide la dificultad para una persona**. Lo que hace buena a una
+estrella es estar fuera de la línea obvia (un tile o dos más arriba del arco
+natural, o cerca de los pinchos); el bot solo certifica que es posible.
 
 El bot juega con **las mismas entradas que una persona** y busca en anchura;
 cuando encuentra un camino lo **vuelve a jugar desde cero** para confirmar.

@@ -74,18 +74,24 @@ body.touch.portrait #touch{background:linear-gradient(180deg,transparent 0%,tran
 body.touch.landscape #touch{background:none; height:100%; padding-bottom:0}
 .tz{position:absolute; bottom:0; height:100%; display:flex; align-items:center;
   touch-action:none; pointer-events:auto}
-#tstick{left:0; width:46%; justify-content:center}
-#tbtns{right:0; width:54%; justify-content:flex-end; gap:14px; padding-right:16px}
-body.swap #tstick{left:auto; right:0; justify-content:center}
-body.swap #tbtns{right:auto; left:0; justify-content:flex-start; padding-right:0; padding-left:16px;
-  flex-direction:row-reverse}
+/* El joystick vive PEGADO al borde del teléfono: en apaisado los controles
+   se dibujan encima del juego, así que cuanto más al costado, menos tapan. */
+#tstick{left:0; width:46%}
+#tbtns{right:0; width:54%; justify-content:flex-end; gap:14px;
+  padding-right:calc(10px + env(safe-area-inset-right,0px))}
+body.swap #tstick{left:auto; right:0}
+body.swap #tbtns{right:auto; left:0; justify-content:flex-start; padding-right:0;
+  padding-left:calc(10px + env(safe-area-inset-left,0px)); flex-direction:row-reverse}
 body.touch.landscape .tz{height:58%; bottom:calc(6px + var(--safe-b))}
 body.touch.landscape #tstick{width:38%}
 body.touch.landscape #tbtns{width:44%}
 
-.stickbase{position:relative; width:132px; height:132px; border-radius:50%;
-  background:#ffffff0a; border:2px solid #ffffff1a}
-body.touch.landscape .stickbase{background:#ffffff08; border-color:#ffffff14}
+.stickbase{position:absolute; width:126px; height:126px; margin:-63px 0 0 -63px; border-radius:50%;
+  background:#ffffff0a; border:2px solid #ffffff1a; transition:left .18s, top .18s, opacity .18s;
+  opacity:.55}
+.stickbase.on{transition:none; opacity:1}
+body.touch.landscape .stickbase{background:#ffffff08; border-color:#ffffff14; opacity:.4}
+body.touch.landscape .stickbase.on{opacity:.9}
 .stickknob{position:absolute; left:50%; top:50%; width:58px; height:58px; margin:-29px 0 0 -29px;
   border-radius:50%; background:#ffffff26; border:2px solid #ffffff33;
   transition:background .08s}
@@ -524,6 +530,23 @@ function pollInput(){
 const STICK = { id:-1, ox:0, oy:0 };
 const DEAD = 11, DEAD_Y = 16;
 
+// La base del joystick se planta donde apoyaste el dedo y vuelve sola al
+// rincón al soltar: así el dibujo coincide con dónde estás tocando de verdad
+// (el control siempre fue flotante; antes el círculo mentía).
+function stickHome(){
+  const zone = document.getElementById('tstick'), base = document.getElementById('stickBase');
+  if (!zone || !base) return;
+  const r = zone.getBoundingClientRect();
+  const izq = !document.body.classList.contains('swap');
+  base.style.left = (izq ? 74 : r.width - 74) + 'px';
+  base.style.top = (r.height * (document.body.classList.contains('portrait') ? .5 : .62)) + 'px';
+}
+function stickPlant(x, y){
+  const zone = document.getElementById('tstick'), base = document.getElementById('stickBase');
+  const r = zone.getBoundingClientRect();
+  base.style.left = Math.max(66, Math.min(r.width - 66, x - r.left)) + 'px';
+  base.style.top  = Math.max(66, Math.min(r.height - 30, y - r.top)) + 'px';
+}
 function stickSet(dx, dy){
   TOUCH.x = Math.abs(dx) > DEAD ? Math.sign(dx) : 0;
   TOUCH.y = Math.abs(dy) > DEAD_Y ? Math.sign(dy) : 0;
@@ -536,13 +559,15 @@ function stickReset(){
   STICK.id = -1; TOUCH.x = 0; TOUCH.y = 0;
   const base = document.getElementById('stickBase'), knob = document.getElementById('stickKnob');
   knob.style.transform = 'translate(0,0)'; base.classList.remove('on');
+  stickHome();
 }
 function bindTouch(){
   const zone = document.getElementById('tstick');
   zone.addEventListener('pointerdown', e => {
     e.preventDefault(); markTouch(); audioResume();
     STICK.id = e.pointerId; STICK.ox = e.clientX; STICK.oy = e.clientY;
-    zone.setPointerCapture(e.pointerId); stickSet(0,0);
+    zone.setPointerCapture(e.pointerId);
+    stickPlant(e.clientX, e.clientY); stickSet(0,0);
   });
   zone.addEventListener('pointermove', e => {
     if (e.pointerId !== STICK.id) return;
@@ -551,7 +576,11 @@ function bindTouch(){
     // El origen "sigue" al dedo si te alejás mucho: evita que el stick se
     // trabe cuando el pulgar deriva durante una serie larga de saltos.
     const max = 52, m = Math.hypot(dx, dy);
-    if (m > max){ const f = (m - max) / m; STICK.ox += dx*f; STICK.oy += dy*f; dx = e.clientX - STICK.ox; dy = e.clientY - STICK.oy; }
+    if (m > max){
+      const f = (m - max) / m; STICK.ox += dx*f; STICK.oy += dy*f;
+      dx = e.clientX - STICK.ox; dy = e.clientY - STICK.oy;
+      stickPlant(STICK.ox, STICK.oy);
+    }
     stickSet(dx, dy);
   });
   const end = e => { if (e.pointerId === STICK.id) stickReset(); };
@@ -1023,12 +1052,12 @@ const LEVELS = [
    '                     #####  ',
    '                            ',
    '                  ##        ',
-   '                            ',
+   '           *                ',
    '             ##             ',
    '                            ',
    '        ##                  ',
    '                            ',
-   '   ##  *                    ',
+   '   ##                       ',
    ' P                          ',
    '##                          ',
    '                            ',
@@ -1038,13 +1067,13 @@ const LEVELS = [
   par:[5.3, 7.7, 12.5], rows:[
    '                            ',
    '                      G     ',
-   '                   #####    ',
+   '         *         #####    ',
    '                            ',
    '                            ',
    '            ####            ',
    '            s               ',
    '                            ',
-   '                  *         ',
+   '                            ',
    '                            ',
    '                            ',
    ' P     s                    ',
@@ -1114,14 +1143,14 @@ const LEVELS = [
    '                    #       ',
    '                    #       ',
    '              #     #       ',
-   '              #             ',
+   '     *        #             ',
    '        #     #             ',
    '        #                   ',
    '  #     #                   ',
    '  #                         ',
    '  #                         ',
    '                            ',
-   ' P                    *     ',
+   ' P                          ',
    '####                        ',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
@@ -1150,7 +1179,7 @@ const LEVELS = [
    '                    #       ',
    '                  c #       ',
    '                            ',
-   '              c             ',
+   '         *    c             ',
    '                            ',
    '          c                 ',
    '                            ',
@@ -1173,7 +1202,7 @@ const LEVELS = [
    '                            ',
    '            o               ',
    '                            ',
-   '                         G  ',
+   ' P                       G  ',
    '########          ##########',
    '                            ',
    '                            ',
@@ -1186,16 +1215,16 @@ const LEVELS = [
    '                            ',
    '                            ',
    '                            ',
-   '                            ',
+   '              *             ',
    '                            ',
    '            o   o           ',
    '                            ',
    '        o           o       ',
    '                            ',
-   '                         G  ',
+   ' P                       G  ',
    '#####                 ######',
    '                            ',
-   '            *               ',
+   '                            ',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
 { n:'Sierras', hint:'Lo que se mueve, mata. Leé el ritmo antes de largarte.',
@@ -1316,6 +1345,7 @@ function layout(){
   document.documentElement.style.setProperty('--ctrl', ctrl + 'px');
   document.documentElement.style.setProperty('--hud-h', hudH + 'px');
   document.documentElement.style.setProperty('--sala-h', (portrait ? salaH : 0) + 'px');
+  if (STICK.id < 0) stickHome();
   const r = st.getBoundingClientRect();     // medir DESPUÉS de aplicar las variables
   const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
   if (cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
