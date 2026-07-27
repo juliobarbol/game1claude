@@ -41,6 +41,27 @@ Es una PWA: entrás con el navegador y le das "Agregar a la pantalla de
 inicio". Queda como una app, abre a pantalla completa y funciona en modo
 avión. El progreso se guarda en el aparato (no hay cuentas ni servidor).
 
+## Publicar
+
+Se sirve como assets estáticos en **Cloudflare** desde este repo: **todo lo
+que llega a `main` se publica solo**, sin build ni pasos manuales.
+
+Configuración por única vez (desde el panel de Cloudflare, con la cuenta de
+Julio):
+
+1. **Workers & Pages → Create → Workers → Import a repository** y elegir
+   `juliobarbol/game1claude`.
+2. Rama de producción: `main`. Build command: **vacío**. Directorio raíz: `/`.
+   Cloudflare lee `wrangler.jsonc` y sirve la carpeta tal cual.
+3. Queda en `https://filo.<cuenta>.workers.dev` (o el dominio que se le
+   ponga).
+
+Desde ahí, cada merge a `main` despliega. Los que ya tengan el juego
+instalado reciben la versión nueva la próxima vez que lo abran con conexión:
+el Service Worker pide el HTML a la red primero, y el juego entero ES el
+HTML. Igual, al publicar conviene subir `CACHE` en `sw.js` (`filo-v1` →
+`filo-v2`) para que se limpie la cache vieja de iconos y manifest.
+
 ## Para desarrollar
 
 Todo el juego está en `index.html` (sin build, sin dependencias, JS vanilla).

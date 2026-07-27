@@ -1,6 +1,8 @@
+# Lo que NO se sube a Cloudflare (sintaxis .gitignore).
+# El juego que se publica es index.html + sw.js + manifest + iconos.
 wrangler.jsonc
 .assetsignore
 README.md
 CLAUDE.md
-test
-tools
+test/
+tools/

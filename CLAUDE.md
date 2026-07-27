@@ -154,10 +154,17 @@ puede volver imposible un nivel del mundo 1 sin que se note jugando el 1.
 
 ## Deploy
 
-Assets estáticos en Cloudflare: **mergear a `main` y listo** (Cloudflare
-despliega solo). Lo único manual: **subir `CACHE` en `sw.js`** (`filo-vN`) en
-cada cambio que se publique, o los que ya tienen la app instalada siguen con
-la versión vieja.
+Assets estáticos en Cloudflare (`wrangler.jsonc`, `assets.directory: "."`):
+**mergear a `main` y listo**, Cloudflare despliega solo. La conexión del repo
+con Cloudflare es un paso de una sola vez y está documentada en el README
+("Publicar").
+
+Al publicar, **subir `CACHE` en `sw.js`** (`filo-vN`). Acá no es tan grave
+como en otras apps —el HTML va network-first y el juego entero ES el HTML—
+pero sin bump la cache vieja sigue sirviendo iconos y manifest.
+
+Antes de mergear: sintaxis + `node test/solver.test.cjs` (obligatorio si
+tocaste `PHY` o niveles) + `test/pwa.test.cjs`.
 
 ## Cosas que NO romper
 
