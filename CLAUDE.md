@@ -11,8 +11,10 @@ salas de una pantalla, muerte instantánea, reintento inmediato, cronómetro,
 terminarlo: es **sentir que la mano te mejora**. Todo el diseño está al
 servicio de eso.
 
-- 20 niveles en 4 mundos. Cada mundo abre una habilidad: **salto** (1-5),
-  **salto de pared** (6-10), **dash** (11-15), **gravedad invertible** (16-20).
+- 4 mundos que abren una habilidad cada uno: **salto** (1-5), **salto de
+  pared** (6-10), **dash** (11-15), **gravedad invertible** (16-20)… y un
+  **mundo 5 (21-25)** que no abre nada: pide las cuatro en la misma vuelta.
+  **En construcción: hoy va solo el 21.**
 - Se juega con teclado, con joystick/gamepad y **con los dedos** (joystick
   flotante + botones).
 - Sin backend, sin cuentas: el progreso vive en `localStorage`.
@@ -30,7 +32,7 @@ servicio de eso.
 ## Estructura de archivos
 
 - `index.html` — **todo el juego** (markup + `<style>` + `<script>`).
-- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v5`**.
+- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v6`**.
 - `manifest.webmanifest`, `icon-*.png` — PWA (instalación, iconos).
 - `test/` — `_load.cjs` (carga el juego en node), `_bot.cjs` (el bot),
   `solver.test.cjs` (¿se pueden terminar los niveles?), `pwa.test.cjs`
@@ -59,7 +61,7 @@ grep -n "===== js/" index.html
 | `js/audio.js` | Sonido sintetizado con WebAudio (cero archivos) |
 | `js/input.js` | **Un solo mando virtual** para teclado + gamepad + táctil (`pollInput()` → `IN`) |
 | `js/physics.js` | **El núcleo.** `parseLevel`, `newWorld`, `stepWorld`, `cloneWorld`. Sin DOM y sin `Math.random` |
-| `js/levels.js` | Los 20 niveles en ASCII + `LEVELS`/`ABIL` (qué habilidad abre cada mundo) |
+| `js/levels.js` | Los niveles en ASCII + `LEVELS`/`ABIL` (qué habilidad abre cada mundo) |
 | `js/fx.js` | Partículas y sacudida (adorno; acá SÍ hay `Math.random`) |
 | `js/render.js` | `layout()` (canvas, orientación, controles) y el dibujo de la sala |
 | `js/ghost.js` | Grabar/reproducir la mejor vuelta |
@@ -173,7 +175,7 @@ en uno de medio:
 **El error más caro es publicar un nivel imposible.** Por eso hay un bot:
 
 ```bash
-node test/solver.test.cjs            # los 20 niveles (meta + estrella)
+node test/solver.test.cjs            # todos los niveles (meta + estrella)
 node test/solver.test.cjs 12         # uno solo
 node test/solver.test.cjs --rapido   # saltea la pasada de estrellas (más rápido)
 node test/solver.test.cjs --par      # + sugerencia de tiempos de medalla
@@ -183,7 +185,7 @@ node tools/star-spots.cjs 8 20,1 6,6 # prueba dónde poner la estrella
 ```
 
 El test hace **dos pasadas por nivel**: llegar a la meta, y llegar a la meta
-**con la estrella**. Con 20 niveles la corrida completa lleva ~10 minutos (la
+**con la estrella**. La corrida completa lleva ~30 s por nivel (la
 segunda pasada es la cara); para iterar, `--rapido` o un nivel suelto. La
 segunda existe porque una estrella que no se puede juntar es una promesa rota
 que no se detecta jugando: se ve, se intenta veinte veces y no está.
@@ -265,7 +267,7 @@ open('/tmp/filo_check.js','w',encoding='utf-8').write(js)
 sys.exit(subprocess.run(['node','--check','/tmp/filo_check.js']).returncode)
 PY
 
-# 2) Los 20 niveles siguen siendo terminables (obligatorio si tocaste PHY o niveles)
+# 2) Todos los niveles siguen siendo terminables (obligatorio si tocaste PHY o niveles)
 node test/solver.test.cjs
 
 # 3) Navegador real: SW, offline, paridad de física node↔navegador, persistencia

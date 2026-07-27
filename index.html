@@ -224,7 +224,7 @@ kbd{background:#ffffff14; border:1px solid var(--line); border-radius:5px; paddi
   </section>
 
   <section class="screen hidden" id="scr-abil">
-    <div class="tagline">NUEVA HABILIDAD</div>
+    <div class="tagline" id="abTag">NUEVA HABILIDAD</div>
     <h1 class="title" id="abTitle" style="font-size:clamp(26px,8vw,52px); letter-spacing:6px">DASH</h1>
     <div class="hintline" id="abDesc"></div>
     <div class="menu"><button class="btn pri" id="abGo">A PROBARLA</button></div>
@@ -1460,6 +1460,34 @@ const LEVELS = [
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
+// ─────────────────────────────── MUNDO 5 · TODO ─────────────────────────────
+// El mundo 5 no enseña nada nuevo: PIDE las cuatro cosas en la misma vuelta,
+// y las pide con la geometría, no con el reglamento. La receta que usa cada
+// sala para que ninguna habilidad sea opcional:
+//   dash   → un hueco de 7-8 tiles (el salto corriendo llega a 6, salto+dash a 9)
+//   pared  → una subida de 8 tiles o más (salto+dash sube 6,7 y no alcanza)
+//   gravedad → la meta del otro lado: colgada del techo lejos de toda pared
+//              trepable, o en el medio del piso lejos de las dos.
+//   precisión → los pozos del techo y las repisas de uno o dos tiles.
+{ n:'El nudo', hint:'Las cuatro cosas, una atrás de la otra: dash, pared, vuelco y pulso.',
+  par:[10, 14, 22], rows:[
+//  0123456789012345678901234567
+   '          vv    vvv         ',
+   '##########  ####   #########',
+   '        G                   ',
+   '                       # u  ',
+   '                       #    ',
+   '             *         #    ',
+   '                       #    ',
+   '                       #    ',
+   '                       #    ',
+   '                       #    ',
+   '                       #    ',
+   ' P                          ',
+   '#####        ###############',
+   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+]},
 ];
 // Las habilidades se abren por mundo y NO antes: el mundo 1 es solo salto, el
 // 2 suma el salto de pared y el 3 el dash. Es lo que hace que se sienta el
@@ -1470,6 +1498,10 @@ const ABIL = [
   { at:5,  t:'SALTO DE PARED', d:'Pegate a una pared en el aire: mantené la dirección y saltá.' },
   { at:10, t:'DASH',           d:'Un envión en la dirección que apuntás. Se recarga al tocar piso o un cristal.' },
   { at:15, t:'GRAVEDAD',       d:'Las baldosas violetas dan vuelta la gravedad: el techo pasa a ser el piso. Saltar, rebotar y dashear funcionan igual… para el otro lado.' },
+  // El mundo 5 no abre nada: cobra. La pantalla es la misma, pero decirle
+  // "nueva habilidad" sería mentir, así que el cartel y el botón cambian.
+  { at:20, t:'TODO JUNTO',     d:'No hay nada nuevo que aprender. Ahora las cuatro cosas van en la misma vuelta, y ninguna es opcional.',
+    tag:'ÚLTIMO MUNDO', btn:'A PELEARLA' },
 ];
 // ===== js/fx.js =====
 // Partículas y sacudida: puro adorno, fuera de la física (usan Math.random,
@@ -1785,8 +1817,10 @@ function startLevel(i, keepDeaths){
   const ab = ABIL.find(a => a.at === i);
   if (ab && !lvRec(i).best && !GAME._abShown){
     GAME._abShown = i;
+    $('abTag').textContent = ab.tag || 'NUEVA HABILIDAD';
     $('abTitle').textContent = ab.t;
     $('abDesc').textContent = ab.d;
+    $('abGo').textContent = ab.btn || 'A PROBARLA';
     GAME.idx = i; GAME.mode = 'menu';
     showScreen('abil');
     return;
@@ -2001,6 +2035,7 @@ const WORLDS = [
   { n:'MUNDO 2 · PAREDES', a:5,  b:10 },
   { n:'MUNDO 3 · DASH',    a:10, b:15 },
   { n:'MUNDO 4 · GRAVEDAD',a:15, b:20 },
+  { n:'MUNDO 5 · TODO',    a:20, b:25 },
 ];
 function renderLevels(){
   const box = $('lvWorlds');
@@ -2073,7 +2108,7 @@ function renderStats(){
     '<div class="stat"><div class="k">' + c[0] + '</div><div class="v">' + c[1] + '</div></div>').join('');
   $('statHint').textContent = done < LEVELS.length
     ? 'Cada nivel guarda tu mejor vuelta. El fantasma blanco es esa vuelta: si lo pasás, hiciste un récord.'
-    : 'Terminaste todos. Ahora la pelea es contra el reloj: 🥇 en los 20.';
+    : 'Terminaste todos. Ahora la pelea es contra el reloj: 🥇 en los ' + LEVELS.length + '.';
 }
 function renderOpts(){
   const on = v => v ? 'SÍ' : 'NO';

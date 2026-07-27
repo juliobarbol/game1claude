@@ -23,7 +23,7 @@ récord.
 **Salto de pared:** en el aire, contra una pared, mantené apretada la
 dirección de la pared y saltá.
 
-## Los cuatro mundos
+## Los mundos
 
 1. **Suelo** (1-5): solo salto. Medir la distancia, soltar el salto antes
    para saltar más bajo, bloques que se caen.
@@ -34,6 +34,8 @@ dirección de la pared y saltá.
 4. **Gravedad** (16-20): las baldosas violetas dan vuelta la gravedad y el
    techo pasa a ser el piso. Saltar, rebotar y dashear funcionan igual… para
    el otro lado.
+5. **Todo** (21-): no enseña nada nuevo. Pide las cuatro cosas en la misma
+   vuelta, y ninguna es opcional. *En construcción.*
 
 Cada nivel tiene tres tiempos: 🥇 🥈 🥉. El oro es exigente a propósito. Y hay
 una **estrella** escondida en cada sala, para el que quiera más.
@@ -71,7 +73,7 @@ Todo el juego está en `index.html` (sin build, sin dependencias, JS vanilla).
 Para probarlo alcanza con abrir el archivo en el navegador.
 
 ```bash
-node test/solver.test.cjs      # un bot juega los 20 niveles y demuestra que se terminan
+node test/solver.test.cjs      # un bot juega todos los niveles y demuestra que se terminan
 node tools/trace.cjs 12        # dibuja una sala y el camino del bot (diseño de niveles)
 NODE_PATH=/opt/node22/lib/node_modules node test/pwa.test.cjs   # navegador real
 ```

@@ -1,8 +1,8 @@
-// test/solver.test.cjs — un bot juega los 20 niveles.
+// test/solver.test.cjs — un bot juega todos los niveles.
 //
 // POR QUÉ EXISTE: en un juego de precisión el peor error posible es publicar
 // un nivel IMPOSIBLE (o uno que se rompe porque moviste una constante de la
-// física). Un humano no puede probar 20 niveles a mano en cada cambio; un bot
+// física). Un humano no puede probar 21 niveles a mano en cada cambio; un bot
 // sí. Este test hace una búsqueda en anchura sobre las entradas del mando
 // (las MISMAS que usa una persona: ← → ↑ ↓, SALTO, DASH) y exige que cada
 // nivel se pueda terminar sin morir.
