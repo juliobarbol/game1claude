@@ -684,7 +684,7 @@ function newWorld(idx){
   const L = (typeof idx === 'object') ? idx : parseLevel(LEVELS[idx]);
   const w = {
     L, idx: (typeof idx === 'object' ? -1 : idx),
-    t:0, timer:0, deaths:0, freeze:0, shake:0, events:[],
+    t:0, timer:0, started:false, deaths:0, freeze:0, shake:0, events:[],
     grav:1,                       // 1 = hacia abajo · -1 = hacia arriba
     prev:{ jump:false, dash:false },
     crSt:new Uint8Array(L.crumbs.length), crT:new Int16Array(L.crumbs.length),
@@ -700,13 +700,13 @@ function resetAttempt(w, first){
     dash:0, dashDx:0, dashDy:0, dashAvail:true, coyote:0, wcoyote:0, wcdir:0, buf:0, lock:0,
     dead:0, win:0, anim:0, sqx:1, sqy:1 };
   w.crSt.fill(0); w.crT.fill(0); w.cryT.fill(0); w.starGot.fill(0);
-  w.timer = 0; w.freeze = 0; w.grav = L.grav0;
+  w.timer = 0; w.started = false; w.freeze = 0; w.grav = L.grav0;
   if (!first) w.events.push('spawn');
 }
 function cloneWorld(w){
   return {
-    L:w.L, idx:w.idx, t:w.t, timer:w.timer, deaths:w.deaths, freeze:w.freeze, shake:0, events:[],
-    grav:w.grav,
+    L:w.L, idx:w.idx, t:w.t, timer:w.timer, started:w.started, deaths:w.deaths,
+    freeze:w.freeze, shake:0, events:[], grav:w.grav,
     prev:{ jump:w.prev.jump, dash:w.prev.dash },
     crSt:w.crSt.slice(), crT:w.crT.slice(), cryT:w.cryT.slice(), starGot:w.starGot.slice(),
     p:Object.assign({}, w.p),
@@ -843,8 +843,13 @@ function stepWorld(w, inp){
   if (p.win){ p.win++; return; }
   if (p.dead){ p.dead++; if (p.dead > PHY.DEATH_F) resetAttempt(w); return; }
   if (jumpP) p.buf = PHY.BUFFER;
-  if (w.freeze > 0){ w.freeze--; w.timer++; return; }
-  w.timer++; p.anim++;
+  // El cronómetro arranca con el primer movimiento, no al aparecer: podés
+  // mirar la sala, leer el ritmo de una sierra y arrancar cuando quieras.
+  // Una vez que te moviste, corre hasta la meta (morir reinicia la vuelta).
+  if (!w.started && (inp.x || inp.y || inp.jump || inp.dash)) w.started = true;
+  if (w.freeze > 0){ w.freeze--; if (w.started) w.timer++; return; }
+  if (w.started) w.timer++;
+  p.anim++;
 
   // ── Plataformas móviles: primero se mueven ellas y te arrastran ──
   for (const m of L.movers){
@@ -1334,54 +1339,54 @@ const LEVELS = [
 { n:'Al revés', hint:'La baldosa violeta da vuelta la gravedad. El techo pasa a ser el piso.',
   par:[5.5, 8, 13], rows:[
 //  0123456789012345678901234567
-   '                       G    ',
-   '                            ',
-   '                            ',
-   '                    *       ',
+   '                  vv   G    ',
    '                            ',
    '                            ',
    '                            ',
+   '                     *      ',
    '                            ',
    '                            ',
-   '              u             ',
+   '                            ',
+   '                            ',
+   '           u                ',
    '                            ',
    ' P                          ',
-   '#############               ',
+   '#########                   ',
    '                            ',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
-{ n:'Ida y vuelta', hint:'Las vallas no se saltan: se rodean por el otro lado de la sala.',
-  par:[6.5, 9.5, 15], rows:[
+{ n:'Ida y vuelta', hint:'Las vallas no se saltan: se rodean. Y arriba también hay pozos.',
+  par:[8, 11, 18], rows:[
 //  0123456789012345678901234567
-   '                            ',
-   '############################',
+   '           vv          vv   ',
+   '###########  ##########  ###',
    '               #            ',
    '               #            ',
-   '          #  d #         d  ',
-   '          #    #      *     ',
-   '          #    #            ',
-   '          #    #            ',
-   '          #    #            ',
-   '        u #        u        ',
-   '          #                 ',
-   ' P        #              G  ',
+   '          #  d #    #    d  ',
+   '          #    #    #       ',
+   '          #    #    #       ',
+   '          #    #    #       ',
+   '          #    #    #       ',
+   '        u #     *   #       ',
+   '          #         #       ',
+   ' P   ^^^  #   ^^^   #  ^^ G ',
    '############################',
    '                            ',
    '                            ',
 ]},
-{ n:'Colgado', hint:'Caminando por el techo, lo que colgaba ahora te tapa el paso.',
-  par:[6.5, 9.5, 15], rows:[
-   '                            ',
-   '############################',
-   '          #        #        ',
-   '          #        #        ',
-   '          #        #        ',
-   '                            ',
-   '                *           ',
+{ n:'Colgado', hint:'Un agujero en el techo es un pozo. Los pinchos también están arriba.',
+  par:[7, 10, 16], rows:[
+   '         vvvv      vvvvv    ',
+   '#########    ######     ####',
    '                            ',
    '                            ',
+   '                          d ',
    '                            ',
-   '   u                   d    ',
+   '                 *          ',
+   '                            ',
+   '                            ',
+   '   u                        ',
+   '                            ',
    ' P                       G  ',
    '#####                  #####',
    '                            ',
@@ -1389,37 +1394,38 @@ const LEVELS = [
 ]},
 { n:'Doble filo', hint:'Un dash boca abajo es igual de largo. Lo que cambia es hacia dónde caés.',
   par:[7, 10, 16], rows:[
+   '         vvvvvvvv     vvvv  ',
+   '#########        #####    ##',
    '                            ',
-   '#########        ###########',
+   '            o               ',
+   '                          d ',
    '                            ',
-   '             o           d  ',
+   '              *             ',
    '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                  *         ',
    '                            ',
    '     u                      ',
-   ' P                        G ',
+   '                            ',
+   ' P                       G  ',
    '######                ######',
    '                            ',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
-{ n:'Cabeza abajo', hint:'Arrancás colgando. Todo lo que aprendiste, del revés.',
-  par:[7, 10, 16], gravInicial:-1, rows:[
-   '                            ',
-   '####  c   c   c             ',
+{ n:'Cabeza abajo', hint:'El techo se te cae encima… o abajo. No frenes.',
+  par:[6, 9, 15], gravInicial:-1, rows:[
+//  0123456789012345678901234567
+   '    vvvvvvvvvvvvvvvvvvvvvvvv',
+   '####cccccccccccccc          ',
    ' P                          ',
    '                            ',
    '                 d          ',
    '                            ',
-   '                  *         ',
+   '           *                ',
    '                            ',
-   '                    o       ',
+   '                  o         ',
    '                            ',
    '                            ',
    '                        G   ',
-   '                    ########',
+   '                       #####',
    '                            ',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
@@ -1661,8 +1667,8 @@ function drawWorld(w){
   drawBG(w.grav);
   drawTiles(w);
   // Fantasma del récord
-  if (OPTS.ghost && GAME.ghost && GAME.mode === 'play'){
-    const f = GAME.ghost, i = Math.min(w.timer, f.n - 1);
+  if (OPTS.ghost && GAME.ghost && GAME.mode === 'play' && w.timer > 0){
+    const f = GAME.ghost, i = Math.min(w.timer - 1, f.n - 1);
     if (i >= 0 && f.n){
       const gx = f.d[i*3]/2, gy = f.d[i*3+1]/2, fl = f.d[i*3+2];
       drawPlayer({ x:gx, y:gy, face:(fl & 1) ? 1 : -1, sqx:1, sqy:1 }, .22, COL.ghost,
@@ -1864,7 +1870,9 @@ function hudUpdate(){
   const w = GAME.w; if (!w) return;
   const r = lvRec(GAME.idx);
   document.getElementById('hudLv').textContent = (GAME.idx+1) + '. ' + LEVELS[GAME.idx].n;
-  document.getElementById('hudTime').textContent = fmtT(w.timer) === '—' ? '0.00' : fmtT(w.timer);
+  const elT = document.getElementById('hudTime');
+  elT.textContent = w.timer ? fmtT(w.timer) : '0.00';
+  elT.style.opacity = w.started ? '1' : '.45';
   document.getElementById('hudBest').innerHTML = r.best
     ? 'récord <span class="rec">' + fmtT(r.best) + '</span>' : 'sin récord';
   document.getElementById('hudDeaths').textContent = '☠ ' + GAME.deaths;
@@ -1892,8 +1900,8 @@ function frame(now){
     while (GAME.acc >= DT && n < 6){
       GAME.acc -= DT; n++;
       const w = GAME.w, inp = pollInput();
-      if (!w.p.dead && !w.p.win) ghostRecord(GAME.rec, w.p, w.grav);
       stepWorld(w, inp);
+      if (w.started && !w.p.dead) ghostRecord(GAME.rec, w.p, w.grav);
       handleEvents(w);
       if (GAME.mode !== 'play') break;
     }

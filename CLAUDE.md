@@ -30,7 +30,7 @@ servicio de eso.
 ## Estructura de archivos
 
 - `index.html` — **todo el juego** (markup + `<style>` + `<script>`).
-- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v3`**.
+- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v4`**.
 - `manifest.webmanifest`, `icon-*.png` — PWA (instalación, iconos).
 - `test/` — `_load.cjs` (carga el juego en node), `_bot.cjs` (el bot),
   `solver.test.cjs` (¿se pueden terminar los niveles?), `pwa.test.cjs`
@@ -56,7 +56,7 @@ grep -n "===== js/" index.html
 | `js/audio.js` | Sonido sintetizado con WebAudio (cero archivos) |
 | `js/input.js` | **Un solo mando virtual** para teclado + gamepad + táctil (`pollInput()` → `IN`) |
 | `js/physics.js` | **El núcleo.** `parseLevel`, `newWorld`, `stepWorld`, `cloneWorld`. Sin DOM y sin `Math.random` |
-| `js/levels.js` | Los 15 niveles en ASCII + `LEVELS`/`ABIL` (qué habilidad abre cada mundo) |
+| `js/levels.js` | Los 20 niveles en ASCII + `LEVELS`/`ABIL` (qué habilidad abre cada mundo) |
 | `js/fx.js` | Partículas y sacudida (adorno; acá SÍ hay `Math.random`) |
 | `js/render.js` | `layout()` (canvas, orientación, controles) y el dibujo de la sala |
 | `js/ghost.js` | Grabar/reproducir la mejor vuelta |
@@ -66,6 +66,12 @@ grep -n "===== js/" index.html
 
 ## Reglas que NO se negocian
 
+- **El cronómetro arranca con el primer movimiento, no al aparecer.**
+  `w.started` se prende con la primera entrada (`inp.x`, salto o dash) y
+  recién ahí corre `w.timer`. Podés mirar la sala y leer el ritmo de una
+  sierra sin que te cueste tiempo; una vez que arrancaste, el reloj no para
+  hasta la meta. El fantasma se graba con ese mismo reloj (si no, se
+  desincroniza del cronómetro).
 - **Paso fijo de 1/60 s.** `stepWorld` avanza siempre 1/60; el bucle acumula
   el tiempo real y da los pasos que hagan falta. **Nunca** meter delta-time
   variable en la física: un juego de precisión que no es repetible es un
@@ -120,6 +126,18 @@ Dos reglas de diseño que salieron de mirar al bot:
 - **Las baldosas van a 2 tiles de la superficie** (`y10` desde el piso, `y5`
   desde el techo). A 1 tile las tocás caminando —sin querer— y a 4 no las
   alcanzás saltando.
+- **Un techo macizo no es un nivel: es un pasillo.** La primera versión del
+  mundo 4 era fácil porque equivocarse no costaba nada — piso y techo
+  enteros, sin pozos. Lo que castiga el error del lado de arriba es un
+  **agujero en el techo con pinchos (`v`) en la fila de encima**: caminando
+  invertido, el hueco te chupa hacia arriba y te ensarta, igual que un pozo
+  abajo. Un techo de bloques frágiles (nivel 20) hace lo mismo, pero pidiendo
+  además que no frenes.
+- **El borde de la sala también es piso cuando estás invertido.** Si el techo
+  del nivel es el marco (y no una fila propia), el jugador puede caminar toda
+  la sala colgado y saltearse el recorrido: el bot lo encontró en el nivel 20.
+  O se llena esa franja de pinchos, o el techo tiene que ser una fila con
+  agujeros.
 
 **El error más caro es publicar un nivel imposible.** Por eso hay un bot:
 

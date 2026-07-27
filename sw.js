@@ -10,7 +10,7 @@
 // los aparatos que ya tienen la app siguen con la versión vieja.
 // ════════════════════════════════════════════════════════════════════
 
-const CACHE = 'filo-v3';
+const CACHE = 'filo-v4';
 
 const PRECACHE = [
   './',
