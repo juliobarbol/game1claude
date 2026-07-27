@@ -14,6 +14,9 @@
 // que es lo que decide si toca una estrella.
 
 const { loadGame } = require('../test/_load.cjs');
+// La búsqueda es LA MISMA del test (test/_bot.cjs): si acá se ve un camino,
+// el solver ve el mismo, y si acá no aparece, tampoco va a aparecer allá.
+const { K, solve, actionsFor } = require('../test/_bot.cjs');
 const G = loadGame();
 
 const CH = { 0:'·', 1:'█', 2:'^', 3:'v', 4:'<', 5:'>', 6:'=', 7:'S', 8:'c', 9:'d', 10:'u' };
@@ -64,41 +67,20 @@ for (const i of idxs){
   const g = mapOf(L);
   if (mapOnly || all){ print(g, `#${i+1} ${L.name}  (pared:${L.ab.wall?'sí':'no'} dash:${L.ab.dash?'sí':'no'})`); continue; }
 
-  // Trazar el bot reutilizando la búsqueda del test
-  const K = 4;
-  const A = [];
-  for (const x of [-1,0,1]) for (const j of [0,1]){
-    A.push({ x, y:0, jump:!!j, dash:false });
-    if (G.LEVELS[i].dash) for (const y of [-1,0,1]) A.push({ x, y, jump:!!j, dash:true });
-  }
-  const key = w => ((w.p.x/6)|0)+','+((w.p.y/6)|0)+','+(w.p.vx>20?1:w.p.vx<-20?-1:0)+','+
-    (w.p.vy>40?1:w.p.vy<-40?-1:0)+','+(w.p.grounded?1:0)+(w.p.dashAvail?1:0)+(w.p.wall+1)+(w.grav>0?'d':'u');
-  const seen = new Set(); let frontier = [{ w:G.newWorld(i), path:[] }];
-  seen.add(key(frontier[0].w));
-  let win = null, reach = new Set(), expanded = 0;
-  for (let d = 0; d < 700 && !win && frontier.length; d++){
-    const next = [];
-    for (const n of frontier){
-      for (let ai = 0; ai < A.length; ai++){
-        const w = G.cloneWorld(n.w);
-        for (let f = 0; f < K && !w.p.dead && !w.p.win; f++) G.stepWorld(w, A[ai]);
-        expanded++;
-        if (w.p.dead) continue;
-        // Todas las casillas que toca el cuerpo, no solo la de la esquina:
-        // una estrella se junta por superposición de cajas.
-        for (let ty = Math.floor(w.p.y/16); ty <= Math.floor((w.p.y + G.PH - 1)/16); ty++)
-          for (let tx = Math.floor(w.p.x/16); tx <= Math.floor((w.p.x + G.PW - 1)/16); tx++)
-            reach.add(ty*100 + tx);
-        if (w.p.win){ win = { w, path:n.path.concat(ai) }; break; }
-        const k = key(w);
-        if (seen.has(k)) continue;
-        seen.add(k); next.push({ w, path:n.path.concat(ai) });
-      }
-      if (win || expanded > 900000) break;
-    }
-    if (win || expanded > 900000) break;
-    frontier = next;
-  }
+  // `alVer` junta todas las casillas que el bot llega a tocar vivo: es lo que
+  // dibuja el '˙' y lo que decide si una estrella está a su alcance.
+  const A = actionsFor(G.LEVELS[i]);
+  const reach = new Set();
+  const alVer = w => {
+    // Todas las casillas que toca el cuerpo, no solo la de la esquina:
+    // una estrella se junta por superposición de cajas.
+    for (let ty = Math.floor(w.p.y/16); ty <= Math.floor((w.p.y + G.PH - 1)/16); ty++)
+      for (let tx = Math.floor(w.p.x/16); tx <= Math.floor((w.p.x + G.PW - 1)/16); tx++)
+        reach.add(ty*100 + tx);
+  };
+  const r = solve(G, i, 2500000, { alVer });
+  const expanded = r.expanded;
+  const win = r.ok ? { path:r.path, frames:r.frames } : null;
   // Marcar lo alcanzado y el camino
   for (const v of reach){
     const y = Math.floor(v/100), x = v % 100;
@@ -116,7 +98,7 @@ for (const i of idxs){
         if (g[y] && (g[y][x] === '·' || g[y][x] === '˙')) g[y][x] = '•';
       }
     }
-    print(g, `#${i+1} ${L.name} — RESUELTO en ${(win.w.timer/60).toFixed(2)}s (${expanded} estados)` +
+    print(g, `#${i+1} ${L.name} — RESUELTO en ${(win.frames/60).toFixed(2)}s (${expanded} estados)` +
       (perdidas.length ? `  ⚠ ESTRELLA FUERA DE ALCANCE en ${perdidas.map(s => '(' + s.tx + ',' + s.ty + ')').join(' ')}` : ''));
   } else {
     print(g, `#${i+1} ${L.name} — SIN SALIDA (${expanded} estados). '˙' = a dónde llega el bot`);

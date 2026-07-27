@@ -1,17 +1,18 @@
-# Nota de diseño — encadenar tramos (PENDIENTE)
+# Nota de diseño — encadenar tramos
 
-> Estado: **decidido, sin implementar**. Charlado con Julio el 2026-07-27,
-> después de jugar el mundo 4 recién publicado.
+> Estado: **aplicado al mundo 4 (niveles 16-20)**. Charlado con Julio el
+> 2026-07-27 después de jugar el mundo recién publicado; rehecho el mismo día.
+> Los mundos 1-3 siguen pendientes.
 
 ## El problema
 
 Julio jugó los cinco niveles del mundo 4 y el veredicto fue "súper fáciles".
 La primera tanda de arreglos (pozos en el techo, pinchos en la superficie
 invertida, techo de bloques frágiles) subió el **riesgo**, y eso ayudó. Pero
-queda un problema de fondo que el riesgo no arregla:
+quedaba un problema de fondo que el riesgo no arregla:
 
-**Cada nivel es UN SOLO TRAMO.** Una idea, ejecutada una vez, y listo. El 20
-es "cruzá el techo frágil → date vuelta → dasheá al piso → meta": dos
+**Cada nivel era UN SOLO TRAMO.** Una idea, ejecutada una vez, y listo. El 20
+era "cruzá el techo frágil → date vuelta → dasheá al piso → meta": dos
 segundos de bot, seis u ocho de una persona. Como es un tramo solo, cuando
 entendés qué hay que hacer lo sacás en pocos intentos y el nivel se terminó.
 
@@ -25,26 +26,30 @@ uno y otro. La sala sigue siendo de una pantalla: encadenar no es agrandarla,
 es usarla en varias direcciones (bajar, cruzar, volver a subir) en vez de ir
 siempre de izquierda a derecha.
 
-Ejemplo con el nivel 20 (`Cabeza abajo`), que hoy tiene los tramos 1 y 2:
-
-```
-1) techo de bloques frágiles (no podés frenar)          ← ya está
-2) vuelco y caída con dash hasta el piso                ← ya está
-3) chimenea de rebotes para volver a subir              ← nuevo
-4) vuelco arriba y carrera por el techo con pozos       ← nuevo
-```
-
 ## Por qué funciona
 
 Si cada tramo lo sacás 1 de cada 2 veces, hacer los cuatro seguidos sale 1 de
 cada 16. El nivel se vuelve difícil **por acumulación**, no porque tenga un
 salto imposible.
 
-Y es exactamente la dificultad que le sirve a este juego: morís en el tramo 4,
+Y es exactamente la dificultad que le sirve a este juego: morís en el tramo 3,
 volvés al 1 — y descubrís que el 1 y el 2 ahora te salen sin pensar. Esa es la
 sensación de "mejoré" que el juego promete (cronómetro, fantasma, medallas) y
-que hoy no termina de entregar, porque los niveles se acaban antes de que
-llegues a automatizar nada.
+que antes no terminaba de entregar, porque los niveles se acababan antes de
+que llegaras a automatizar nada.
+
+## Cómo quedó el mundo 4
+
+| # | Nombre | Tramos | Bot |
+|---|---|---|---|
+| 16 | Al revés | escalera hasta la baldosa · techo entero con tres pozos · caída dirigida a la repisa | ~3,0 s |
+| 17 | Ida y vuelta | (ya venía de dos tramos: vallas abajo, pozos arriba) | ~3,1 s |
+| 18 | Colgado | piso izquierdo · techo cruzando el muro · piso derecho de vuelta | ~2,9 s |
+| 19 | Doble filo | hueco del piso con salto+dash · hueco del techo con dos dashes y el cristal · pinchos colgantes hasta la meta | ~3,9 s |
+| 20 | Cabeza abajo | carrera de frágiles en el techo · vuelco y caída dirigida · la misma carrera de frágiles en el piso | ~3,3 s |
+
+El bot es más rápido que cualquier persona: multiplicá por tres para tener la
+vuelta humana. Quedaron en 9-12 s, dentro de la ventana que buscábamos.
 
 ## Los límites (esto es lo que hay que cuidar)
 
@@ -56,10 +61,33 @@ llegues a automatizar nada.
   instantáneo: la repetición del tramo fácil es el precio, y tiene que ser
   barata.
 - **Recalibrar las medallas** con `node test/solver.test.cjs --par`. Los
-  tiempos actuales quedan cortos apenas el nivel se hace más largo.
-- **El bot tarda más** (búsqueda más profunda). Iterar con
-  `node test/solver.test.cjs <n> --rapido` y dejar la corrida completa (con
-  estrellas) para el final.
+  tiempos viejos quedan cortos apenas el nivel se hace más largo.
+
+## Lo que costó de verdad: el bot
+
+El límite real no fue el diseño, fue **verificar**. La búsqueda en anchura
+crece exponencialmente con la duración del nivel, y el 17 —de 3,13 s— ya
+gastaba 889k estados de los 900k de presupuesto. Un nivel encadenado habría
+dado `SIN SALIDA` por quedarse sin aire, no por imposible.
+
+`test/_bot.cjs` cambió en dos cosas: no prueba las acciones con dash cuando el
+dash no está disponible (son estados que se descartaban igual, pero recién
+después de simularlos), y recorta el frente a un **haz** guiado por la
+distancia a la meta inundando la sala por tiles. Los mismos niveles dan los
+mismos tiempos, en un tercio del tiempo de máquina. A cambio la búsqueda pasó
+a ser incompleta, así que el solver reintenta con el haz abierto antes de dar
+por roto un nivel. Está explicado en `CLAUDE.md`.
+
+## Lo que costó lo segundo: los atajos
+
+Encadenar tramos crea uniones, y en cada unión el bot busca la forma de
+saltearse el tramo. De las cinco salas salieron cuatro atajos que ninguno se
+ve leyendo el mapa —el sótano bajo el piso, la trepada de nueve tiles contra
+el marco, bajar por una pared estando cabeza abajo, y el vuelco en diagonal
+que cruza la sala sin pisar el techo—. Están anotados con su remedio en
+`CLAUDE.md`, sección "Los cuatro atajos que encontró el bot". **Cada tramo
+nuevo hay que mirarlo con `tools/trace.cjs`**: que el nivel se termine no
+quiere decir que se termine por donde vos creías.
 
 ## El camino que NO tomamos
 
@@ -69,17 +97,10 @@ progreso — te frustrás veinte veces en el mismo salto y no hay nada que
 automatizar. Sirve como condimento dentro de un tramo, no como plato
 principal.
 
-## Por dónde empezar
+## Lo que sigue
 
-Reconstruir los cinco del mundo 4 (16-20) con dos o tres tramos encadenados
-cada uno, apuntando a ~10 s de vuelta humana. Las reglas de geometría que ya
-aprendimos (vallas, estalactitas, agujeros en el techo, el marco de la sala
-como piso invertido) están en `CLAUDE.md`, sección "Gravedad invertible".
-
-Herramientas: `tools/trace.cjs <n>` para ver el camino del bot tramo por
-tramo, `tools/star-spots.cjs` para reubicar la estrella, y el solver para
-confirmar que cada nivel sigue siendo terminable **con la estrella**.
-
-Si funciona en el mundo 4, la misma revisión les cabe a los mundos 1-3: casi
-todos son de un tramo (los más largos, `Pozo` y `Ascensor`, ya son de dos y
-se notan mejores).
+Los mundos 1-3. Casi todos son de un tramo; los más largos, `Pozo` y
+`Ascensor`, ya son de dos y se notan mejores. La receta es la misma y las
+herramientas ya están: `tools/trace.cjs <n>` para ver el camino del bot tramo
+por tramo, `tools/star-spots.cjs` para reubicar la estrella, y el solver para
+confirmar que sigue siendo terminable **con la estrella**.

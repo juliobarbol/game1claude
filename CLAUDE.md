@@ -30,7 +30,7 @@ servicio de eso.
 ## Estructura de archivos
 
 - `index.html` — **todo el juego** (markup + `<style>` + `<script>`).
-- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v4`**.
+- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v5`**.
 - `manifest.webmanifest`, `icon-*.png` — PWA (instalación, iconos).
 - `test/` — `_load.cjs` (carga el juego en node), `_bot.cjs` (el bot),
   `solver.test.cjs` (¿se pueden terminar los niveles?), `pwa.test.cjs`
@@ -39,8 +39,9 @@ servicio de eso.
   **Es la herramienta de diseño de niveles.**
 - `tools/star-spots.cjs` — prueba posiciones para la estrella de un nivel.
 - `tools/make-icons.py` — genera los PNG de los iconos (sin dependencias).
-- `docs/encadenado.md` — **lo próximo**: nota de diseño para hacer los
-  niveles más largos encadenando tramos. Leer antes de tocar niveles.
+- `docs/encadenado.md` — nota de diseño de niveles largos por tramos
+  encadenados: aplicada al mundo 4, pendiente en los mundos 1-3. **Leer
+  antes de tocar niveles**; ahí están también los atajos que aparecieron.
 
 ## Mapa del código dentro de `index.html`
 
@@ -117,7 +118,7 @@ Las baldosas **fijan** la gravedad (no la alternan): tocar dos veces la misma
 no hace nada. Es a propósito — un interruptor que alterna obliga a recordar
 por dónde pasaste, y este juego se tiene que poder leer de un vistazo.
 
-Dos reglas de diseño que salieron de mirar al bot:
+Reglas de diseño que salieron de mirar al bot:
 
 - **Los pinchos no obligan a nada.** La primera versión de "Ida y vuelta"
   tenía pinchos en el piso y en el techo, y el bot los saltó a todos sin dar
@@ -140,11 +141,39 @@ Dos reglas de diseño que salieron de mirar al bot:
   la sala colgado y saltearse el recorrido: el bot lo encontró en el nivel 20.
   O se llena esa franja de pinchos, o el techo tiene que ser una fila con
   agujeros.
+- **La baldosa `u` va pegada al techo, no al piso.** Si el vuelco te agarra
+  ocho tiles abajo, subís en DIAGONAL: con el envión que traías más un dash
+  cruzás la sala entera sin pisar el techo ni una vez, y el tramo de arriba
+  desaparece. La baldosa tiene que estar a un tile o dos del techo, y para
+  llegar hasta ahí se sube por otro lado (escalones, chimenea).
+
+### Los cuatro atajos que encontró el bot
+
+Todos salieron de mirar `tools/trace.cjs` mientras se encadenaban los tramos.
+Ninguno se ve leyendo el mapa; los cuatro convertían un nivel de tres tramos
+en uno de medio:
+
+1. **El sótano.** Un piso agujereado con espacio libre abajo es un pasillo:
+   te caés por un agujero, dasheás por debajo y salís por el otro. Los
+   pinchos van **pegados abajo del piso** (la fila de inmediatamente
+   después), no al fondo de la sala.
+2. **La trepada de 9 tiles.** Un salto de pared más un dash suben nueve tiles
+   contra una pared sola —el marco de la sala cuenta como pared—. Una meta
+   colgada del techo a menos de eso de una pared se toca desde el arranque.
+   O se la aleja, o la pared muerde (`>`/`<` en la columna del marco).
+3. **Bajar por la pared, cabeza abajo.** Invertido, el salto de pared empuja
+   hacia abajo de la pantalla: se BAJA por una pared igual que se sube. Una
+   meta al pie de un muro es alcanzable desde arriba del muro.
+4. …pero **de costado no se camina**. Con la gravedad tirando para arriba, el
+   piso solo se toca de paso: un dash da 3,5 tiles y después te chupa. Por eso
+   una meta en el MEDIO del piso, a cinco o más tiles de las dos paredes, es
+   inalcanzable hasta que des vuelta la gravedad. Es la forma más barata de
+   cerrar los atajos 2 y 3.
 
 **El error más caro es publicar un nivel imposible.** Por eso hay un bot:
 
 ```bash
-node test/solver.test.cjs            # los 15 niveles (meta + estrella)
+node test/solver.test.cjs            # los 20 niveles (meta + estrella)
 node test/solver.test.cjs 12         # uno solo
 node test/solver.test.cjs --rapido   # saltea la pasada de estrellas (más rápido)
 node test/solver.test.cjs --par      # + sugerencia de tiempos de medalla
@@ -154,10 +183,10 @@ node tools/star-spots.cjs 8 20,1 6,6 # prueba dónde poner la estrella
 ```
 
 El test hace **dos pasadas por nivel**: llegar a la meta, y llegar a la meta
-**con la estrella**. Con 20 niveles la corrida completa lleva ~25 minutos
-(la segunda pasada es la cara); para iterar, `--rapido` o un nivel suelto. La segunda existe porque una estrella que no se puede
-juntar es una promesa rota que no se detecta jugando: se ve, se intenta
-veinte veces y no está.
+**con la estrella**. Con 20 niveles la corrida completa lleva ~10 minutos (la
+segunda pasada es la cara); para iterar, `--rapido` o un nivel suelto. La
+segunda existe porque una estrella que no se puede juntar es una promesa rota
+que no se detecta jugando: se ve, se intenta veinte veces y no está.
 
 **Ojo con las estrellas:** que se puedan TOCAR no alcanza. El error típico es
 ponerlas colgadas sobre los pinchos: el jugador la toca... y se muere, o
@@ -177,6 +206,22 @@ Si dice `SIN SALIDA`, `tools/trace.cjs` muestra con `˙` hasta dónde llega —
 casi siempre el problema es el mismo: **una pared que llega hasta el piso
 deja un sector inalcanzable**, o un salto de más de 3 tiles de alto.
 
+**Cómo aguanta los niveles largos.** La anchura pura crece exponencialmente
+con la duración: el nivel 17, de 3,13 s, gastaba 889k estados de los 900k de
+presupuesto, así que un nivel encadenado habría fallado por quedarse sin aire,
+no por imposible. Dos cambios en `test/_bot.cjs` lo arreglan:
+
+- no se prueban las acciones con **dash cuando el dash no está disponible**
+  (apretarlo sin tenerlo no cambia nada que la clave de poda mire);
+- el frente se recorta a un **haz** (`ANCHO`) con los mejores estados según
+  la distancia a la meta, medida **inundando la sala por tiles** — así una
+  valla o un pozo cuestan lo que cuestan y no se poda el frente que va bien.
+
+El haz hace la búsqueda **incompleta**: un "no encontré" ya no prueba que el
+nivel sea imposible. Por eso el solver reintenta con el haz más abierto y,
+al final, con anchura pura, y avisa (`haz x4`) cuándo hizo falta. Si un nivel
+solo sale con el haz abierto, el camino es sospechosamente fino.
+
 Números útiles para diseñar (salen de `PHY`):
 
 | Movimiento | Alcance |
@@ -193,11 +238,13 @@ Números útiles para diseñar (salen de `PHY`):
 Regla práctica: escalones de **2 tiles** son cómodos, de **3** son al límite
 (precisión), de **4 o más** son imposibles sin pared/dash/resorte.
 
-**Largo de un nivel (pendiente de aplicar):** hoy casi todos son de un solo
-tramo y se terminan en 6-8 segundos, que es lo que los hace fáciles. Lo que
-sube la dificultad en este género no es el movimiento más difícil sino el
-largo de la cadena que hay que ejecutar sin errar. El plan para arreglarlo
-—con sus límites, que son varios— está en `docs/encadenado.md`.
+**Largo de un nivel:** lo que sube la dificultad en este género no es el
+movimiento más difícil sino el **largo de la cadena que hay que ejecutar sin
+errar**. El mundo 4 (16-20) ya está rehecho así: dos o tres tramos por sala,
+usando la sala en varias direcciones en vez de ir siempre de izquierda a
+derecha. Los mundos 1-3 siguen siendo casi todos de un tramo y les cabe la
+misma revisión. El razonamiento, los límites y lo que se aprendió están en
+`docs/encadenado.md`.
 
 **Medallas:** el bot es más rápido que cualquier persona, así que su tiempo
 es el *piso*, no el oro. `--par` propone `oro = bot*2 + 0,5`,
@@ -218,7 +265,7 @@ open('/tmp/filo_check.js','w',encoding='utf-8').write(js)
 sys.exit(subprocess.run(['node','--check','/tmp/filo_check.js']).returncode)
 PY
 
-# 2) Los 15 niveles siguen siendo terminables (obligatorio si tocaste PHY o niveles)
+# 2) Los 20 niveles siguen siendo terminables (obligatorio si tocaste PHY o niveles)
 node test/solver.test.cjs
 
 # 3) Navegador real: SW, offline, paridad de física node↔navegador, persistencia

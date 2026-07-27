@@ -71,7 +71,7 @@ Todo el juego está en `index.html` (sin build, sin dependencias, JS vanilla).
 Para probarlo alcanza con abrir el archivo en el navegador.
 
 ```bash
-node test/solver.test.cjs      # un bot juega los 15 niveles y demuestra que se terminan
+node test/solver.test.cjs      # un bot juega los 20 niveles y demuestra que se terminan
 node tools/trace.cjs 12        # dibuja una sala y el camino del bot (diseño de niveles)
 NODE_PATH=/opt/node22/lib/node_modules node test/pwa.test.cjs   # navegador real
 ```

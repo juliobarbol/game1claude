@@ -1336,22 +1336,28 @@ const LEVELS = [
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
 // ─────────────────────────────── MUNDO 4 · GRAVEDAD ────────────────────────
-{ n:'Al revés', hint:'La baldosa violeta da vuelta la gravedad. El techo pasa a ser el piso.',
-  par:[5.5, 8, 13], rows:[
+// Tres tramos: la escalera hasta la baldosa · el techo entero con tres pozos
+// · la caída dirigida hasta la repisa. Ninguno es difícil; lo que cuesta es
+// hacerlos seguidos, que es de lo que se trata (ver docs/encadenado.md).
+// La baldosa va PEGADA al techo a propósito: si queda abajo, el vuelco te
+// deja subiendo en diagonal y con un dash cruzás la sala sin pisar el techo
+// —el bot lo encontró en la primera versión y el tramo 2 desaparecía—.
+{ n:'Al revés', hint:'La baldosa violeta da vuelta la gravedad. El techo pasa a ser el piso… con sus propios pozos.',
+  par:[7.5, 10.5, 17], rows:[
 //  0123456789012345678901234567
-   '                  vv   G    ',
+   '         vv    vv    vv     ',
+   '#########  ####  ####  #####',
    '                            ',
+   '     u                      ',
+   '                          d ',
    '                            ',
+   '    ###                     ',
    '                            ',
-   '                     *      ',
+   ' ###         *              ',
    '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '           u                ',
-   '                            ',
-   ' P                          ',
-   '#########                   ',
+   '   ###                      ',
+   ' P                    G     ',
+   '#####                ###    ',
    '                            ',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
@@ -1374,59 +1380,84 @@ const LEVELS = [
    '                            ',
    '                            ',
 ]},
-{ n:'Colgado', hint:'Un agujero en el techo es un pozo. Los pinchos también están arriba.',
-  par:[7, 10, 16], rows:[
-   '         vvvv      vvvvv    ',
-   '#########    ######     ####',
-   '                            ',
-   '                            ',
-   '                          d ',
-   '                            ',
-   '                 *          ',
-   '                            ',
-   '                            ',
-   '   u                        ',
-   '                            ',
-   ' P                       G  ',
-   '#####                  #####',
-   '                            ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Doble filo', hint:'Un dash boca abajo es igual de largo. Lo que cambia es hacia dónde caés.',
-  par:[7, 10, 16], rows:[
-   '         vvvvvvvv     vvvv  ',
-   '#########        #####    ##',
-   '                            ',
-   '            o               ',
-   '                          d ',
-   '                            ',
-   '              *             ',
-   '                            ',
-   '                            ',
-   '     u                      ',
-   '                            ',
-   ' P                       G  ',
-   '######                ######',
-   '                            ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Cabeza abajo', hint:'El techo se te cae encima… o abajo. No frenes.',
-  par:[6, 9, 15], gravInicial:-1, rows:[
+// El muro del medio parte la sala en dos: abajo no se cruza (10 tiles), y
+// arriba sí, porque el techo pasa por encima. De ahí los tres tramos —
+// piso izquierdo hacia la derecha, techo cruzando el muro, piso derecho de
+// vuelta hacia la izquierda. La estrella está del lado del techo que NO
+// hace falta recorrer: hay que ir a buscarla y volver.
+// Los pinchos van PEGADOS abajo del piso: con un piso agujereado y un hueco
+// libre debajo, el bot se metía por un agujero, dasheaba por abajo y salía
+// del otro lado — la sala entera se saltaba por el sótano.
+{ n:'Colgado', hint:'Un agujero en el techo es un pozo. Y el muro solo se cruza por arriba.',
+  par:[7.5, 10.5, 17], rows:[
 //  0123456789012345678901234567
-   '    vvvvvvvvvvvvvvvvvvvvvvvv',
-   '####cccccccccccccc          ',
+   '       vv        vv     vv  ',
+   '#######  #########  ####  ##',
+   '                            ',
+   '              #             ',
+   '   *          #           d ',
+   '              #             ',
+   '              #             ',
+   '              #             ',
+   '              #             ',
+   '             u#             ',
+   '              #             ',
+   ' P            #      G      ',
+   '####   ####  ##     ###   ##',
+   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+]},
+// El mismo hueco, dos veces: uno en el piso (se cruza con salto+dash) y otro
+// en el techo, más ancho, que pide encadenar dos dashes con el cristal del
+// medio. La meta cuelga del techo, así que no hay forma de terminarlo sin
+// dar la vuelta. El tercer tramo son los pinchos que cuelgan del techo.
+// La pared izquierda está afilada porque si no, no hace falta nada de esto:
+// con un salto de pared y un dash se trepan 9 tiles contra el marco y la
+// meta se toca desde el arranque. Una meta colgada del techo solo está a
+// salvo si NO hay pared trepable cerca (o si la pared muerde).
+{ n:'Doble filo', hint:'Un dash boca abajo es igual de largo. El cristal te da el segundo.',
+  par:[9.5, 13.5, 21], rows:[
+//  0123456789012345678901234567
+   '           vvvvvvvvvv       ',
+   '###########          #######',
+   ' G  v  v                    ',
+   '>                           ',
+   '>                           ',
+   '>               o           ',
+   '>                           ',
+   '>                           ',
+   '>                           ',
+   '>                       u   ',
+   '                            ',
+   ' P                          ',
+   '#######    *   #############',
+   '                            ',
+   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+]},
+// El cierre del mundo: la misma carrera de bloques frágiles dos veces, una
+// colgado del techo y otra de pie en el piso, con un vuelco y una caída
+// dirigida en el medio. Empieza cabeza abajo y termina caminando: el nivel
+// entero es la idea del mundo dicha de las dos maneras. La meta va en el
+// medio del piso, lejos de las dos paredes: cabeza abajo se baja por el
+// marco a saltos de pared, pero no se camina de costado — con la gravedad
+// tirando para arriba, el piso solo se toca de paso.
+{ n:'Cabeza abajo', hint:'El techo se te cae encima… o abajo. Dos veces, y sin frenar.',
+  par:[8.5, 12, 19], gravInicial:-1, rows:[
+//  0123456789012345678901234567
+   '      vvvvvvvvvvvvvv        ',
+   '######cccccccccccccc########',
    ' P                          ',
    '                            ',
-   '                 d          ',
-   '                            ',
-   '           *                ',
-   '                            ',
-   '                  o         ',
+   '                          d ',
    '                            ',
    '                            ',
-   '                        G   ',
-   '                       #####',
    '                            ',
+   '                *           ',
+   '                            ',
+   '                            ',
+   '         G                  ',
+   '        ###   c   c   ###   ',
+   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
 ];
@@ -2042,7 +2073,7 @@ function renderStats(){
     '<div class="stat"><div class="k">' + c[0] + '</div><div class="v">' + c[1] + '</div></div>').join('');
   $('statHint').textContent = done < LEVELS.length
     ? 'Cada nivel guarda tu mejor vuelta. El fantasma blanco es esa vuelta: si lo pasás, hiciste un récord.'
-    : 'Terminaste todos. Ahora la pelea es contra el reloj: 🥇 en los 15.';
+    : 'Terminaste todos. Ahora la pelea es contra el reloj: 🥇 en los 20.';
 }
 function renderOpts(){
   const on = v => v ? 'SÍ' : 'NO';
