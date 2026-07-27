@@ -1,0 +1,7 @@
+{
+  // FILO se sirve como assets estáticos (no hay backend ni build).
+  // Cloudflare despliega solo con cada push a main.
+  "name": "filo",
+  "compatibility_date": "2026-07-27",
+  "assets": { "directory": "." }
+}
