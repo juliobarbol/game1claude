@@ -39,6 +39,8 @@ servicio de eso.
   **Es la herramienta de diseño de niveles.**
 - `tools/star-spots.cjs` — prueba posiciones para la estrella de un nivel.
 - `tools/make-icons.py` — genera los PNG de los iconos (sin dependencias).
+- `docs/encadenado.md` — **lo próximo**: nota de diseño para hacer los
+  niveles más largos encadenando tramos. Leer antes de tocar niveles.
 
 ## Mapa del código dentro de `index.html`
 
@@ -190,6 +192,12 @@ Números útiles para diseñar (salen de `PHY`):
 
 Regla práctica: escalones de **2 tiles** son cómodos, de **3** son al límite
 (precisión), de **4 o más** son imposibles sin pared/dash/resorte.
+
+**Largo de un nivel (pendiente de aplicar):** hoy casi todos son de un solo
+tramo y se terminan en 6-8 segundos, que es lo que los hace fáciles. Lo que
+sube la dificultad en este género no es el movimiento más difícil sino el
+largo de la cadena que hay que ejecutar sin errar. El plan para arreglarlo
+—con sus límites, que son varios— está en `docs/encadenado.md`.
 
 **Medallas:** el bot es más rápido que cualquier persona, así que su tiempo
 es el *piso*, no el oro. `--par` propone `oro = bot*2 + 0,5`,
