@@ -23,7 +23,7 @@ récord.
 **Salto de pared:** en el aire, contra una pared, mantené apretada la
 dirección de la pared y saltá.
 
-## Los tres mundos
+## Los cuatro mundos
 
 1. **Suelo** (1-5): solo salto. Medir la distancia, soltar el salto antes
    para saltar más bajo, bloques que se caen.
@@ -31,6 +31,9 @@ dirección de la pared y saltá.
    pinchos.
 3. **Dash** (11-15): un envión en la dirección que apuntás, que se recarga al
    tocar piso o un cristal.
+4. **Gravedad** (16-20): las baldosas violetas dan vuelta la gravedad y el
+   techo pasa a ser el piso. Saltar, rebotar y dashear funcionan igual… para
+   el otro lado.
 
 Cada nivel tiene tres tiempos: 🥇 🥈 🥉. El oro es exigente a propósito. Y hay
 una **estrella** escondida en cada sala, para el que quiera más.

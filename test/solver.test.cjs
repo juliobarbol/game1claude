@@ -38,7 +38,7 @@ function revisarEstructura(G){
     if (L.rows.length !== 15) mal(i, `tiene ${L.rows.length} filas (tienen que ser 15)`);
     L.rows.forEach((r, y) => {
       if (r.length !== 28) mal(i, `la fila y${y+1} mide ${r.length} (tienen que ser 28)`);
-      const raro = r.replace(/[ #^v<>=sco*PG]/g, '');
+      const raro = r.replace(/[ #^v<>=scoud*PG]/g, '');
       if (raro) mal(i, `la fila y${y+1} usa símbolos desconocidos: "${raro}"`);
     });
     const txt = L.rows.join('');
@@ -54,7 +54,7 @@ function revisarEstructura(G){
     if (enSolido(P.spawn.x + 5, P.spawn.y + 7)) mal(i, 'el inicio está dentro de una pared');
     if (enSolido(P.goal.x + 8, P.goal.y + 8)) mal(i, 'la meta está dentro de una pared');
   });
-  console.log(ok ? 'PASS  estructura de los 15 niveles' : '');
+  console.log(ok ? `PASS  estructura de los ${G.LEVELS.length} niveles` : '');
   return ok;
 }
 

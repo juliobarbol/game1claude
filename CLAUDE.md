@@ -11,8 +11,8 @@ salas de una pantalla, muerte instantánea, reintento inmediato, cronómetro,
 terminarlo: es **sentir que la mano te mejora**. Todo el diseño está al
 servicio de eso.
 
-- 15 niveles en 3 mundos. Cada mundo abre una habilidad: **salto** (1-5),
-  **salto de pared** (6-10), **dash** (11-15).
+- 20 niveles en 4 mundos. Cada mundo abre una habilidad: **salto** (1-5),
+  **salto de pared** (6-10), **dash** (11-15), **gravedad invertible** (16-20).
 - Se juega con teclado, con joystick/gamepad y **con los dedos** (joystick
   flotante + botones).
 - Sin backend, sin cuentas: el progreso vive en `localStorage`.
@@ -30,7 +30,7 @@ servicio de eso.
 ## Estructura de archivos
 
 - `index.html` — **todo el juego** (markup + `<style>` + `<script>`).
-- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v2`**.
+- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v3`**.
 - `manifest.webmanifest`, `icon-*.png` — PWA (instalación, iconos).
 - `test/` — `_load.cjs` (carga el juego en node), `_bot.cjs` (el bot),
   `solver.test.cjs` (¿se pueden terminar los niveles?), `pwa.test.cjs`
@@ -90,9 +90,36 @@ grep -n "===== js/" index.html
 
 Un nivel es una sala de 30x17 tiles: 15 filas de 28 caracteres (el marco lo
 pone `parseLevel`). Leyenda: `#` pared, `^v<>` pinches, `=` plataforma
-atravesable, `s` resorte, `c` bloque frágil, `o` cristal de dash, `*`
-estrella, `P` inicio, `G` meta. Las plataformas móviles y las sierras van
-aparte, en `movers`/`saws`, en coordenadas de tile.
+atravesable, `s` resorte, `c` bloque frágil, `o` cristal de dash, `u`/`d`
+baldosa de gravedad (arriba/abajo), `*` estrella, `P` inicio, `G` meta. Las
+plataformas móviles y las sierras van aparte, en `movers`/`saws`, en
+coordenadas de tile. `gravInicial:-1` arranca el nivel cabeza abajo.
+
+### Gravedad invertible (mundo 4)
+
+`w.grav` (1 abajo · -1 arriba) es **estado del mundo**, no una variable
+global: se clona, el bot lo ve y el fantasma lo graba. En la física, todo lo
+vertical se mide contra `gv = w.grav` — `p.vy*gv > 0` es "cayendo" y
+`p.vy*gv < 0` es "subiendo"; el salto es `-PHY.JUMP*gv`, el piso se busca en
+`p.y + gv` y la corrección de esquina se aplica del lado contra el que caés.
+**Si agregás algo vertical, escribilo relativo a `gv` o se rompe cabeza
+abajo.**
+
+Las baldosas **fijan** la gravedad (no la alternan): tocar dos veces la misma
+no hace nada. Es a propósito — un interruptor que alterna obliga a recordar
+por dónde pasaste, y este juego se tiene que poder leer de un vistazo.
+
+Dos reglas de diseño que salieron de mirar al bot:
+
+- **Los pinchos no obligan a nada.** La primera versión de "Ida y vuelta"
+  tenía pinchos en el piso y en el techo, y el bot los saltó a todos sin dar
+  vuelta la gravedad ni una vez: un salto cruza 6 tiles. Lo que obliga a
+  cambiar de lado es la GEOMETRÍA: una **valla** que sube del piso (≥7 tiles,
+  no se cruza ni con salto+dash) o una **estalactita** que baja del techo,
+  dejando libre solo el otro lado de la sala.
+- **Las baldosas van a 2 tiles de la superficie** (`y10` desde el piso, `y5`
+  desde el techo). A 1 tile las tocás caminando —sin querer— y a 4 no las
+  alcanzás saltando.
 
 **El error más caro es publicar un nivel imposible.** Por eso hay un bot:
 
@@ -107,7 +134,8 @@ node tools/star-spots.cjs 8 20,1 6,6 # prueba dónde poner la estrella
 ```
 
 El test hace **dos pasadas por nivel**: llegar a la meta, y llegar a la meta
-**con la estrella**. La segunda existe porque una estrella que no se puede
+**con la estrella**. Con 20 niveles la corrida completa lleva ~25 minutos
+(la segunda pasada es la cara); para iterar, `--rapido` o un nivel suelto. La segunda existe porque una estrella que no se puede
 juntar es una promesa rota que no se detecta jugando: se ve, se intenta
 veinte veces y no está.
 
@@ -139,6 +167,8 @@ Números útiles para diseñar (salen de `PHY`):
 | Dash | ~3,5 tiles (+ lo que ya traías) |
 | Salto + dash | ~**9 tiles** de largo, ~6,7 de alto |
 | Resorte | ~6 tiles de alto |
+
+(Con la gravedad invertida son los mismos números, para el otro lado.)
 
 Regla práctica: escalones de **2 tiles** son cómodos, de **3** son al límite
 (precisión), de **4 o más** son imposibles sin pared/dash/resorte.

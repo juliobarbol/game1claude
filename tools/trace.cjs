@@ -16,7 +16,7 @@
 const { loadGame } = require('../test/_load.cjs');
 const G = loadGame();
 
-const CH = { 0:'·', 1:'█', 2:'^', 3:'v', 4:'<', 5:'>', 6:'=', 7:'S', 8:'c' };
+const CH = { 0:'·', 1:'█', 2:'^', 3:'v', 4:'<', 5:'>', 6:'=', 7:'S', 8:'c', 9:'d', 10:'u' };
 
 function mapOf(L){
   const g = [];
@@ -72,7 +72,7 @@ for (const i of idxs){
     if (G.LEVELS[i].dash) for (const y of [-1,0,1]) A.push({ x, y, jump:!!j, dash:true });
   }
   const key = w => ((w.p.x/6)|0)+','+((w.p.y/6)|0)+','+(w.p.vx>20?1:w.p.vx<-20?-1:0)+','+
-    (w.p.vy>40?1:w.p.vy<-40?-1:0)+','+(w.p.grounded?1:0)+(w.p.dashAvail?1:0)+(w.p.wall+1);
+    (w.p.vy>40?1:w.p.vy<-40?-1:0)+','+(w.p.grounded?1:0)+(w.p.dashAvail?1:0)+(w.p.wall+1)+(w.grav>0?'d':'u');
   const seen = new Set(); let frontier = [{ w:G.newWorld(i), path:[] }];
   seen.add(key(frontier[0].w));
   let win = null, reach = new Set(), expanded = 0;

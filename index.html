@@ -324,7 +324,7 @@ const PHY = {
 
 // Códigos de tile (grilla estática)
 const T_EMPTY=0, T_SOLID=1, T_SP_U=2, T_SP_D=3, T_SP_L=4, T_SP_R=5, T_ONEWAY=6,
-      T_SPRING=7, T_CRUMB=8;
+      T_SPRING=7, T_CRUMB=8, T_PAD_D=9, T_PAD_U=10;
 
 const COL = {
   bg:'#0a0d16', bg2:'#131b30', grid:'#1b2540', out:'#05070c',
@@ -332,7 +332,7 @@ const COL = {
   spike:'#ff4757', oneway:'#6b7ba8',
   player:'#ffd166', playerNo:'#7cc3ff',
   goal:'#4ade80', crystal:'#c084fc', spring:'#fb923c',
-  crumb:'#8a6b45', mover:'#38bdf8', saw:'#ff4757', star:'#ffe066',
+  crumb:'#8a6b45', mover:'#38bdf8', saw:'#ff4757', star:'#ffe066', pad:'#a78bfa',
   ghost:'#ffffff',
 };
 
@@ -441,6 +441,7 @@ const SFX = {
   spring: () => blip(300, 900, .14, 'triangle', .32),
   star:   () => { blip(990, 990, .08, 'triangle', .3); setTimeout(()=>blip(1480,1480,.12,'triangle',.3), 80); },
   goal:   () => { [660, 880, 1320].forEach((f,i) => setTimeout(()=>blip(f, f, .14, 'triangle', .3), i*90)); },
+  flip:   () => { blip(240, 620, .16, 'triangle', .3); noise(.12, .18, 500); },
   ui:     () => blip(520, 520, .05, 'square', .16),
 };
 function vibrate(ms){
@@ -627,7 +628,8 @@ function parseLevel(def){
     crumbs:[], crAt:new Int32Array(W*H).fill(-1),
     crystals:[], cryAt:new Int32Array(W*H).fill(-1),
     stars:[], springs:[], movers:[], saws:[], par:def.par || [10,15,25],
-    ab:{ wall:!!def.wall, dash:!!def.dash } };
+    ab:{ wall:!!def.wall, dash:!!def.dash, grav:!!def.grav },
+    grav0: def.gravInicial === -1 ? -1 : 1 };
   for (let ty = 0; ty < H; ty++){
     // Marco: la primera y la última fila/columna son siempre pared.
     const inner = (ty === 0 || ty === H-1) ? '#'.repeat(W-2) : (rows[ty-1] || '');
@@ -644,6 +646,8 @@ function parseLevel(def){
         case '=': tiles[i] = T_ONEWAY; break;
         case 's': tiles[i] = T_SPRING; break;
         case 'c': tiles[i] = T_CRUMB; L.crAt[i] = L.crumbs.length; L.crumbs.push(i); break;
+        case 'd': tiles[i] = T_PAD_D; break;      // baldosa: gravedad hacia abajo
+        case 'u': tiles[i] = T_PAD_U; break;      // baldosa: gravedad hacia arriba
         case 'o': L.cryAt[i] = L.crystals.length; L.crystals.push({ tx, ty }); break;
         case '*': L.stars.push({ tx, ty }); break;
         case 'P': L.spawn = { x: tx*TS + (TS-PW)/2, y: ty*TS + TS - PH }; break;
@@ -681,6 +685,7 @@ function newWorld(idx){
   const w = {
     L, idx: (typeof idx === 'object' ? -1 : idx),
     t:0, timer:0, deaths:0, freeze:0, shake:0, events:[],
+    grav:1,                       // 1 = hacia abajo · -1 = hacia arriba
     prev:{ jump:false, dash:false },
     crSt:new Uint8Array(L.crumbs.length), crT:new Int16Array(L.crumbs.length),
     cryT:new Int16Array(L.crystals.length), starGot:new Uint8Array(L.stars.length),
@@ -695,12 +700,13 @@ function resetAttempt(w, first){
     dash:0, dashDx:0, dashDy:0, dashAvail:true, coyote:0, wcoyote:0, wcdir:0, buf:0, lock:0,
     dead:0, win:0, anim:0, sqx:1, sqy:1 };
   w.crSt.fill(0); w.crT.fill(0); w.cryT.fill(0); w.starGot.fill(0);
-  w.timer = 0; w.freeze = 0;
+  w.timer = 0; w.freeze = 0; w.grav = L.grav0;
   if (!first) w.events.push('spawn');
 }
 function cloneWorld(w){
   return {
     L:w.L, idx:w.idx, t:w.t, timer:w.timer, deaths:w.deaths, freeze:w.freeze, shake:0, events:[],
+    grav:w.grav,
     prev:{ jump:w.prev.jump, dash:w.prev.dash },
     crSt:w.crSt.slice(), crT:w.crT.slice(), cryT:w.cryT.slice(), starGot:w.starGot.slice(),
     p:Object.assign({}, w.p),
@@ -740,15 +746,19 @@ function blocked(w, x, y){
 }
 // Plataformas atravesables ("=" ): solo frenan si venís cayendo y tus pies
 // estaban por encima del borde. Se atraviesan de abajo hacia arriba.
-function onewayHit(w, x, yNew, yOld){
-  if (yNew <= yOld) return -1;
+// Devuelve la coordenada de la cara que te frena, o -1. Con la gravedad dada
+// vuelta la plataforma atravesable se cruza al revés: siempre frena del lado
+// contra el que caés y se atraviesa desde el otro.
+function onewayHit(w, x, yNew, yOld, gv){
+  gv = gv || 1;
+  if ((yNew - yOld) * gv <= 0) return -1;
   const x0 = Math.floor(x/TS), x1 = Math.floor((x + PW - .001)/TS);
-  const oldB = yOld + PH, newB = yNew + PH;
-  const ty0 = Math.floor(oldB/TS), ty1 = Math.floor((newB - .001)/TS);
+  const oldB = gv > 0 ? yOld + PH : yOld, newB = gv > 0 ? yNew + PH : yNew;
+  const ty0 = Math.floor(Math.min(oldB, newB)/TS), ty1 = Math.floor(Math.max(oldB, newB - .001)/TS);
   for (let ty = ty0; ty <= ty1; ty++){
-    const top = ty*TS;
-    if (oldB > top + .001) continue;
-    for (let tx = x0; tx <= x1; tx++) if (tileAt(w.L, tx, ty) === T_ONEWAY) return top;
+    const cara = gv > 0 ? ty*TS : ty*TS + TS;
+    if ((oldB - cara) * gv > .001) continue;
+    for (let tx = x0; tx <= x1; tx++) if (tileAt(w.L, tx, ty) === T_ONEWAY) return cara;
   }
   return -1;
 }
@@ -769,10 +779,10 @@ function moveY(w, dy){
   while (rem > 0){
     const st = Math.min(1, rem) * s;
     const ny = p.y + st;
-    const ow = onewayHit(w, p.x, ny, p.y);
-    if (ow >= 0){ p.y = ow - PH; return 1; }
+    const ow = onewayHit(w, p.x, ny, p.y, w.grav);
+    if (ow >= 0){ p.y = w.grav > 0 ? ow - PH : ow; return w.grav; }
     if (blocked(w, p.x, ny)){
-      if (s < 0){
+      if (s === -w.grav){
         // Corrección de esquina: si el techo te pega apenas del borde, el
         // juego te corre unos píxeles en vez de cortarte el salto. Es la
         // diferencia entre "me equivoqué" y "el juego me robó".
@@ -889,21 +899,27 @@ function stepWorld(w, inp){
   }
 
   // ── Gravedad (más suave en el pico: control fino sin volverse flotante) ──
+  // Todo lo vertical se mide CONTRA w.grav, no contra "abajo": con la
+  // gravedad dada vuelta, el techo es el piso y el salto va para abajo.
+  // p.vy*gv > 0 significa "cayendo"; p.vy*gv < 0, "subiendo".
+  const gv = w.grav;
   if (!dashing){
     const g = Math.abs(p.vy) < PHY.APEX && !p.grounded ? PHY.GRAV_APEX : PHY.GRAV;
-    p.vy = Math.min(PHY.MAX_FALL, p.vy + g*DT);
-    if (p.vy > 0 && p.wall && L.ab.wall && Math.sign(inp.x) === p.wall) p.vy = Math.min(p.vy, PHY.WALL_SLIDE);
-    if (p.vy < 0 && !inp.jump) p.vy *= (1 - (1 - PHY.JUMP_CUT));   // salto de altura variable
+    p.vy += g*DT*gv;
+    if (p.vy*gv > PHY.MAX_FALL) p.vy = PHY.MAX_FALL*gv;
+    if (p.vy*gv > 0 && p.wall && L.ab.wall && Math.sign(inp.x) === p.wall)
+      p.vy = Math.min(p.vy*gv, PHY.WALL_SLIDE) * gv;
+    if (p.vy*gv < 0 && !inp.jump) p.vy *= PHY.JUMP_CUT;            // salto de altura variable
   }
 
   // ── Salto y salto de pared ──
   if (p.buf > 0 && !dashing){
     if (p.coyote > 0){
-      p.vy = -PHY.JUMP; p.buf = 0; p.coyote = 0; p.grounded = false;
+      p.vy = -PHY.JUMP*gv; p.buf = 0; p.coyote = 0; p.grounded = false;
       p.sqx = .78; p.sqy = 1.25; w.events.push('jump');
     } else if (p.wcoyote > 0 && L.ab.wall){
       const d = p.wcdir;
-      p.vy = -PHY.WJ_Y; p.vx = -d * PHY.WJ_X; p.face = -d;
+      p.vy = -PHY.WJ_Y*gv; p.vx = -d * PHY.WJ_X; p.face = -d;
       p.buf = 0; p.wcoyote = 0; p.lock = PHY.WJ_LOCK; p.wall = 0;
       p.sqx = .8; p.sqy = 1.2; w.events.push('walljump');
     }
@@ -923,7 +939,7 @@ function stepWorld(w, inp){
   }
   if (p.dash > 0){
     p.vx = p.dashDx * PHY.DASH; p.vy = p.dashDy * PHY.DASH;
-    if (--p.dash === 0){ p.vx *= PHY.DASH_END; p.vy *= (p.dashDy < 0 ? .45 : PHY.DASH_END); }
+    if (--p.dash === 0){ p.vx *= PHY.DASH_END; p.vy *= (p.dashDy*w.grav < 0 ? .45 : PHY.DASH_END); }
   }
 
   // ── Movimiento y colisión ──
@@ -931,15 +947,18 @@ function stepWorld(w, inp){
   if (hitX) p.vx = 0;
   const hitY = moveY(w, p.vy*DT);
   const wasG = p.grounded;
-  if (hitY === 1){
-    if (p.vy > 220) { w.shake = Math.max(w.shake, 3); }
-    if (!wasG && p.vy > 60) w.events.push('land');
-    p.sqy = Math.max(.72, 1 - p.vy/1600); p.sqx = 2 - p.sqy;
+  if (hitY === gv){                       // chocaste del lado al que tira la gravedad: es piso
+    const caida = p.vy*gv;
+    if (caida > 220) { w.shake = Math.max(w.shake, 3); }
+    if (!wasG && caida > 60) w.events.push('land');
+    p.sqy = Math.max(.72, 1 - caida/1600); p.sqx = 2 - p.sqy;
     p.vy = 0; p.grounded = true; p.dash = 0;
-  } else if (hitY === -1){ p.vy = Math.max(p.vy, 0); p.grounded = false; }
+  } else if (hitY === -gv){               // te golpeaste contra el "techo"
+    p.vy = p.vy*gv < 0 ? 0 : p.vy; p.grounded = false;
+  }
   else p.grounded = false;
-  if (!p.grounded) p.grounded = blocked(w, p.x, p.y + 1) || !!moverAt(w, p.x, p.y + 1) ||
-                                onewayHit(w, p.x, p.y + 1, p.y) >= 0;
+  if (!p.grounded) p.grounded = blocked(w, p.x, p.y + gv) || !!moverAt(w, p.x, p.y + gv) ||
+                                onewayHit(w, p.x, p.y + gv, p.y, gv) >= 0;
   if (p.grounded){ p.dashAvail = true; p.dash = 0; }
 
   // ── Pared (solo cuenta si apretás contra ella) ──
@@ -952,8 +971,10 @@ function stepWorld(w, inp){
   // ── Resortes ──
   for (const s of L.springs){
     const rx = s.tx*TS, ry = s.ty*TS;
-    if (p.x < rx + TS && p.x + PW > rx && Math.abs((p.y + PH) - ry) < 3 && p.vy >= 0){
-      p.vy = -PHY.SPRING; p.grounded = false; p.dashAvail = true; p.coyote = 0;
+    // Se pisa por la cara que mira a la gravedad, y dispara para el otro lado.
+    const pies = gv > 0 ? p.y + PH : p.y, cara = gv > 0 ? ry : ry + TS;
+    if (p.x < rx + TS && p.x + PW > rx && Math.abs(pies - cara) < 3 && p.vy*gv >= 0){
+      p.vy = -PHY.SPRING*gv; p.grounded = false; p.dashAvail = true; p.coyote = 0;
       p.sqx = .7; p.sqy = 1.35; w.events.push('spring');
     }
   }
@@ -962,8 +983,9 @@ function stepWorld(w, inp){
     if (w.crSt[i] !== 0) continue;
     const idx = L.crumbs[i], tx = idx % L.w, ty = (idx - tx)/L.w;
     const rx = tx*TS, ry = ty*TS;
+    const pies = gv > 0 ? p.y + PH : p.y, cara = gv > 0 ? ry : ry + TS;
     const touch = p.x < rx + TS && p.x + PW > rx &&
-      ((Math.abs((p.y + PH) - ry) < 2 && p.vy >= 0) || (p.y < ry + TS && p.y + PH > ry && p.wall));
+      ((Math.abs(pies - cara) < 2 && p.vy*gv >= 0) || (p.y < ry + TS && p.y + PH > ry && p.wall));
     if (touch){ w.crSt[i] = 1; w.crT[i] = 0; w.events.push('crack'); }
   }
   // ── Cristales de dash ──
@@ -976,6 +998,26 @@ function stepWorld(w, inp){
       }
     }
   }
+  // ── Baldosas de gravedad ──
+  // Fijan la gravedad (no la alternan): tocar dos veces la misma baldosa no
+  // hace nada, así el nivel se puede leer sin memorizar por dónde pasaste.
+  if (L.ab.grav){
+    const bx = p.x + 1, by = p.y + 1;
+    const x0 = Math.floor(bx/TS), x1 = Math.floor((bx + PW - 2)/TS);
+    const y0 = Math.floor(by/TS), y1 = Math.floor((by + PH - 2)/TS);
+    for (let ty = y0; ty <= y1 && !p.dead; ty++) for (let tx = x0; tx <= x1; tx++){
+      const t = tileAt(L, tx, ty);
+      if (t !== T_PAD_D && t !== T_PAD_U) continue;
+      const nueva = t === T_PAD_U ? -1 : 1;
+      if (w.grav === nueva) continue;
+      w.grav = nueva;
+      p.coyote = 0; p.grounded = false; p.wall = 0; p.wcoyote = 0;
+      if (p.vy*nueva < 0) p.vy = 0;    // no arrastres el impulso contra la nueva caída
+      w.shake = Math.max(w.shake, 5);
+      w.events.push('flip');
+    }
+  }
+
   // ── Estrella ──
   for (let i = 0; i < L.stars.length; i++){
     if (w.starGot[i]) continue;
@@ -1288,15 +1330,109 @@ const LEVELS = [
    '####      ######            ',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
+// ─────────────────────────────── MUNDO 4 · GRAVEDAD ────────────────────────
+{ n:'Al revés', hint:'La baldosa violeta da vuelta la gravedad. El techo pasa a ser el piso.',
+  par:[5.5, 8, 13], rows:[
+//  0123456789012345678901234567
+   '                       G    ',
+   '                            ',
+   '                            ',
+   '                    *       ',
+   '                            ',
+   '                            ',
+   '                            ',
+   '                            ',
+   '                            ',
+   '              u             ',
+   '                            ',
+   ' P                          ',
+   '#############               ',
+   '                            ',
+   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+]},
+{ n:'Ida y vuelta', hint:'Las vallas no se saltan: se rodean por el otro lado de la sala.',
+  par:[6.5, 9.5, 15], rows:[
+//  0123456789012345678901234567
+   '                            ',
+   '############################',
+   '               #            ',
+   '               #            ',
+   '          #  d #         d  ',
+   '          #    #      *     ',
+   '          #    #            ',
+   '          #    #            ',
+   '          #    #            ',
+   '        u #        u        ',
+   '          #                 ',
+   ' P        #              G  ',
+   '############################',
+   '                            ',
+   '                            ',
+]},
+{ n:'Colgado', hint:'Caminando por el techo, lo que colgaba ahora te tapa el paso.',
+  par:[6.5, 9.5, 15], rows:[
+   '                            ',
+   '############################',
+   '          #        #        ',
+   '          #        #        ',
+   '          #        #        ',
+   '                            ',
+   '                *           ',
+   '                            ',
+   '                            ',
+   '                            ',
+   '   u                   d    ',
+   ' P                       G  ',
+   '#####                  #####',
+   '                            ',
+   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+]},
+{ n:'Doble filo', hint:'Un dash boca abajo es igual de largo. Lo que cambia es hacia dónde caés.',
+  par:[7, 10, 16], rows:[
+   '                            ',
+   '#########        ###########',
+   '                            ',
+   '             o           d  ',
+   '                            ',
+   '                            ',
+   '                            ',
+   '                            ',
+   '                  *         ',
+   '                            ',
+   '     u                      ',
+   ' P                        G ',
+   '######                ######',
+   '                            ',
+   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+]},
+{ n:'Cabeza abajo', hint:'Arrancás colgando. Todo lo que aprendiste, del revés.',
+  par:[7, 10, 16], gravInicial:-1, rows:[
+   '                            ',
+   '####  c   c   c             ',
+   ' P                          ',
+   '                            ',
+   '                 d          ',
+   '                            ',
+   '                  *         ',
+   '                            ',
+   '                    o       ',
+   '                            ',
+   '                            ',
+   '                        G   ',
+   '                    ########',
+   '                            ',
+   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
+]},
 ];
 // Las habilidades se abren por mundo y NO antes: el mundo 1 es solo salto, el
 // 2 suma el salto de pared y el 3 el dash. Es lo que hace que se sienta el
 // progreso — y evita que el dash convierta los primeros niveles en un ascensor.
-LEVELS.forEach((L, i) => { L.wall = i >= 5; L.dash = i >= 10; });
+LEVELS.forEach((L, i) => { L.wall = i >= 5; L.dash = i >= 10; L.grav = i >= 15; });
 const ABIL = [
   { at:0,  t:'SALTO',          d:'← → para moverte, SALTO para saltar. Soltá antes para saltar más bajo.' },
   { at:5,  t:'SALTO DE PARED', d:'Pegate a una pared en el aire: mantené la dirección y saltá.' },
   { at:10, t:'DASH',           d:'Un envión en la dirección que apuntás. Se recarga al tocar piso o un cristal.' },
+  { at:15, t:'GRAVEDAD',       d:'Las baldosas violetas dan vuelta la gravedad: el techo pasa a ser el piso. Saltar, rebotar y dashear funcionan igual… para el otro lado.' },
 ];
 // ===== js/fx.js =====
 // Partículas y sacudida: puro adorno, fuera de la física (usan Math.random,
@@ -1306,15 +1442,17 @@ const FX = { p:[], shake:0, flash:0 };
 function fxBurst(x, y, n, col, spd, grav){
   for (let i = 0; i < n; i++){
     const a = Math.random()*Math.PI*2, v = spd*(.35 + Math.random()*.9);
-    FX.p.push({ x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v, g:grav == null ? 420 : grav,
+    FX.p.push({ x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v, g:(grav == null ? 420 : grav) * GV(),
       life:1, dec:1.6 + Math.random()*1.6, col, s:1.4 + Math.random()*2.2 });
   }
 }
 function fxDust(x, y, dir){
+  const gv = GV();
   for (let i = 0; i < 6; i++)
     FX.p.push({ x:x + (Math.random()-.5)*8, y, vx:(dir || (Math.random()-.5))*(20+Math.random()*70),
-      vy:-Math.random()*60, g:260, life:1, dec:3.2, col:'#8fa3c9', s:1.2 + Math.random()*1.6 });
+      vy:-Math.random()*60*gv, g:260*gv, life:1, dec:3.2, col:'#8fa3c9', s:1.2 + Math.random()*1.6 });
 }
+const GV = () => (GAME.w ? GAME.w.grav : 1);
 function fxStep(dt){
   for (let i = FX.p.length - 1; i >= 0; i--){
     const q = FX.p[i];
@@ -1362,10 +1500,18 @@ function rr(x, y, w, h, r){
   if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
   else ctx.rect(x, y, w, h);
 }
-function drawBG(){
-  const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
+function drawBG(gv){
+  gv = gv || 1;
+  // El degradé apunta siempre "hacia el piso": con la gravedad invertida se
+  // da vuelta solo. Es la pista de fondo de que estás caminando por el techo.
+  const g = ctx.createLinearGradient(0, gv > 0 ? 0 : VIEW_H, 0, gv > 0 ? VIEW_H : 0);
   g.addColorStop(0, COL.bg2); g.addColorStop(1, COL.bg);
   ctx.fillStyle = g; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
+  if (gv < 0){
+    const f = ctx.createLinearGradient(0, 0, 0, 26);
+    f.addColorStop(0, COL.pad + '33'); f.addColorStop(1, COL.pad + '00');
+    ctx.fillStyle = f; ctx.fillRect(0, 0, VIEW_W, 26);
+  }
   // Textura de puntos: da referencia de distancia sin competir con el terreno
   // (una grilla de líneas ensucia y hace que las paredes no se lean).
   ctx.fillStyle = COL.grid;
@@ -1408,6 +1554,20 @@ function drawTiles(w){
     } else if (t === T_ONEWAY){
       ctx.fillStyle = COL.oneway; ctx.fillRect(x, y, TS, 3);
       ctx.fillStyle = COL.oneway + '55'; ctx.fillRect(x + 2, y + 3, TS - 4, 2);
+    } else if (t === T_PAD_D || t === T_PAD_U){
+      const dir = t === T_PAD_U ? -1 : 1;
+      const pulso = .55 + Math.sin(w.t*.07 + tx)*.18;
+      ctx.globalAlpha = pulso;
+      ctx.fillStyle = COL.pad;
+      ctx.fillRect(x + 1, y + (dir > 0 ? TS - 3 : 1), TS - 2, 2);
+      ctx.beginPath();
+      ctx.moveTo(x + TS/2, y + (dir > 0 ? TS - 4 : 4));
+      ctx.lineTo(x + TS/2 - 4, y + (dir > 0 ? TS - 10 : 10));
+      ctx.lineTo(x + TS/2 + 4, y + (dir > 0 ? TS - 10 : 10));
+      ctx.closePath(); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = COL.pad + '44'; ctx.lineWidth = 1;
+      ctx.strokeRect(x + .5, y + .5, TS - 1, TS - 1);
     } else if (t === T_SPRING){
       ctx.fillStyle = COL.solid; ctx.fillRect(x, y + 6, TS, TS - 6);
       ctx.fillStyle = COL.spring; ctx.fillRect(x + 1, y + 2, TS - 2, 5);
@@ -1480,11 +1640,11 @@ function drawTiles(w){
   ctx.beginPath(); ctx.moveTo(1, -8); ctx.lineTo(9, -4.5); ctx.lineTo(1, -1); ctx.closePath(); ctx.fill();
   ctx.restore();
 }
-function drawPlayer(p, alpha, col){
+function drawPlayer(p, alpha, col, gv){
   const cx = p.x + PW/2, cy = p.y + PH/2;
   ctx.save();
   ctx.globalAlpha = alpha;
-  ctx.translate(cx, cy); ctx.scale(p.sqx || 1, p.sqy || 1);
+  ctx.translate(cx, cy); ctx.scale(p.sqx || 1, (p.sqy || 1) * (gv || 1));
   ctx.fillStyle = col;
   rr(-PW/2, -PH/2, PW, PH, 3); ctx.fill();
   ctx.fillStyle = '#00000088';
@@ -1498,14 +1658,15 @@ function drawWorld(w){
   const sh = OPTS.shake ? FX.shake : 0;
   if (sh) ctx.translate((Math.random()-.5)*sh, (Math.random()-.5)*sh);
   ctx.beginPath(); ctx.rect(0, 0, VIEW_W, VIEW_H); ctx.clip();
-  drawBG();
+  drawBG(w.grav);
   drawTiles(w);
   // Fantasma del récord
   if (OPTS.ghost && GAME.ghost && GAME.mode === 'play'){
     const f = GAME.ghost, i = Math.min(w.timer, f.n - 1);
     if (i >= 0 && f.n){
-      const gx = f.d[i*3]/2, gy = f.d[i*3+1]/2, gf = f.d[i*3+2] & 1 ? 1 : -1;
-      drawPlayer({ x:gx, y:gy, face:gf, sqx:1, sqy:1 }, .22, COL.ghost);
+      const gx = f.d[i*3]/2, gy = f.d[i*3+1]/2, fl = f.d[i*3+2];
+      drawPlayer({ x:gx, y:gy, face:(fl & 1) ? 1 : -1, sqx:1, sqy:1 }, .22, COL.ghost,
+        (fl & 2) ? -1 : 1);
     }
   }
   // Partículas
@@ -1521,9 +1682,10 @@ function drawWorld(w){
     if (p.dash > 0){
       for (let k = 1; k <= 3; k++)
         drawPlayer({ x:p.x - p.dashDx*k*5, y:p.y - p.dashDy*k*5, face:p.face, sqx:1, sqy:1 },
-          .18*(4-k), COL.crystal);
+          .18*(4-k), COL.crystal, w.grav);
     }
-    drawPlayer(p, p.win ? Math.max(0, 1 - p.win/30) : 1, p.dashAvail ? COL.player : COL.playerNo);
+    drawPlayer(p, p.win ? Math.max(0, 1 - p.win/30) : 1, p.dashAvail ? COL.player : COL.playerNo,
+      w.grav);
   }
   // Cartel de ayuda del nivel
   if (OPTS.hints && GAME.hintT > 0 && GAME.mode === 'play'){
@@ -1568,8 +1730,10 @@ function ghostSave(idx, rec){
   const d = rec.length > cap ? rec.slice(0, cap) : rec;
   lsSet(LS.GHOST + idx, JSON.stringify({ v:1, d }));
 }
-function ghostRecord(rec, p){
-  rec.push(Math.round(p.x*2), Math.round(p.y*2), p.face > 0 ? 1 : 0);
+// Bit 0 = hacia dónde mira · bit 1 = gravedad invertida. Los fantasmas
+// viejos (solo 0/1) siguen leyéndose: bit 1 apagado = gravedad normal.
+function ghostRecord(rec, p, gv){
+  rec.push(Math.round(p.x*2), Math.round(p.y*2), (p.face > 0 ? 1 : 0) | (gv < 0 ? 2 : 0));
 }
 
 // ===== js/game.js =====
@@ -1632,13 +1796,15 @@ function handleEvents(w){
   for (const e of w.events){
     const p = w.p, cx = p.x + PW/2, cy = p.y + PH/2;
     switch (e){
-      case 'jump':     SFX.jump(); fxDust(cx, p.y + PH, 0); break;
+      case 'jump':     SFX.jump(); fxDust(cx, w.grav > 0 ? p.y + PH : p.y, 0); break;
       case 'walljump': SFX.wall(); fxBurst(cx + (p.face*-6), cy, 5, '#9fb4dd', 90); vibrate(8); break;
-      case 'land':     SFX.land(); fxDust(cx, p.y + PH, 0); break;
+      case 'land':     SFX.land(); fxDust(cx, w.grav > 0 ? p.y + PH : p.y, 0); break;
       case 'dash':     SFX.dash(); fxBurst(cx, cy, 10, COL.crystal, 150, 60); FX.shake = 5; vibrate(12); break;
       case 'spring':   SFX.spring(); fxBurst(cx, p.y + PH, 10, COL.spring, 160, 200); vibrate(14); break;
       case 'crystal':  SFX.crystal(); fxBurst(cx, cy, 10, COL.crystal, 130, 0); break;
-      case 'crack':    fxDust(cx, p.y + PH, 0); break;
+      case 'crack':    fxDust(cx, w.grav > 0 ? p.y + PH : p.y, 0); break;
+      case 'flip':     SFX.flip(); fxBurst(cx, cy, 14, COL.pad, 150, 0); FX.shake = 6;
+                       vibrate(16); break;
       case 'crumble':  fxBurst(cx, p.y + PH + 6, 8, COL.crumb, 90, 500); break;
       case 'star':     SFX.star(); fxBurst(cx, cy, 16, COL.star, 170, 40); FX.flash = .5; break;
       case 'die':      SFX.die(); fxBurst(cx, cy, 26, COL.player, 210, 380); FX.shake = 10;
@@ -1726,7 +1892,7 @@ function frame(now){
     while (GAME.acc >= DT && n < 6){
       GAME.acc -= DT; n++;
       const w = GAME.w, inp = pollInput();
-      if (!w.p.dead && !w.p.win) ghostRecord(GAME.rec, w.p);
+      if (!w.p.dead && !w.p.win) ghostRecord(GAME.rec, w.p, w.grav);
       stepWorld(w, inp);
       handleEvents(w);
       if (GAME.mode !== 'play') break;
@@ -1745,7 +1911,7 @@ function frame(now){
 }
 function drawMenuBG(){
   ctx.setTransform(VIEW.s, 0, 0, VIEW.s, VIEW.ox, VIEW.oy);
-  drawBG();
+  drawBG(1);
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 // ===== js/ui.js =====
@@ -1795,6 +1961,7 @@ const WORLDS = [
   { n:'MUNDO 1 · SUELO',   a:0,  b:5  },
   { n:'MUNDO 2 · PAREDES', a:5,  b:10 },
   { n:'MUNDO 3 · DASH',    a:10, b:15 },
+  { n:'MUNDO 4 · GRAVEDAD',a:15, b:20 },
 ];
 function renderLevels(){
   const box = $('lvWorlds');

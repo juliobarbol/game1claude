@@ -27,7 +27,7 @@ function keyOf(w, conEstrella){
   if (conEstrella) for (let i = 0; i < w.starGot.length; i++) st += w.starGot[i];
   return ((p.x/CELL)|0) + ',' + ((p.y/CELL)|0) + ',' +
     (p.vx > 20 ? 1 : p.vx < -20 ? -1 : 0) + ',' + (p.vy > 40 ? 1 : p.vy < -40 ? -1 : 0) + ',' +
-    (p.grounded ? 1 : 0) + (p.dashAvail ? 1 : 0) + (p.wall + 1) + st;
+    (p.grounded ? 1 : 0) + (p.dashAvail ? 1 : 0) + (p.wall + 1) + (w.grav > 0 ? 'd' : 'u') + st;
 }
 const conTodasLasEstrellas = w => {
   for (let i = 0; i < w.starGot.length; i++) if (!w.starGot[i]) return false;
