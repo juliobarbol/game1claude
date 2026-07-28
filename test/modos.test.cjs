@@ -329,6 +329,49 @@ const check = (name, pass, extra) => {
   check('el mapa sobrevive a guardar y cargar',
     mapa.tras[mapa.celda] === 2, JSON.stringify(mapa.tras));
 
+  // ── Rediseñar una sala borra su récord ──
+  // Un tiempo hecho en la versión anterior de un nivel es de OTRO nivel:
+  // dejarlo puesto sería mostrar un récord que quizá no se pueda igualar, y
+  // en la tabla compartida sería comparar cosas distintas.
+  const purga = await page.evaluate(() => {
+    try { localStorage.clear(); } catch(_){}
+    loadSave();
+    OPTS.mirror = 0;
+    const cambiado = LEVELS.findIndex(L => (L.v || 1) > 1);
+    const igual = LEVELS.findIndex(L => (L.v || 1) === 1);
+    if (cambiado < 0) return { salteado:true };
+    // Simular un guardado viejo: récord puesto y `lvv` de la versión anterior.
+    for (const i of [cambiado, igual]){
+      const r = lvRec(i); r.best = 500; r.star = true; r.deaths = 3; r.lvv = 1;
+      anotarMuerte(i, 4, 4);
+    }
+    lsSet(LS.GHOST + cambiado, JSON.stringify({ v:1, d:[1,2,3] }));
+    lsSet(LS.GHOST + igual,    JSON.stringify({ v:1, d:[1,2,3] }));
+    SAVE.run['w0'] = { best:3000, splits:[1], deaths:0 };
+    saveSave();
+    loadSave();                                   // acá corre la purga
+    return {
+      cambiado, igual,
+      recordCambiado: lvRec(cambiado).best,
+      recordIgual:    lvRec(igual).best,
+      fantasmaCambiado: lsGet(LS.GHOST + cambiado),
+      fantasmaIgual:    lsGet(LS.GHOST + igual),
+      mapaCambiado: Object.keys(muertesDe(cambiado)).length,
+      mapaIgual:    Object.keys(muertesDe(igual)).length,
+      maraton: SAVE.run['w0'] || null,
+    };
+  });
+  check('el récord de una sala rediseñada se borra',
+    purga.salteado || purga.recordCambiado === 0, 'nivel ' + (purga.cambiado+1));
+  check('el de una sala que no cambió se conserva',
+    purga.salteado || purga.recordIgual === 500, 'nivel ' + (purga.igual+1));
+  check('también se van su fantasma y su mapa de muertes',
+    purga.salteado || (!purga.fantasmaCambiado && purga.mapaCambiado === 0));
+  check('el fantasma de la sala intacta sigue ahí',
+    purga.salteado || (!!purga.fantasmaIgual && purga.mapaIgual === 1));
+  check('el maratón que incluye la sala rediseñada también se borra',
+    purga.salteado || purga.maraton === null, JSON.stringify(purga.maraton));
+
   // ── La tabla sin internet ──
   const tabla = await page.evaluate(async () => {
     abrirTabla(null);

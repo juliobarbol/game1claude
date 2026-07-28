@@ -37,7 +37,7 @@ servicio de eso.
 ## Estructura de archivos
 
 - `index.html` — **todo el juego** (markup + `<style>` + `<script>`).
-- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v11`**.
+- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v12`**.
 - `manifest.webmanifest`, `icon-*.png` — PWA (instalación, iconos).
 - `test/` — `_load.cjs` (carga el juego en node), `_bot.cjs` (el bot),
   `solver.test.cjs` (¿se pueden terminar los niveles?), `pwa.test.cjs`
@@ -49,8 +49,9 @@ servicio de eso.
 - `tools/star-spots.cjs` — prueba posiciones para la estrella de un nivel.
 - `tools/make-icons.py` — genera los PNG de los iconos (sin dependencias).
 - `docs/encadenado.md` — nota de diseño de niveles largos por tramos
-  encadenados: aplicada al mundo 4, pendiente en los mundos 1-3. **Leer
-  antes de tocar niveles**; ahí están también los atajos que aparecieron.
+  encadenados: aplicada a los mundos 1 y 4, pendiente en los mundos 2-3.
+  **Leer antes de tocar niveles**; ahí están también los atajos que
+  aparecieron.
 
 ## Mapa del código dentro de `index.html`
 
@@ -363,6 +364,11 @@ tocaste `PHY` o niveles) + `test/pwa.test.cjs`.
 - No meter DOM ni `Math.random` en `js/physics.js`.
 - No cambiar las claves de `localStorage` (`LS`): se pierden récords y
   fantasmas ajenos.
+- **Rediseñar una sala obliga a subirle el `v`.** Un tiempo hecho en la
+  versión anterior es de otro nivel: `purgarNivelesCambiados()` le borra
+  récord, estrella, fantasma, mapa de muertes y los maratones que lo
+  incluyen. Sin eso te queda un récord que quizá no puedas volver a igualar,
+  y en la tabla compartida se compararían salas distintas.
 - No poner la red en el camino de jugar (ni un `await`, ni un spinner que
   frene un nivel). Y no meter la clave de servicio de Supabase en el HTML:
   la que va es la **publicable**, y la tabla se defiende con RLS + la función

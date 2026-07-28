@@ -454,6 +454,8 @@ function loadSave(){
         deaths:  Math.max(0, Math.floor(+e.deaths || 0)),
         star:    !!e.star,
         noDeath: !!e.noDeath,
+        // Qué versión de la sala jugaste. Ver `purgarNivelesCambiados`.
+        lvv:     Math.max(1, Math.floor(+e.lvv || 1)),
       };
     }
     // Maratones: una entrada por recorrido (un mundo, o el juego entero) con
@@ -495,6 +497,35 @@ function loadSave(){
     const o = JSON.parse(lsGet(LS.OPTS) || '{}');
     for (const k of Object.keys(OPTS_DEF)) OPTS[k] = (o && k in o) ? (o[k] ? 1 : 0) : OPTS_DEF[k];
   } catch(_){ OPTS = Object.assign({}, OPTS_DEF); }
+  purgarNivelesCambiados();
+}
+
+// Cuando una sala se rediseña le sube el `v`. El tiempo que hiciste en la
+// versión anterior es de OTRO nivel: dejarlo puesto sería mostrarte un récord
+// que quizá no puedas volver a igualar (o que ya no cuesta nada), y en la
+// tabla compartida sería comparar cosas distintas. Así que se borra: récord,
+// estrella, fantasma y mapa de muertes de ese nivel, y los maratones que lo
+// incluyen. Lo demás no se toca.
+function purgarNivelesCambiados(){
+  const cambiados = [];
+  for (let i = 0; i < LEVELS.length; i++){
+    const v = LEVELS[i].v || 1;
+    for (const suf of ['', 'm']){
+      const k = String(i) + suf, r = SAVE.lv[k];
+      if (!r || !r.best && !r.star && !r.deaths){ if (r) r.lvv = v; continue; }
+      if ((r.lvv || 1) === v) continue;
+      SAVE.lv[k] = { best:0, deaths:0, star:false, noDeath:false, lvv:v };
+      delete SAVE.mu[k];
+      try { localStorage.removeItem(LS.GHOST + i + suf); } catch(_){}
+      if (cambiados.indexOf(i) < 0) cambiados.push(i);
+    }
+  }
+  if (!cambiados.length) return;
+  // Un maratón que pasa por un nivel rediseñado tampoco es comparable.
+  for (const d of runDefs())
+    if (cambiados.some(i => i >= d.a && i < d.b))
+      for (const suf of ['', 'm', 'x', 'mx']) delete SAVE.run[d.k + suf];
+  saveSave();
 }
 function saveSave(){ lsSet(LS.SAVE, JSON.stringify(SAVE)); }
 function saveOpts(){ lsSet(LS.OPTS, JSON.stringify(OPTS)); }
@@ -504,7 +535,8 @@ function saveOpts(){ lsSet(LS.OPTS, JSON.stringify(OPTS)); }
 // terminado el 7 normal ya te abre el 8, también en el espejo.
 function lvRec(i, suf){
   const k = String(i) + (suf == null ? modeSuf() : suf);
-  if (!SAVE.lv[k]) SAVE.lv[k] = { best:0, deaths:0, star:false, noDeath:false };
+  if (!SAVE.lv[k]) SAVE.lv[k] = { best:0, deaths:0, star:false, noDeath:false,
+    lvv:(LEVELS[i] && LEVELS[i].v) || 1 };
   return SAVE.lv[k];
 }
 function runRec(key){ return SAVE.run[key] || null; }
@@ -1266,40 +1298,47 @@ const LEVELS = [
    ' P                        * ',
    '############################',
 ]},
-{ n:'Vacío', hint:'Soltá el salto antes para saltar más bajo. El aire también se maneja.',
-  par:[5.9, 8.6, 13.9], rows:[
+// Ida por abajo, subida por la derecha y vuelta por arriba: la meta está
+// sobre el propio inicio, a nueve tiles, así que hay que dar la vuelta
+// entera. Tres tramos con lo único que hay en el mundo 1: medir el salto.
+{ n:'Vacío', hint:'Soltá el salto antes para saltar más bajo. La meta está arriba tuyo: hay que rodearla.',
+  par:[5.9, 8.6, 13.9], v:2, rows:[
+//  0123456789012345678901234567
    '                            ',
    '                            ',
    '                            ',
    '                            ',
    '                            ',
+   '                   G        ',
+   '                 #####      ',
    '                            ',
-   '                            ',
-   '                            ',
-   '               *            ',
-   '                            ',
-   ' P                        G ',
-   '#####   #####    #####   ###',
-   '                            ',
+   '          #####             ',
+   '        *                   ',
+   '                  #####     ',
+   ' P                          ',
+   '######     ######           ',
    '                            ',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
-{ n:'Aguja', hint:'Plataformas de un tile. Acá se empieza a ver quién mide el salto.',
-  par:[5.4, 7.9, 12.8], rows:[
+// Se sube por escalones de dos y se vuelve por agujas de un tile. Subir es
+// cómodo; la vuelta es la que cuesta, porque cada aterrizaje es de un tile y
+// abajo no hay nada. La estrella pide un salto más alto que el del camino.
+{ n:'Aguja', hint:'Plataformas de un tile. Subir es fácil; volver por arriba, no.',
+  par:[5.4, 7.9, 12.8], v:2, rows:[
 //  0123456789012345678901234567
    '                            ',
-   '                       G    ',
+   '            G               ',
+   '          #####   #   #     ',
+   '                            ',
    '                     #####  ',
    '                            ',
-   '                  ##        ',
-   '           *                ',
-   '             ##             ',
+   '          *     ##          ',
    '                            ',
-   '        ##                  ',
+   '           ##               ',
    '                            ',
-   '   ##                       ',
+   '      ##                    ',
    ' P                          ',
-   '##                          ',
+   '####                        ',
    '                            ',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
@@ -1326,21 +1365,25 @@ const LEVELS = [
    '                            ',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
-{ n:'Frágil', hint:'Lo que pisás se cae. No frenes.',
-  par:[5.8, 8.5, 13.7], rows:[
+// La misma carrera de frágiles dos veces, ida y vuelta, con una subida en el
+// medio. La segunda es peor: los bloques de la primera todavía se están
+// rehaciendo y arriba no hay dónde parar a mirar.
+{ n:'Frágil', hint:'Lo que pisás se cae. No frenes — y después hay que volver.',
+  par:[5.8, 8.5, 13.7], v:2, rows:[
+//  0123456789012345678901234567
    '                            ',
+   '        G                   ',
+   '      #####                 ',
    '                            ',
+   '          c   c             ',
    '                            ',
+   '               #####        ',
    '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '              *             ',
-   '                            ',
-   ' P                       G  ',
-   '###  c   c   c   c   c  ####',
-   '                            ',
-   '                            ',
+   '                   ###      ',
+   '          *                 ',
+   '                ###         ',
+   ' P                          ',
+   '####   c   ####             ',
    '                            ',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},

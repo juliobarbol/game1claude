@@ -97,10 +97,39 @@ progreso — te frustrás veinte veces en el mismo salto y no hay nada que
 automatizar. Sirve como condimento dentro de un tramo, no como plato
 principal.
 
+## El mundo 1, y lo que enseñó sobre el largo
+
+Rehechos el 2 (`Vacío`), el 3 (`Aguja`) y el 5 (`Frágil`). El 1 es el tutorial
+y se dejó como está; el 4 (`Resorte`) ya tenía dos tiempos.
+
+Lo que costó no fue inventar los tramos sino **acertarles el largo**. Las
+primeras versiones daban 4,5 a 5,1 s de bot: más que CUALQUIER nivel del
+juego, incluido el 21. Un nivel 2 más largo que el último es un error de
+orden, por bueno que sea.
+
+El número que faltaba: **el zigzag de subida cuesta unos 6 tiles de recorrido
+por escalón**, y el bot hace unos 40 tiles en 3,1 s (el nivel 1 es la vara).
+Así que el presupuesto de un nivel de mundo 1 son ~40 tiles de camino, y una
+"U" completa —ida por abajo, subida, vuelta entera por arriba— son 60 y
+pico. La forma que entra en el presupuesto es media U: ida, subida, y la meta
+a mitad de camino de vuelta.
+
+Quedaron en 2,87 · 3,00 · 3,47 s, contra 3,13 del nivel 1. **Estimar el largo
+mirando el mapa no funciona: hay que construir y medir**, y dos iteraciones
+con `tools/trace.cjs` alcanzan.
+
+## Rediseñar borra récords
+
+Un tiempo hecho en la versión anterior de una sala es de otro nivel. Cada
+nivel rediseñado lleva un `v` más alto y `purgarNivelesCambiados()` le borra
+récord, estrella, fantasma, mapa de muertes y los maratones que lo incluyen.
+Sin eso queda un récord que quizá no se pueda volver a igualar —o que ya no
+cuesta nada— y en la tabla compartida se compararían salas distintas.
+
 ## Lo que sigue
 
-Los mundos 1-3. Casi todos son de un tramo; los más largos, `Pozo` y
-`Ascensor`, ya son de dos y se notan mejores. La receta es la misma y las
-herramientas ya están: `tools/trace.cjs <n>` para ver el camino del bot tramo
-por tramo, `tools/star-spots.cjs` para reubicar la estrella, y el solver para
-confirmar que sigue siendo terminable **con la estrella**.
+Los mundos 2 y 3. Los más largos, `Pozo` y `Ascensor`, ya son de dos tramos y
+se notan mejores; el resto es de uno. La receta es la misma y las herramientas
+ya están: `tools/trace.cjs <n>` para ver el camino del bot tramo por tramo,
+`tools/star-spots.cjs` para reubicar la estrella, y el solver **de los dos
+lados** para confirmar que sigue siendo terminable con la estrella.
