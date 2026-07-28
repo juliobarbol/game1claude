@@ -107,10 +107,16 @@ body.touch.landscape .tbtn{background:#ffffff10}
 /* ── Pantallas (menú, niveles, opciones, pausa, resultado) ──────── */
 #screens{position:fixed; inset:0; z-index:10; display:none}
 #screens.on{display:block}
+/* `safe center` y no `center` a secas: cuando el contenido no entra —un celu
+   apaisado, que es como se juega— un flex centrado se derrama por ARRIBA y
+   esa parte no se alcanza ni con scroll. Con `safe` se centra si hay lugar y
+   se pega arriba si no, y ahí sí el overflow-y sirve para algo. */
 .screen{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
-  justify-content:center; gap:14px; padding:calc(18px + env(safe-area-inset-top,0px)) 18px
+  justify-content:safe center; gap:14px; padding:calc(18px + env(safe-area-inset-top,0px)) 18px
   calc(18px + var(--safe-b)); background:rgba(6,9,16,.9); backdrop-filter:blur(6px);
   overflow-y:auto; overscroll-behavior:contain; text-align:center}
+/* Los hijos no se pueden encoger hasta desaparecer cuando falta alto. */
+.screen > *{flex-shrink:0}
 .screen.hidden{display:none}
 .title{font-size:clamp(38px,12vw,84px); font-weight:800; letter-spacing:10px; margin:0 0 -6px;
   color:var(--acc); text-shadow:0 0 26px #ffd16655}
@@ -2491,16 +2497,12 @@ function renderRuns(){
   $('runModo').querySelectorAll('.chip').forEach(el => el.addEventListener('click', () => {
     OPTS.extremo = +el.dataset.x ? 1 : 0; saveOpts(); SFX.ui(); renderRuns();
   }));
-  $('runsHint').innerHTML = 'Un recorrido entero de un tirón, con un cronómetro solo. ' +
-    'Los niveles se encadenan sin apretar nada. En los dos modos el reloj ' +
-    '<b>no se reinicia al morir</b>: reintentar sigue siendo instantáneo, pero cuesta tiempo.<br>' +
-    (OPTS.extremo
-      ? '<b>EXTREMO:</b> cronómetro de pared. Arranca cuando aparece la primera sala y para ' +
-        'cuando tocás la última bandera. Cuenta <b>todo</b>: leer el nivel, el respiro entre uno ' +
-        'y otro, y la pausa. No hay nada gratis.'
-      : '<b>NORMAL:</b> suma el tiempo que estuviste jugando. Arranca con tu primer movimiento ' +
-        'y la pausa lo frena, así que mirar cada sala sale gratis.') +
-    (OPTS.mirror ? '<br><b>Estás en modo espejo:</b> estos récords son los del espejo.' : '');
+  $('runsHint').innerHTML = (OPTS.extremo
+      ? 'Cronómetro de pared: corre desde que aparece la primera sala hasta la última bandera. ' +
+        'Cuenta leer el nivel, el respiro y la pausa.'
+      : 'Suma lo que estuviste jugando: arranca con tu primer movimiento y la pausa lo frena.') +
+    ' Morir nunca reinicia el reloj.' +
+    (OPTS.mirror ? '<br><b>Espejo:</b> estos récords son los del espejo.' : '');
   $('runList').innerHTML = defs.map(d => {
     const rec = runRec(runKey(d.k)), open = unlocked(d.a);
     const n = Math.min(d.b, LEVELS.length) - d.a;

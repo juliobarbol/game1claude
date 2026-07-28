@@ -37,7 +37,7 @@ servicio de eso.
 ## Estructura de archivos
 
 - `index.html` — **todo el juego** (markup + `<style>` + `<script>`).
-- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v8`**.
+- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v9`**.
 - `manifest.webmanifest`, `icon-*.png` — PWA (instalación, iconos).
 - `test/` — `_load.cjs` (carga el juego en node), `_bot.cjs` (el bot),
   `solver.test.cjs` (¿se pueden terminar los niveles?), `pwa.test.cjs`
