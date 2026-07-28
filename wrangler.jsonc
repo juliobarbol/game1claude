@@ -7,7 +7,7 @@
   // `not_found_handling` manda cualquier ruta desconocida al index: si alguien
   // entra a /juego o el Service Worker pide una URL vieja, igual abre el juego
   // en vez de un 404.
-  "name": "filo",
+  "name": "game1claude",
   "compatibility_date": "2026-07-27",
   "assets": {
     "directory": ".",
