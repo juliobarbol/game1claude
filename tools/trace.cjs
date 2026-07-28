@@ -58,6 +58,7 @@ function print(g, title){
 }
 
 const args = process.argv.slice(2);
+if (args.includes('--espejo')){ G.OPTS.mirror = 1; console.log('· modo ESPEJO ·'); }
 const all = args.includes('--all');
 const mapOnly = args.includes('--map');
 const idxs = all ? G.LEVELS.map((_, i) => i) : [ (+args.find(a => /^\d+$/.test(a)) || 1) - 1 ];

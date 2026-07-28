@@ -17,7 +17,11 @@ servicio de eso.
   **En construcción: hoy va solo el 21.**
 - Se juega con teclado, con joystick/gamepad y **con los dedos** (joystick
   flotante + botones).
-- Sin backend, sin cuentas: el progreso vive en `localStorage`.
+- Sin cuentas: el progreso vive en `localStorage`. Hay **una** cosa en la
+  nube —la tabla de récords compartida (Supabase)— y es estrictamente
+  opcional: sin nombre puesto o sin internet, el juego anda igual.
+- Además del juego suelto hay **maratón** (un mundo o el juego entero de un
+  tirón, con parciales) y **espejo** (las salas dadas vuelta).
 
 ## Arquitectura (importante)
 
@@ -32,11 +36,12 @@ servicio de eso.
 ## Estructura de archivos
 
 - `index.html` — **todo el juego** (markup + `<style>` + `<script>`).
-- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v6`**.
+- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v7`**.
 - `manifest.webmanifest`, `icon-*.png` — PWA (instalación, iconos).
 - `test/` — `_load.cjs` (carga el juego en node), `_bot.cjs` (el bot),
   `solver.test.cjs` (¿se pueden terminar los niveles?), `pwa.test.cjs`
-  (navegador real: SW, offline, paridad de física, persistencia).
+  (navegador real: SW, offline, paridad de física, persistencia),
+  `modos.test.cjs` (maratón, espejo y tabla, también en navegador).
 - `tools/trace.cjs` — dibuja una sala y el camino del bot en la terminal.
   **Es la herramienta de diseño de niveles.**
 - `tools/star-spots.cjs` — prueba posiciones para la estrella de un nivel.
@@ -65,6 +70,7 @@ grep -n "===== js/" index.html
 | `js/fx.js` | Partículas y sacudida (adorno; acá SÍ hay `Math.random`) |
 | `js/render.js` | `layout()` (canvas, orientación, controles) y el dibujo de la sala |
 | `js/ghost.js` | Grabar/reproducir la mejor vuelta |
+| `js/net.js` | Tabla de récords en Supabase (REST + realtime a mano). **Todo opcional y no bloqueante** |
 | `js/game.js` | Máquina de estados, bucle de paso fijo, HUD, resultado |
 | `js/ui.js` | Pantallas: menú, niveles, opciones, estadísticas, pausa, habilidad nueva |
 | `js/core.js` | Arranque y registro del Service Worker |
@@ -96,6 +102,14 @@ grep -n "===== js/" index.html
 - **Los controles táctiles son ciudadanos de primera.** Si un truco no se
   puede hacer con el pulgar, no va. El joystick es **digital de 8
   direcciones** a propósito: un analógico a medias arruina los saltos cortos.
+- **La red nunca puede hacer falta.** La tabla de récords es una vidriera:
+  todo lo que la toca va dentro de `try/catch`, no hay `await` en el camino
+  de jugar, y sin nombre puesto ni siquiera se intenta. Si Supabase se cae,
+  el juego no se entera. El guardado de verdad sigue siendo `localStorage`.
+- **El espejo tiene sus propios récords** (clave con `'m'` pegada, ver
+  `modeSuf()`). Son dos juegos distintos: si compartieran casillero, el
+  récord de un lado borraría el del otro y ninguno significaría nada. El
+  desbloqueo de niveles, en cambio, se mira siempre contra el juego normal.
 
 ## Cómo se diseñan y validan los niveles
 
@@ -172,14 +186,24 @@ en uno de medio:
    inalcanzable hasta que des vuelta la gravedad. Es la forma más barata de
    cerrar los atajos 2 y 3.
 
+**El espejo NO sale gratis.** La física es casi simétrica, pero la corrección
+de esquina prueba primero hacia la derecha (`for (const sg of [1, -1])`), así
+que un aterrizaje al límite tiene un empujoncito que te mete en la repisa
+yendo hacia la derecha y te tira afuera yendo hacia la izquierda. El nivel 4
+salía normal y era **imposible** espejado por exactamente eso; se arregló
+dándole dos tiles de margen a la repisa, no tocando la física. **Un nivel
+nuevo hay que pasarlo por el solver de los dos lados.**
+
 **El error más caro es publicar un nivel imposible.** Por eso hay un bot:
 
 ```bash
 node test/solver.test.cjs            # todos los niveles (meta + estrella)
+node test/solver.test.cjs --espejo   # lo mismo, con las salas dadas vuelta
 node test/solver.test.cjs 12         # uno solo
 node test/solver.test.cjs --rapido   # saltea la pasada de estrellas (más rápido)
 node test/solver.test.cjs --par      # + sugerencia de tiempos de medalla
 node tools/trace.cjs 12              # dibuja la sala y el camino del bot
+node tools/trace.cjs 12 --espejo     # …la misma sala, espejada
 node tools/trace.cjs --all           # todos los mapas
 node tools/star-spots.cjs 8 20,1 6,6 # prueba dónde poner la estrella
 ```
@@ -272,6 +296,12 @@ node test/solver.test.cjs
 
 # 3) Navegador real: SW, offline, paridad de física node↔navegador, persistencia
 NODE_PATH=/opt/node22/lib/node_modules node test/pwa.test.cjs
+
+# 4) Maratón, espejo y tabla (obligatorio si tocaste modos, guardado o red)
+NODE_PATH=/opt/node22/lib/node_modules node test/modos.test.cjs
+
+# 5) Si tocaste niveles o PHY, el solver TAMBIÉN espejado
+node test/solver.test.cjs --espejo
 ```
 
 **Si tocás una constante de `PHY`, corré el solver.** Bajar el salto 10 px
@@ -297,6 +327,10 @@ tocaste `PHY` o niveles) + `test/pwa.test.cjs`.
 - No meter DOM ni `Math.random` en `js/physics.js`.
 - No cambiar las claves de `localStorage` (`LS`): se pierden récords y
   fantasmas ajenos.
+- No poner la red en el camino de jugar (ni un `await`, ni un spinner que
+  frene un nivel). Y no meter la clave de servicio de Supabase en el HTML:
+  la que va es la **publicable**, y la tabla se defiende con RLS + la función
+  `enviar_record`, que es el único camino de escritura.
 - No olvidar subir `CACHE` en `sw.js` al publicar.
 - No penalizar la muerte (ni vidas, ni esperas, ni cortes): reintentar tiene
   que ser instantáneo.

@@ -40,6 +40,22 @@ dirección de la pared y saltá.
 Cada nivel tiene tres tiempos: 🥇 🥈 🥉. El oro es exigente a propósito. Y hay
 una **estrella** escondida en cada sala, para el que quiera más.
 
+## Los otros modos
+
+**Maratón.** Un mundo entero —o el juego completo— de un tirón, con un
+cronómetro solo y sin apretar nada entre nivel y nivel. Al pasar cada uno te
+dice cuánto vas adelante o atrás de tu mejor maratón. Acá el reloj **no se
+reinicia al morir**: reintentar sigue siendo instantáneo, pero cuesta tiempo.
+
+**Espejo.** Las mismas salas dadas vuelta. No es contenido nuevo: es el mismo
+nivel con las manos cambiadas, que es justo lo que el juego mide. Tiene sus
+propios récords.
+
+**Tabla.** Si le ponés un nombre en Opciones, tus récords aparecen en una
+tabla compartida que se actualiza sola. Es opcional de punta a punta: sin
+nombre o sin internet, el juego anda exactamente igual y tu progreso sigue
+guardado en el aparato.
+
 ## Instalarlo
 
 Es una PWA: entrás con el navegador y le das "Agregar a la pantalla de
@@ -73,10 +89,18 @@ Todo el juego está en `index.html` (sin build, sin dependencias, JS vanilla).
 Para probarlo alcanza con abrir el archivo en el navegador.
 
 ```bash
-node test/solver.test.cjs      # un bot juega todos los niveles y demuestra que se terminan
-node tools/trace.cjs 12        # dibuja una sala y el camino del bot (diseño de niveles)
-NODE_PATH=/opt/node22/lib/node_modules node test/pwa.test.cjs   # navegador real
+node test/solver.test.cjs         # un bot juega todos los niveles y demuestra que se terminan
+node test/solver.test.cjs --espejo   # lo mismo con las salas dadas vuelta
+node tools/trace.cjs 12           # dibuja una sala y el camino del bot (diseño de niveles)
+NODE_PATH=/opt/node22/lib/node_modules node test/pwa.test.cjs     # navegador real
+NODE_PATH=/opt/node22/lib/node_modules node test/modos.test.cjs   # maratón, espejo y tabla
 ```
+
+La tabla de récords vive en un proyecto de **Supabase** (`filo`). El esquema
+es una tabla y una función; se aplicó con migraciones y está comentado en el
+propio SQL. El HTML solo lleva la clave **publicable**: escribir se puede
+únicamente a través de `enviar_record`, que deja mejorar tu propia fila y
+nada más.
 
 El detalle de cómo está armado, cómo se diseñan los niveles y qué no hay que
 romper está en [`CLAUDE.md`](CLAUDE.md).

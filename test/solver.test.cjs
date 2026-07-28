@@ -25,6 +25,15 @@
 const { loadGame } = require('./_load.cjs');
 const G = loadGame();
 
+// --espejo corre el juego dado vuelta en horizontal (el modo espejo del
+// juego). La física es simétrica salvo la corrección de esquina, que prueba
+// primero hacia la derecha; alcanza para que un nivel espejado NO sea
+// automáticamente terminable, así que hay que pasarle el bot igual.
+if (process.argv.includes('--espejo')){
+  G.OPTS.mirror = 1;
+  console.log('· modo ESPEJO ·');
+}
+
 const { K, ANCHO, solve, replay } = require('./_bot.cjs');
 
 // El bot busca con un HAZ (ver test/_bot.cjs): rápido, pero incompleto. Un

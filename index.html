@@ -163,6 +163,37 @@ kbd{background:#ffffff14; border:1px solid var(--line); border-radius:5px; paddi
   border:1px solid var(--line); border-radius:10px; padding:9px 15px; font-size:13px;
   pointer-events:none; opacity:0; transition:opacity .2s}
 .toast.on{opacity:1}
+/* El parcial del maratón: aparece grande un segundo al pasar de nivel. Es
+   el único momento en que el juego te dice, con un número, que mejoraste. */
+.split{position:fixed; left:50%; top:26%; transform:translateX(-50%); z-index:21; text-align:center;
+  pointer-events:none; opacity:0; transition:opacity .25s, transform .25s; font-variant-numeric:tabular-nums}
+.split.on{opacity:1; transform:translateX(-50%) translateY(-10px)}
+.split .d{font-size:clamp(30px,9vw,48px); font-weight:800; letter-spacing:-1px}
+.split .l{font-size:12px; letter-spacing:2px; color:var(--dim)}
+.split.good .d{color:var(--ok)} .split.bad .d{color:#ff8f8f} .split.neu .d{color:var(--txt)}
+/* Lista de maratones (mundos + juego entero) */
+.runlist{display:flex; flex-direction:column; gap:8px; width:min(560px,92vw)}
+.runrow{display:flex; align-items:center; gap:12px; padding:12px 14px; border-radius:12px;
+  background:var(--panel); border:1px solid var(--line); text-align:left; color:var(--txt);
+  font:inherit; cursor:pointer}
+.runrow:disabled{opacity:.4; cursor:default}
+.runrow .rn{flex:1; min-width:0; font-weight:700; letter-spacing:1px; overflow:hidden; text-overflow:ellipsis}
+.runrow .rt{font-variant-numeric:tabular-nums; color:var(--acc); font-weight:700}
+.runrow .rs{font-size:11px; color:var(--dim)}
+.splitlist{display:flex; flex-direction:column; gap:2px; width:min(420px,90vw);
+  font-size:12px; font-variant-numeric:tabular-nums; color:var(--dim)}
+.splitlist div{display:flex; justify-content:space-between; gap:10px}
+.splitlist b{color:var(--txt); font-weight:600}
+.chips{display:flex; flex-wrap:wrap; gap:6px; justify-content:center; width:min(560px,92vw)}
+.chip{padding:6px 11px; border-radius:999px; background:var(--panel); border:1px solid var(--line);
+  color:var(--dim); font:inherit; font-size:12px; letter-spacing:1px; cursor:pointer}
+.chip.on{color:var(--txt); border-color:var(--acc2); background:#ffffff10}
+.tbrow{display:flex; align-items:center; gap:12px; padding:9px 14px; border-radius:10px;
+  background:var(--panel); border:1px solid var(--line)}
+.tbrow .pos{width:26px; color:var(--dim); font-variant-numeric:tabular-nums}
+.tbrow .who{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.tbrow .tm{font-variant-numeric:tabular-nums; font-weight:700}
+.tbrow.yo{border-color:var(--acc2)} .tbrow.yo .who{color:var(--acc)}
 </style>
 </head>
 <body>
@@ -171,7 +202,7 @@ kbd{background:#ffffff14; border:1px solid var(--line); border-radius:5px; paddi
 <div id="goals"></div>
 
 <div id="hud" class="hidden">
-  <div class="grow lv" id="hudLv">—</div>
+  <div class="grow lv"><div id="hudLv">—</div><div class="sub" id="hudRun"></div></div>
   <div class="center">
     <div class="time" id="hudTime">0.00</div>
     <div class="sub" id="hudBest">—</div>
@@ -199,6 +230,8 @@ kbd{background:#ffffff14; border:1px solid var(--line); border-radius:5px; paddi
     <div class="menu">
       <button class="btn pri" id="mPlay">JUGAR</button>
       <button class="btn" id="mLevels">NIVELES</button>
+      <button class="btn" id="mRuns">MARATÓN</button>
+      <button class="btn" id="mTabla">TABLA</button>
       <button class="btn" id="mStats">ESTADÍSTICAS</button>
       <button class="btn" id="mOpts">OPCIONES</button>
     </div>
@@ -220,6 +253,34 @@ kbd{background:#ffffff14; border:1px solid var(--line); border-radius:5px; paddi
       <button class="btn pri" id="winNext">SIGUIENTE →</button>
       <button class="btn" id="winRetry">REINTENTAR</button>
       <button class="btn ghost" id="winMenu">NIVELES</button>
+    </div>
+  </section>
+
+  <section class="screen hidden" id="scr-runs">
+    <h2>MARATÓN</h2>
+    <div class="hintline" id="runsHint"></div>
+    <div class="runlist" id="runList"></div>
+    <button class="btn ghost" id="runsBack" style="width:min(320px,86vw)">VOLVER</button>
+  </section>
+
+  <section class="screen hidden" id="scr-tabla">
+    <h2>TABLA</h2>
+    <div class="chips" id="tbChips"></div>
+    <div class="runlist" id="tbList"></div>
+    <div class="hintline" id="tbHint"></div>
+    <button class="btn ghost" id="tbBack" style="width:min(320px,86vw)">VOLVER</button>
+  </section>
+
+  <section class="screen hidden" id="scr-runend">
+    <div class="tagline" id="reName">MARATÓN</div>
+    <p class="bigtime" id="reTime">0.00</p>
+    <div class="delta" id="reDelta"></div>
+    <div class="medals" id="reInfo"></div>
+    <div class="splitlist" id="reSplits"></div>
+    <div class="menu">
+      <button class="btn pri" id="reAgain">OTRA VEZ</button>
+      <button class="btn" id="reTabla">VER TABLA</button>
+      <button class="btn ghost" id="reMenu">VOLVER</button>
     </div>
   </section>
 
@@ -248,6 +309,8 @@ kbd{background:#ffffff14; border:1px solid var(--line); border-radius:5px; paddi
     <div class="opt"><span>Vibración</span><button class="val" id="oVibe">SÍ</button></div>
     <div class="opt"><span>Sacudida de pantalla</span><button class="val" id="oShake">SÍ</button></div>
     <div class="opt"><span>Controles zurdo/diestro</span><button class="val" id="oSwap">DIESTRO</button></div>
+    <div class="opt"><span>Modo espejo</span><button class="val" id="oMirror">NO</button></div>
+    <div class="opt"><span>Tu nombre</span><button class="val" id="oName">—</button></div>
     <div class="opt"><span>Ayudas en pantalla</span><button class="val" id="oHints">SÍ</button></div>
     <div class="menu" style="margin-top:6px">
       <button class="btn ghost" id="oBack">VOLVER</button>
@@ -265,6 +328,7 @@ kbd{background:#ffffff14; border:1px solid var(--line); border-radius:5px; paddi
 </div>
 
 <div class="toast" id="toast"></div>
+<div class="split" id="split"><div class="d" id="splitD"></div><div class="l" id="splitL"></div></div>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -339,16 +403,23 @@ const COL = {
 const LS = {
   SAVE:'filo_save_v1',
   OPTS:'filo_opts_v1',
-  GHOST:'filo_ghost_',   // + índice de nivel
+  GHOST:'filo_ghost_',   // + índice de nivel (+ 'm' si es el espejo)
+  NAME:'filo_name_v1',   // el nombre con el que firmás los récords
 };
 
 // ===== js/save.js =====
 // Progreso y opciones en localStorage. Nada de backend: el récord es tuyo
 // y vive en el aparato. Todo lo que entra se valida (un JSON tocado a mano
 // no puede romper el juego).
-const OPTS_DEF = { ghost:1, sound:1, vibe:1, shake:1, swap:0, hints:1 };
-let SAVE = { v:1, lv:{}, deaths:0, frames:0, wins:0 };
+const OPTS_DEF = { ghost:1, sound:1, vibe:1, shake:1, swap:0, hints:1, mirror:0 };
+let SAVE = { v:1, lv:{}, run:{}, deaths:0, frames:0, wins:0 };
 let OPTS = Object.assign({}, OPTS_DEF);
+
+// El espejo es OTRO juego: las mismas salas, pero tu mano está al revés. Sus
+// récords y sus fantasmas viven aparte, con una 'm' pegada a la clave — si
+// compartieran casillero, el récord de un lado borraría el del otro y los
+// dos dejarían de significar algo.
+function modeSuf(){ return OPTS.mirror ? 'm' : ''; }
 
 function lsGet(k){ try { return localStorage.getItem(k); } catch(_){ return null; } }
 function lsSet(k,v){ try { localStorage.setItem(k,v); return true; } catch(_){ return false; } }
@@ -367,13 +438,29 @@ function loadSave(){
         noDeath: !!e.noDeath,
       };
     }
+    // Maratones: una entrada por recorrido (un mundo, o el juego entero) con
+    // el total y los parciales acumulados de la mejor vuelta. Los parciales
+    // son contra lo que se corre en vivo, así que se guardan SOLO cuando el
+    // total es récord: si no, se compararían pedazos de vueltas distintas.
+    const run = {};
+    const rsrc = (raw && typeof raw.run === 'object' && raw.run) ? raw.run : {};
+    for (const k of Object.keys(rsrc)){
+      const e = rsrc[k]; if (!e || typeof e !== 'object') continue;
+      const best = Number.isFinite(+e.best) && +e.best > 0 ? Math.floor(+e.best) : 0;
+      if (!best) continue;
+      run[k] = {
+        best,
+        splits: Array.isArray(e.splits) ? e.splits.map(v => Math.max(0, Math.floor(+v || 0))) : [],
+        deaths: Math.max(0, Math.floor(+e.deaths || 0)),
+      };
+    }
     SAVE = {
-      v:1, lv,
+      v:1, lv, run,
       deaths: Math.max(0, Math.floor(+raw.deaths || 0)),
       frames: Math.max(0, Math.floor(+raw.frames || 0)),
       wins:   Math.max(0, Math.floor(+raw.wins   || 0)),
     };
-  } catch(_){ SAVE = { v:1, lv:{}, deaths:0, frames:0, wins:0 }; }
+  } catch(_){ SAVE = { v:1, lv:{}, run:{}, deaths:0, frames:0, wins:0 }; }
   try {
     const o = JSON.parse(lsGet(LS.OPTS) || '{}');
     for (const k of Object.keys(OPTS_DEF)) OPTS[k] = (o && k in o) ? (o[k] ? 1 : 0) : OPTS_DEF[k];
@@ -381,15 +468,22 @@ function loadSave(){
 }
 function saveSave(){ lsSet(LS.SAVE, JSON.stringify(SAVE)); }
 function saveOpts(){ lsSet(LS.OPTS, JSON.stringify(OPTS)); }
-function lvRec(i){
-  const k = String(i);
+// `suf` fuerza un espacio de récords concreto ('' = el normal). Sin él se usa
+// el del modo en curso. Se pasa '' donde el récord tiene que ser el mismo
+// mires de donde mires — el desbloqueo de niveles, por ejemplo: haber
+// terminado el 7 normal ya te abre el 8, también en el espejo.
+function lvRec(i, suf){
+  const k = String(i) + (suf == null ? modeSuf() : suf);
   if (!SAVE.lv[k]) SAVE.lv[k] = { best:0, deaths:0, star:false, noDeath:false };
   return SAVE.lv[k];
 }
+function runRec(key){ return SAVE.run[key] || null; }
+function ghostKey(i){ return LS.GHOST + i + modeSuf(); }
 function wipeSave(){
-  SAVE = { v:1, lv:{}, deaths:0, frames:0, wins:0 };
+  SAVE = { v:1, lv:{}, run:{}, deaths:0, frames:0, wins:0 };
   saveSave();
-  for (let i = 0; i < LEVELS.length; i++) { try { localStorage.removeItem(LS.GHOST + i); } catch(_){} }
+  for (let i = 0; i < LEVELS.length; i++) for (const s of ['', 'm'])
+    { try { localStorage.removeItem(LS.GHOST + i + s); } catch(_){} }
 }
 
 // ===== js/audio.js =====
@@ -619,7 +713,36 @@ function markTouch(){
 // Todo lo que el mundo quiere contarle al resto del juego (sonido, polvo,
 // sacudida) lo deja en w.events; física y presentación no se mezclan.
 
+// — Espejo —
+// Da vuelta la sala en horizontal. No es contenido nuevo: es el mismo nivel
+// con las manos cambiadas, que es justo lo que el juego mide. La columna
+// ascii `c` pasa a ser `27-c` (o sea, el tile `x` pasa a ser `ROOM_W-1-x`),
+// los pinchos laterales cambian de lado, y las plataformas y sierras —que
+// van en coordenadas de tile absolutas— se reflejan a mano. Un bloque de
+// ancho `w` que empieza en `x` termina empezando en `ROOM_W - x - w`.
+const ESPEJO_CH = { '<':'>', '>':'<' };
+function espejarNivel(def){
+  const rows = (def.rows || []).map(r =>
+    r.split('').reverse().map(c => ESPEJO_CH[c] || c).join(''));
+  const movers = (def.movers || []).map(m => {
+    const w = m.w || 2, o = { x: ROOM_W - m.x - w, y: m.y, w, spd: m.spd };
+    if (m.h != null) o.h = m.h;
+    if (m.x2 != null) o.x2 = ROOM_W - m.x2 - w;
+    if (m.y2 != null) o.y2 = m.y2;
+    return o;
+  });
+  const saws = (def.saws || []).map(s => {
+    const o = { x: ROOM_W - 1 - s.x, y: s.y, spd: s.spd };
+    if (s.r != null) o.r = s.r;
+    if (s.x2 != null) o.x2 = ROOM_W - 1 - s.x2;
+    if (s.y2 != null) o.y2 = s.y2;
+    return o;
+  });
+  return Object.assign({}, def, { rows, movers, saws });
+}
+
 function parseLevel(def){
+  if (OPTS.mirror) def = espejarNivel(def);
   const rows = def.rows || [];
   const W = ROOM_W, H = ROOM_H;
   const tiles = new Uint8Array(W * H);
@@ -1110,6 +1233,11 @@ const LEVELS = [
    '                            ',
    '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
 ]},
+// La repisa es de SEIS tiles y no de cuatro por el modo espejo: con cuatro,
+// el rebote llegaba justo al borde, y la corrección de esquina —que prueba
+// primero hacia la derecha— te metía adentro yendo para allá y te tiraba
+// afuera yendo para el otro lado. El nivel normal salía y el espejado era
+// imposible. Dos tiles de margen lo arreglan de los dos lados.
 { n:'Resorte', hint:'Los resortes te disparan. Elegí bien hacia dónde vas en el aire.',
   par:[5.3, 7.7, 12.5], rows:[
    '                            ',
@@ -1117,7 +1245,7 @@ const LEVELS = [
    '         *         #####    ',
    '                            ',
    '                            ',
-   '            ####            ',
+   '           ######           ',
    '            s               ',
    '                            ',
    '                            ',
@@ -1788,7 +1916,7 @@ function drawWorld(w){
 // localStorage sin comerse el espacio.
 function ghostLoad(idx){
   try {
-    const raw = JSON.parse(lsGet(LS.GHOST + idx) || 'null');
+    const raw = JSON.parse(lsGet(ghostKey(idx)) || 'null');
     if (!raw || !Array.isArray(raw.d) || raw.d.length < 3) return null;
     return { n: Math.floor(raw.d.length/3), d: raw.d };
   } catch(_){ return null; }
@@ -1797,7 +1925,7 @@ function ghostSave(idx, rec){
   if (!rec || rec.length < 3) return;
   const cap = 60*90*3;                        // 90 s como máximo
   const d = rec.length > cap ? rec.slice(0, cap) : rec;
-  lsSet(LS.GHOST + idx, JSON.stringify({ v:1, d }));
+  lsSet(ghostKey(idx), JSON.stringify({ v:1, d }));
 }
 // Bit 0 = hacia dónde mira · bit 1 = gravedad invertida. Los fantasmas
 // viejos (solo 0/1) siguen leyéndose: bit 1 apagado = gravedad normal.
@@ -1805,16 +1933,145 @@ function ghostRecord(rec, p, gv){
   rec.push(Math.round(p.x*2), Math.round(p.y*2), (p.face > 0 ? 1 : 0) | (gv < 0 ? 2 : 0));
 }
 
+// ===== js/net.js =====
+// La tabla de récords compartida. TODO acá es opcional y no bloqueante: si no
+// hay internet, si Supabase se cae o si nunca pusiste un nombre, el juego
+// anda exactamente igual. El progreso de verdad sigue viviendo en
+// localStorage — esto es una vidriera, no el guardado.
+//
+// Sin cuentas: cada aparato genera un uuid la primera vez y firma con el
+// nombre que elijas. Un juego que corre entero en el navegador no puede
+// demostrar que un tiempo sea real, así que la tabla no pretende ser
+// antitrampa; lo único que el servidor garantiza (con la función
+// `enviar_record`) es que nadie pueda pisarle el récord a otro.
+const NET = {
+  url:'https://pibikqsitcbotxbqeymr.supabase.co',
+  key:'sb_publishable_44vkb62Bky3ZVtb0RiolyQ_hMAuABmo',
+  name:'', aparato:'', tabla:[], viendo:null, ws:null, hb:0, poll:0, estado:'',
+};
+function netOn(){ return !!(NET.url && NET.key); }
+function netInit(){
+  NET.name = (lsGet(LS.NAME) || '').slice(0, 16);
+  let ap = lsGet(LS.NAME + '_id');
+  if (!ap || ap.length < 8){
+    ap = (self.crypto && crypto.randomUUID) ? crypto.randomUUID()
+       : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+           const r = Math.random()*16|0; return (c === 'x' ? r : (r&3|8)).toString(16); });
+    lsSet(LS.NAME + '_id', ap);
+  }
+  NET.aparato = ap;
+}
+function pedirNombre(){
+  const v = prompt('¿Con qué nombre firmás tus récords?\n(1 a 16 caracteres, se ve en la tabla)',
+    NET.name || '');
+  if (v == null) return;
+  const n = String(v).replace(/\s+/g, ' ').trim().slice(0, 16);
+  if (!n){ toast('Nombre vacío: no se cambió'); return; }
+  NET.name = n; lsSet(LS.NAME, n);
+  renderOpts();
+  toast('Ahora firmás como ' + n);
+  sincronizarTodo();
+}
+async function rpc(fn, body){
+  if (!netOn() || !NET.name) return null;
+  try {
+    const r = await fetch(NET.url + '/rest/v1/rpc/' + fn, {
+      method:'POST',
+      headers:{ 'apikey':NET.key, 'Authorization':'Bearer ' + NET.key, 'Content-Type':'application/json' },
+      body: JSON.stringify(body),
+    });
+    return r.ok ? true : null;
+  } catch(_){ return null; }
+}
+// `clave`: 'n6' = nivel 7 · 'w2' = mundo 3 · 'todo' = el juego entero.
+function subirRecord(clave, frames, muertes){
+  if (!netOn() || !NET.name || !frames) return;
+  rpc('enviar_record', { p_jugador:NET.name, p_aparato:NET.aparato, p_clave:clave,
+    p_espejo:!!OPTS.mirror, p_frames:Math.floor(frames), p_muertes:Math.floor(muertes || 0) });
+}
+// Se llama al hacer un récord: manda SOLO el que cambió. El envío masivo es
+// `sincronizarTodo`, y ese corre una sola vez, cuando ponés (o cambiás) el nombre.
+function subirRecords(){
+  if (!netOn() || !NET.name) return;
+  const R = GAME.run;
+  if (R) return;                       // dentro de un maratón se sube al final
+  const r = lvRec(GAME.idx);
+  if (r.best) subirRecord('n' + GAME.idx, r.best, r.deaths);
+}
+async function sincronizarTodo(){
+  if (!netOn() || !NET.name) return;
+  const pend = [];
+  for (const esp of ['', 'm']){
+    for (let i = 0; i < LEVELS.length; i++){
+      const r = SAVE.lv[String(i) + esp];
+      if (r && r.best) pend.push({ clave:'n' + i, esp, frames:r.best, muertes:r.deaths });
+    }
+    for (const d of runDefs()){
+      const r = SAVE.run[d.k + esp];
+      if (r && r.best) pend.push({ clave:d.k, esp, frames:r.best, muertes:r.deaths });
+    }
+  }
+  for (const p of pend){
+    await rpc('enviar_record', { p_jugador:NET.name, p_aparato:NET.aparato, p_clave:p.clave,
+      p_espejo:p.esp === 'm', p_frames:p.frames, p_muertes:p.muertes });
+  }
+  if (pend.length) toast(pend.length + ' récords subidos');
+}
+async function traerTabla(clave, espejo){
+  if (!netOn()) return null;
+  const q = '/rest/v1/records?select=jugador,frames,muertes,creado' +
+    '&clave=eq.' + encodeURIComponent(clave) + '&espejo=is.' + (espejo ? 'true' : 'false') +
+    '&order=frames.asc&limit=25';
+  try {
+    const r = await fetch(NET.url + q, { headers:{ 'apikey':NET.key, 'Authorization':'Bearer ' + NET.key } });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch(_){ return null; }
+}
+// — En vivo —
+// Realtime de Supabase hablado a mano (no hay build, así que no hay librería).
+// Si el socket no levanta, se cae a recargar cada 6 s: para el jugador es lo
+// mismo, y no queda una pantalla mintiendo que está al día.
+function netEscuchar(){
+  netCallar();
+  NET.poll = setInterval(() => { if (NET.viendo) refrescarTabla(true); }, 6000);
+  if (!netOn() || !self.WebSocket) return;
+  try {
+    const ws = new WebSocket(NET.url.replace(/^http/, 'ws') +
+      '/realtime/v1/websocket?apikey=' + encodeURIComponent(NET.key) + '&vsn=1.0.0');
+    NET.ws = ws;
+    ws.onopen = () => {
+      ws.send(JSON.stringify({ topic:'realtime:filo', event:'phx_join', ref:'1',
+        payload:{ config:{ postgres_changes:[{ event:'*', schema:'public', table:'records' }] } } }));
+      NET.hb = setInterval(() => {
+        try { ws.send(JSON.stringify({ topic:'phoenix', event:'heartbeat', payload:{}, ref:'hb' })); }
+        catch(_){}
+      }, 25000);
+    };
+    ws.onmessage = ev => {
+      let m; try { m = JSON.parse(ev.data); } catch(_){ return; }
+      if (m && m.event === 'postgres_changes' && NET.viendo) refrescarTabla(true);
+    };
+    ws.onerror = () => {};
+    ws.onclose = () => { clearInterval(NET.hb); if (NET.ws === ws) NET.ws = null; };
+  } catch(_){}
+}
+function netCallar(){
+  clearInterval(NET.poll); clearInterval(NET.hb);
+  if (NET.ws){ try { NET.ws.close(); } catch(_){} NET.ws = null; }
+}
+
 // ===== js/game.js =====
 let optsFrom = 'menu';
 const GAME = { mode:'menu', w:null, idx:0, ghost:null, rec:[], acc:0, last:0, hintT:0,
-  deaths:0, wonAt:0, lastResult:null };
+  deaths:0, wonAt:0, lastResult:null, run:null, lastRun:null };
 
 function startLevel(i, keepDeaths){
   // Momento de desbloqueo: la primera vez que entrás a un mundo nuevo, el
   // juego se detiene un segundo a decirte qué aprendiste. Es la mitad de la
   // sensación de progreso; la otra mitad es que el nivel lo pida enseguida.
-  const ab = ABIL.find(a => a.at === i);
+  // En un maratón no: ahí el reloj corre y frenar sería robarte tiempo.
+  const ab = GAME.run ? null : ABIL.find(a => a.at === i);
   if (ab && !lvRec(i).best && !GAME._abShown){
     GAME._abShown = i;
     $('abTag').textContent = ab.tag || 'NUEVA HABILIDAD';
@@ -1858,9 +2115,65 @@ function togglePause(){
 }
 function quitToMenu(){
   saveSave();
+  GAME.run = null;
   GAME.mode = 'menu'; GAME.w = null;
   document.getElementById('hud').classList.add('hidden');
   showScreen('levels'); renderLevels();
+}
+
+// ── Maratón ────────────────────────────────────────────────────────────
+// Un mundo entero (o el juego completo) de un tirón, con un cronómetro solo.
+// Es la idea del encadenado subida de escala: dominar un nivel suelto y
+// aguantar cinco seguidos sin que se te caiga la mano son dos cosas
+// distintas, y la segunda es la que se siente como haber mejorado.
+//
+// Diferencia importante con el cronómetro de nivel: el del maratón NO se
+// reinicia cuando morís. Sigue sin haber vidas, ni esperas, ni cortes —
+// reintentar es igual de instantáneo—, pero en un recorrido lo único que se
+// mide es cuánto tardaste en llegar al final, y morir tarda.
+function runDefs(){
+  const l = WORLDS.filter(w => w.a < LEVELS.length)
+    .map((w, i) => ({ k:'w' + i, n:w.n, a:w.a, b:Math.min(w.b, LEVELS.length) }));
+  if (l.length > 1) l.push({ k:'todo', n:'EL JUEGO ENTERO', a:0, b:LEVELS.length });
+  return l;
+}
+function startRun(def){
+  GAME.run = { k:def.k + modeSuf(), n:def.n, a:def.a, b:def.b, def,
+    frames:0, on:false, splits:[], deaths:0, best:runRec(def.k + modeSuf()), flash:null, pb:[] };
+  startLevel(def.a);
+}
+// Cierra el nivel que se acaba de terminar y devuelve la diferencia contra el
+// parcial de tu mejor maratón (en frames), o null si todavía no hay con qué
+// comparar. Los parciales son ACUMULADOS: comparar el tramo suelto premiaría
+// un nivel bueno dentro de una vuelta mala.
+function runSplit(){
+  const R = GAME.run, k = R.splits.length;
+  R.splits.push(R.frames);
+  const ref = R.best && R.best.splits.length > k ? R.best.splits[k] : 0;
+  return ref ? (R.frames - ref) : null;
+}
+function runAdvance(){
+  const R = GAME.run, next = GAME.idx + 1;
+  if (next >= R.b){ finishRun(); return; }
+  const d = R.flash; R.flash = null;
+  startLevel(next);
+  splitFlash(R.splits[R.splits.length - 1], d);
+}
+function finishRun(){
+  const R = GAME.run;
+  const prev = R.best ? R.best.best : 0;
+  const record = !prev || R.frames < prev;
+  if (record) SAVE.run[R.k] = { best:R.frames, splits:R.splits.slice(), deaths:R.deaths };
+  saveSave();
+  GAME.lastRun = { def:R.def, n:R.n, frames:R.frames, prev, record,
+    deaths:R.deaths, splits:R.splits.slice(), mejor:(SAVE.run[R.k] || null) };
+  GAME.run = null;
+  GAME.mode = 'menu'; GAME.w = null;
+  document.getElementById('hud').classList.add('hidden');
+  if (record) { SFX.star(); FX.flash = .6; subirRecord(R.def.k, R.frames, R.deaths); }
+  // Y recién ahora los récords de nivel que hayas hecho durante el recorrido.
+  for (const i of R.pb){ const r = lvRec(i); if (r.best) subirRecord('n' + i, r.best, r.deaths); }
+  showRunEnd();
 }
 
 function handleEvents(w){
@@ -1891,6 +2204,7 @@ function handleEvents(w){
 // cerrás el juego sin terminarlo.
 function contarMuerte(){
   GAME.deaths++; SAVE.deaths++;
+  if (GAME.run) GAME.run.deaths++;
   lvRec(GAME.idx).deaths++;
   saveSave();
 }
@@ -1908,7 +2222,14 @@ function onWin(){
   SAVE.frames += frames; SAVE.wins++;
   saveSave();
   if (record) ghostSave(i, GAME.rec);
+  // En un maratón el récord de nivel se anota igual, pero el envío queda
+  // para el final: mientras el reloj corre no se toca la red.
+  if (record){ if (GAME.run) GAME.run.pb.push(i); else subirRecords(); }
   GAME.lastResult = { i, frames, prev, record, star, deaths:GAME.deaths, medal:medalOf(i, frames) };
+  // En un maratón la vuelta cuenta igual para el récord del nivel (arriba),
+  // pero no hay pantalla de resultado: el parcial se cierra acá y el nivel
+  // siguiente arranca solo desde el bucle.
+  if (GAME.run) GAME.run.flash = runSplit();
   GAME.mode = 'win'; GAME.wonAt = performance.now();
   SFX.goal(); FX.flash = .7; FX.shake = 6;
   fxBurst(w.L.goal.x + TS/2, w.L.goal.y + TS/2, 30, COL.goal, 200, 120);
@@ -1940,7 +2261,13 @@ function hudUpdate(){
   elT.style.opacity = w.started ? '1' : '.45';
   document.getElementById('hudBest').innerHTML = r.best
     ? 'récord <span class="rec">' + fmtT(r.best) + '</span>' : 'sin récord';
-  document.getElementById('hudDeaths').textContent = '☠ ' + GAME.deaths;
+  document.getElementById('hudDeaths').textContent = '☠ ' + (GAME.run ? GAME.run.deaths : GAME.deaths);
+  const hr = document.getElementById('hudRun');
+  if (GAME.run){
+    const R = GAME.run, k = GAME.idx - R.a + 1;
+    hr.innerHTML = esc(R.n) + ' · ' + k + '/' + (R.b - R.a) +
+      ' · <span class="rec">' + fmtT(R.frames) + '</span>';
+  } else hr.textContent = '';
   const g = document.getElementById('goals');
   if (g.dataset.lv !== String(GAME.idx)){
     g.dataset.lv = String(GAME.idx);
@@ -1966,6 +2293,12 @@ function frame(now){
       GAME.acc -= DT; n++;
       const w = GAME.w, inp = pollInput();
       stepWorld(w, inp);
+      // El reloj del maratón arranca con tu primer movimiento y ya no para:
+      // ni al morir (por eso `on` no se apaga nunca), ni al reintentar.
+      if (GAME.run){
+        if (w.started) GAME.run.on = true;
+        if (GAME.run.on) GAME.run.frames++;
+      }
       if (w.started && !w.p.dead) ghostRecord(GAME.rec, w.p, w.grav);
       handleEvents(w);
       if (GAME.mode !== 'play') break;
@@ -1974,7 +2307,9 @@ function frame(now){
     hudUpdate();
   } else if (GAME.w && GAME.mode === 'win'){
     GAME.w.p.win++;
-    if (performance.now() - GAME.wonAt > 420 && !document.getElementById('scr-win').dataset.on) showWin();
+    const t = performance.now() - GAME.wonAt;
+    if (GAME.run){ if (t > 420) runAdvance(); }
+    else if (t > 420 && !document.getElementById('scr-win').dataset.on) showWin();
   } else {
     pollInput();
   }
@@ -1988,9 +2323,12 @@ function drawMenuBG(){
   ctx.setTransform(1, 0, 0, 1, 0, 0);
 }
 // ===== js/ui.js =====
-const SCREENS = ['menu','levels','win','pause','opts','stats','abil'];
+const SCREENS = ['menu','levels','win','pause','opts','stats','abil','runs','runend','tabla'];
 function $(id){ return document.getElementById(id); }
 function showScreen(name){
+  // Salir de la tabla corta el socket y el refresco: no tiene sentido
+  // mantenerlos abiertos mientras jugás.
+  if (name !== 'tabla' && NET.viendo){ NET.viendo = null; netCallar(); }
   const box = $('screens');
   for (const s of SCREENS){
     const el = $('scr-' + s);
@@ -2005,10 +2343,25 @@ function toast(msg){
   const t = $('toast'); t.textContent = msg; t.classList.add('on');
   clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 1600);
 }
+// El cartel de parcial: el tiempo acumulado y, si hay con qué comparar, cuánto
+// vas adelante o atrás de tu mejor maratón. Verde adelante, rojo atrás.
+function splitFlash(acum, delta){
+  const el = $('split');
+  const cls = delta == null ? 'neu' : (delta < 0 ? 'good' : 'bad');
+  $('splitD').textContent = delta == null ? fmtT(acum)
+    : (delta < 0 ? '−' : '+') + (Math.abs(delta)/60).toFixed(2) + ' s';
+  $('splitL').textContent = delta == null ? 'PARCIAL' : fmtT(acum) + ' · TU MEJOR MARATÓN';
+  el.className = 'split ' + cls + ' on';
+  clearTimeout(splitFlash._t);
+  splitFlash._t = setTimeout(() => { el.className = 'split ' + cls; }, 1200);
+}
 const MERCY = 40;   // muertes en un nivel tras las cuales el siguiente se abre igual
 function unlocked(i){
   if (i === 0) return true;
-  const r = lvRec(i-1);
+  // Siempre contra el progreso del juego normal: haber terminado el 7 te abre
+  // el 8 también en el espejo. Si no, el espejo empezaría de cero y sería un
+  // castigo, no un modo.
+  const r = lvRec(i-1, '');
   // Trabarse no puede ser el final del juego: si un nivel te comió 40
   // intentos, el siguiente se abre solo. El récord te sigue esperando.
   return !!r.best || r.deaths >= MERCY;
@@ -2020,6 +2373,11 @@ function nextLevel(){
 }
 function uiEnter(){
   if (!$('scr-abil').classList.contains('hidden')){ GAME._abShown = -1; startLevel(GAME.idx); return; }
+  if (GAME.run) return;                       // en maratón el nivel siguiente entra solo
+  if (!$('scr-runend').classList.contains('hidden')){
+    const R = GAME.lastRun; if (R && R.def) startRun(R.def);
+    return;
+  }
   if (GAME.mode === 'win') nextLevel();
   else if (GAME.mode === 'pause') togglePause();
   else if (!$('scr-menu').classList.contains('hidden')) playFromMenu();
@@ -2048,12 +2406,16 @@ function renderLevels(){
       if (!open) cls.push('lock');
       if (r.best) cls.push('done');
       if (m === 3) cls.push('gold');
+      // "Te falta X para el oro": convierte la medalla de un ícono en un
+      // objetivo. Sin esto el oro es un número que solo ves cuando ya perdiste.
+      const falta = (r.best && m < 3) ? (r.best/60 - LEVELS[i].par[0]) : 0;
       h += '<button class="' + cls.join(' ') + '" data-lv="' + i + '"' + (open ? '' : ' disabled') + '>' +
         '<span class="m">' + (m ? MEDAL_ICON[m] : '') + '</span>' +
         (r.star ? '<span class="st">★</span>' : '') +
         '<span class="n">' + (open ? (i+1) : '🔒') + '</span>' +
-        '<span class="t">' + (open ? LEVELS[i].n : '') + '</span>' +
+        '<span class="t">' + (open ? esc(LEVELS[i].n) : '') + '</span>' +
         '<span class="t">' + (r.best ? fmtT(r.best) : '') + '</span>' +
+        (falta > 0 ? '<span class="t" style="color:var(--gold)">🥇 −' + falta.toFixed(2) + 's</span>' : '') +
         '</button>';
     }
     h += '</div></div>';
@@ -2089,6 +2451,91 @@ function showWin(){
   $('winNext').textContent = (R.i + 1 < LEVELS.length) ? 'SIGUIENTE →' : 'VOLVER AL MENÚ';
   showScreen('win');
 }
+function renderRuns(){
+  const defs = runDefs();
+  $('runsHint').innerHTML = 'Un recorrido entero de un tirón, con un cronómetro solo. ' +
+    'Los niveles se encadenan sin apretar nada.<br>' +
+    'Acá el reloj <b>no se reinicia al morir</b>: reintentar sigue siendo instantáneo, pero cuesta tiempo.' +
+    (OPTS.mirror ? '<br><b>Estás en modo espejo:</b> estos récords son los del espejo.' : '');
+  $('runList').innerHTML = defs.map(d => {
+    const rec = runRec(d.k + modeSuf()), open = unlocked(d.a);
+    const n = Math.min(d.b, LEVELS.length) - d.a;
+    return '<button class="runrow" data-run="' + esc(d.k) + '"' + (open ? '' : ' disabled') + '>' +
+      '<span class="rn">' + esc(d.n) + '<div class="rs">' + n + ' nivel' + (n === 1 ? '' : 'es') +
+      (rec ? ' · ☠ ' + rec.deaths : '') + '</div></span>' +
+      '<span class="rt">' + (rec ? fmtT(rec.best) : (open ? 'sin récord' : '🔒')) + '</span>' +
+      '</button>';
+  }).join('');
+  $('runList').querySelectorAll('.runrow').forEach(el => el.addEventListener('click', () => {
+    const d = defs.find(x => x.k === el.dataset.run);
+    if (!d || !unlocked(d.a)) return;
+    SFX.ui(); startRun(d);
+  }));
+}
+function showRunEnd(){
+  const R = GAME.lastRun; if (!R) return;
+  $('reName').textContent = R.n + (OPTS.mirror ? ' · ESPEJO' : '');
+  $('reTime').textContent = fmtT(R.frames);
+  const d = $('reDelta');
+  if (R.record && R.prev){
+    d.className = 'delta good';
+    d.textContent = '¡RÉCORD DEL RECORRIDO!  −' + ((R.prev - R.frames)/60).toFixed(2) + ' s';
+  } else if (R.record){
+    d.className = 'delta good'; d.textContent = '¡PRIMER RÉCORD DEL RECORRIDO!';
+  } else {
+    d.className = 'delta bad';
+    d.textContent = 'récord ' + fmtT(R.prev) + '  (+' + ((R.frames - R.prev)/60).toFixed(2) + ' s)';
+  }
+  $('reInfo').innerHTML = '<span>' + R.splits.length + ' niveles</span><span>☠ ' + R.deaths + '</span>' +
+    (NET.name ? '<span>' + esc(NET.name) + '</span>' : '');
+  // Los parciales de la vuelta que acabás de hacer, contra los de tu mejor
+  // maratón. Es donde se ve en qué nivel se te fue la vuelta.
+  const ref = R.mejor && R.mejor.splits.length === R.splits.length && !R.record ? R.mejor.splits : null;
+  $('reSplits').innerHTML = R.splits.map((s, k) => {
+    const i = k + (R.def ? R.def.a : 0);
+    const dd = ref ? s - ref[k] : null;
+    return '<div><span>' + (i+1) + '. ' + esc(LEVELS[i] ? LEVELS[i].n : '') + '</span>' +
+      '<b>' + fmtT(s) + (dd == null ? '' :
+        ' <span style="color:' + (dd < 0 ? 'var(--ok)' : 'var(--dim)') + '">' +
+        (dd < 0 ? '−' : '+') + (Math.abs(dd)/60).toFixed(2) + '</span>') + '</b></div>';
+  }).join('');
+  showScreen('runend');
+}
+// — Tabla de récords compartida —
+function abrirTabla(clave){
+  const defs = runDefs();
+  NET.viendo = clave || (NET.viendo || defs[defs.length-1].k);
+  $('tbChips').innerHTML = defs.map(d =>
+    '<button class="chip' + (d.k === NET.viendo ? ' on' : '') + '" data-k="' + esc(d.k) + '">' +
+    esc(d.n.replace('MUNDO ', 'M')) + '</button>').join('');
+  $('tbChips').querySelectorAll('.chip').forEach(el => el.addEventListener('click', () => {
+    SFX.ui(); abrirTabla(el.dataset.k);
+  }));
+  showScreen('tabla');
+  refrescarTabla();
+  netEscuchar();
+}
+async function refrescarTabla(silencioso){
+  const clave = NET.viendo; if (!clave) return;
+  if (!silencioso) $('tbList').innerHTML = '<div class="tbrow"><span class="who">cargando…</span></div>';
+  const filas = await traerTabla(clave, !!OPTS.mirror);
+  if (NET.viendo !== clave) return;              // cambiaste de pestaña mientras cargaba
+  if (!filas){
+    if (!silencioso) $('tbList').innerHTML =
+      '<div class="tbrow"><span class="who">sin conexión — la tabla se ve cuando vuelvas a tener internet</span></div>';
+    return;
+  }
+  $('tbList').innerHTML = filas.length ? filas.map((f, k) =>
+    '<div class="tbrow' + (f.jugador === NET.name ? ' yo' : '') + '">' +
+      '<span class="pos">' + (k+1) + '</span>' +
+      '<span class="who">' + esc(f.jugador) + '</span>' +
+      '<span class="tm">' + fmtT(f.frames) + '</span></div>').join('')
+    : '<div class="tbrow"><span class="who">todavía no hay nadie acá. Poné el primero.</span></div>';
+  $('tbHint').innerHTML = (NET.name
+    ? 'Firmás como <b>' + esc(NET.name) + '</b>. Se actualiza sola.'
+    : 'Todavía no tenés nombre: ponelo en <b>Opciones</b> y tus récords aparecen acá.') +
+    (OPTS.mirror ? '<br>Estás viendo la tabla del <b>espejo</b>.' : '');
+}
 function renderStats(){
   let medals = 0, gold = 0, stars = 0, done = 0, best = 0;
   for (let i = 0; i < LEVELS.length; i++){
@@ -2118,6 +2565,8 @@ function renderOpts(){
   $('oShake').textContent = on(OPTS.shake);
   $('oHints').textContent = on(OPTS.hints);
   $('oSwap').textContent  = OPTS.swap ? 'ZURDO' : 'DIESTRO';
+  $('oMirror').textContent = OPTS.mirror ? 'SÍ' : 'NO';
+  $('oName').textContent = NET.name || 'PONER';
   document.body.classList.toggle('swap', !!OPTS.swap);
 }
 function bindUI(){
@@ -2125,6 +2574,13 @@ function bindUI(){
   go('abGo',   () => { GAME._abShown = -1; startLevel(GAME.idx); });
   go('mPlay',  playFromMenu);
   go('mLevels',() => { renderLevels(); showScreen('levels'); });
+  go('mRuns',  () => { renderRuns(); showScreen('runs'); });
+  go('runsBack', () => showScreen('menu'));
+  go('reAgain', () => { const R = GAME.lastRun; if (R && R.def) startRun(R.def); });
+  go('reTabla', () => abrirTabla(GAME.lastRun && GAME.lastRun.def ? GAME.lastRun.def.k : null));
+  go('reMenu',  () => { renderRuns(); showScreen('runs'); });
+  go('mTabla',  () => abrirTabla(null));
+  go('tbBack',  () => showScreen('menu'));
   go('mStats', () => { renderStats(); showScreen('stats'); });
   go('mOpts',  () => { renderOpts(); showScreen('opts'); optsFrom = 'menu'; });
   go('lvBack', () => showScreen('menu'));
@@ -2145,6 +2601,14 @@ function bindUI(){
   tog('oGhost','ghost', () => { if (GAME.w) GAME.ghost = OPTS.ghost ? ghostLoad(GAME.idx) : null; });
   tog('oSound','sound'); tog('oVibe','vibe'); tog('oShake','shake'); tog('oHints','hints');
   tog('oSwap','swap');
+  // El espejo cambia las salas, así que no se puede prender a mitad de una
+  // vuelta: se corta el maratón y el nivel arranca de nuevo, ya espejado.
+  tog('oMirror','mirror', () => {
+    GAME.run = null;
+    if (GAME.w) startLevel(GAME.idx);
+    toast(OPTS.mirror ? 'Espejo prendido: récords aparte' : 'Espejo apagado');
+  });
+  $('oName').addEventListener('click', () => { SFX.ui(); pedirNombre(); });
   $('oReset').addEventListener('click', () => {
     if (!confirm('¿Borrar récords, medallas y fantasmas? No se puede deshacer.')) return;
     wipeSave(); renderOpts(); toast('Progreso borrado'); showScreen('menu');
@@ -2162,6 +2626,7 @@ function bindUI(){
 // ===== js/core.js =====
 function boot(){
   loadSave();
+  netInit();
   bindUI();
   bindTouch();
   renderOpts();
