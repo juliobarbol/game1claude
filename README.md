@@ -44,8 +44,15 @@ una **estrella** escondida en cada sala, para el que quiera más.
 
 **Maratón.** Un mundo entero —o el juego completo— de un tirón, con un
 cronómetro solo y sin apretar nada entre nivel y nivel. Al pasar cada uno te
-dice cuánto vas adelante o atrás de tu mejor maratón. Acá el reloj **no se
-reinicia al morir**: reintentar sigue siendo instantáneo, pero cuesta tiempo.
+dice cuánto vas adelante o atrás de tu mejor maratón. En los dos modos el
+reloj **no se reinicia al morir**: reintentar sigue siendo instantáneo, pero
+cuesta tiempo. Y hay dos relojes:
+
+- **Normal:** suma el tiempo que estuviste jugando. Arranca con tu primer
+  movimiento y la pausa lo frena, así que mirar cada sala sale gratis.
+- **Extremo:** cronómetro de pared. Arranca cuando aparece la primera sala y
+  para cuando tocás la última bandera. Cuenta todo —leer el nivel, el
+  respiro entre uno y otro, la pausa—. No hay nada gratis.
 
 **Espejo.** Las mismas salas dadas vuelta. No es contenido nuevo: es el mismo
 nivel con las manos cambiadas, que es justo lo que el juego mide. Tiene sus

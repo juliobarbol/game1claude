@@ -185,6 +185,57 @@ const check = (name, pass, extra) => {
     alMorir.run === 900 && alMorir.nivel === 0 && alMorir.muertes === 1,
     `maratón ${alMorir.run} · nivel ${alMorir.nivel} · ☠ ${alMorir.muertes}`);
 
+  // ── Maratón EXTREMO ──
+  // El reloj de pared cuenta lo que el normal no cuenta: el rato que te
+  // tomás para leer la sala antes de moverte, el respiro entre nivel y
+  // nivel, y la pausa. Y para EXACTO en la última bandera.
+  const extremo = await page.evaluate(async () => {
+    try { localStorage.clear(); } catch(_){}
+    loadSave();
+    OPTS.extremo = 1;
+    const def = runDefs()[0];
+    startRun(def);
+    const arrancoSolo = GAME.run.t0 > 0 && GAME.run.extremo === true;
+    // Sin tocar una tecla, el reloj tiene que correr igual.
+    await new Promise(r => setTimeout(r, 250));
+    runTick(GAME.run);
+    const quieto = GAME.run.frames;
+    // Terminar todos los niveles menos el último.
+    const N = def.b - def.a;
+    for (let k = 0; k < N - 1; k++){ onWin(); runAdvance(); }
+    onWin();                                   // última bandera
+    const congelado = GAME.run ? GAME.run.frames : 0;
+    await new Promise(r => setTimeout(r, 200));
+    runTick(GAME.run);
+    const despues = GAME.run ? GAME.run.frames : congelado;
+    if (GAME.run) runAdvance();
+    const clave = Object.keys(SAVE.run)[0];
+    OPTS.extremo = 0;
+    return { arrancoSolo, quieto, congelado, despues, clave, guardado:SAVE.run[clave] };
+  });
+  check('el extremo arranca al aparecer la sala, sin esperar tu movimiento',
+    extremo.arrancoSolo && extremo.quieto > 0, `${extremo.quieto} frames quieto`);
+  check('el extremo para en la última bandera y no sigue corriendo',
+    extremo.congelado === extremo.despues,
+    `${extremo.congelado} → ${extremo.despues}`);
+  check('el récord extremo va a su propio casillero', extremo.clave === 'w0x',
+    extremo.clave);
+
+  // Normal y extremo no se pisan entre sí.
+  const casillerosRun = await page.evaluate(() => {
+    try { localStorage.clear(); } catch(_){}
+    loadSave();
+    OPTS.extremo = 0; OPTS.mirror = 0;
+    const a = runKey('w0');
+    OPTS.extremo = 1;         const b = runKey('w0');
+    OPTS.mirror = 1;          const c = runKey('w0');
+    OPTS.extremo = 0;         const d = runKey('w0');
+    OPTS.mirror = 0;
+    return [a, b, c, d];
+  });
+  check('los cuatro casilleros de recorrido son distintos',
+    new Set(casillerosRun).size === 4, casillerosRun.join(' '));
+
   // ── La tabla sin internet ──
   const tabla = await page.evaluate(async () => {
     abrirTabla(null);

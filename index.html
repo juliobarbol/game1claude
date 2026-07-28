@@ -258,6 +258,7 @@ kbd{background:#ffffff14; border:1px solid var(--line); border-radius:5px; paddi
 
   <section class="screen hidden" id="scr-runs">
     <h2>MARATÓN</h2>
+    <div class="chips" id="runModo"></div>
     <div class="hintline" id="runsHint"></div>
     <div class="runlist" id="runList"></div>
     <button class="btn ghost" id="runsBack" style="width:min(320px,86vw)">VOLVER</button>
@@ -411,7 +412,7 @@ const LS = {
 // Progreso y opciones en localStorage. Nada de backend: el récord es tuyo
 // y vive en el aparato. Todo lo que entra se valida (un JSON tocado a mano
 // no puede romper el juego).
-const OPTS_DEF = { ghost:1, sound:1, vibe:1, shake:1, swap:0, hints:1, mirror:0 };
+const OPTS_DEF = { ghost:1, sound:1, vibe:1, shake:1, swap:0, hints:1, mirror:0, extremo:0 };
 let SAVE = { v:1, lv:{}, run:{}, deaths:0, frames:0, wins:0 };
 let OPTS = Object.assign({}, OPTS_DEF);
 
@@ -420,6 +421,10 @@ let OPTS = Object.assign({}, OPTS_DEF);
 // compartieran casillero, el récord de un lado borraría el del otro y los
 // dos dejarían de significar algo.
 function modeSuf(){ return OPTS.mirror ? 'm' : ''; }
+// El extremo NO entra en `modeSuf`: cambia cómo se mide un RECORRIDO, no las
+// salas, así que los récords de nivel y los fantasmas son los mismos.
+function runKey(k){ return k + modeSuf() + (OPTS.extremo ? 'x' : ''); }
+function claveNet(k){ return k + (OPTS.extremo ? 'x' : ''); }
 
 function lsGet(k){ try { return localStorage.getItem(k); } catch(_){ return null; } }
 function lsSet(k,v){ try { localStorage.setItem(k,v); return true; } catch(_){ return false; } }
@@ -2006,9 +2011,10 @@ async function sincronizarTodo(){
       const r = SAVE.lv[String(i) + esp];
       if (r && r.best) pend.push({ clave:'n' + i, esp, frames:r.best, muertes:r.deaths });
     }
-    for (const d of runDefs()){
-      const r = SAVE.run[d.k + esp];
-      if (r && r.best) pend.push({ clave:d.k, esp, frames:r.best, muertes:r.deaths });
+    // Los cuatro casilleros de recorrido: normal/espejo × normal/extremo.
+    for (const d of runDefs()) for (const ext of ['', 'x']){
+      const r = SAVE.run[d.k + esp + ext];
+      if (r && r.best) pend.push({ clave:d.k + ext, esp, frames:r.best, muertes:r.deaths });
     }
   }
   for (const p of pend){
@@ -2137,10 +2143,29 @@ function runDefs(){
   if (l.length > 1) l.push({ k:'todo', n:'EL JUEGO ENTERO', a:0, b:LEVELS.length });
   return l;
 }
+// Dos relojes distintos, y la diferencia es toda la gracia del extremo:
+//
+//   NORMAL  — suma el tiempo que estuviste JUGANDO. Arranca con tu primer
+//             movimiento (igual que el de nivel), no corre entre nivel y
+//             nivel, y la pausa lo frena. Podés mirar cada sala gratis.
+//   EXTREMO — es un cronómetro de pared: arranca cuando aparece la primera
+//             sala y para cuando tocás la última bandera. Cuenta todo: lo
+//             que tardás en leer el nivel, el respiro entre uno y otro, y
+//             la pausa. No hay nada gratis.
 function startRun(def){
-  GAME.run = { k:def.k + modeSuf(), n:def.n, a:def.a, b:def.b, def,
-    frames:0, on:false, splits:[], deaths:0, best:runRec(def.k + modeSuf()), flash:null, pb:[] };
+  const ext = !!OPTS.extremo;
+  GAME.run = { k:runKey(def.k), n:def.n, a:def.a, b:def.b, def, extremo:ext,
+    frames:0, on:false, splits:[], deaths:0, best:runRec(runKey(def.k)),
+    flash:null, pb:[], t0:0, fin:0 };
   startLevel(def.a);
+  if (ext) GAME.run.t0 = performance.now();     // desde que la sala está en pantalla
+}
+// El extremo no cuenta pasos de física: mide tiempo real. Se congela con
+// `fin`, que se pone al tocar la última bandera (y no cuando termina la
+// animación, que sería regalarte medio segundo).
+function runTick(R){
+  if (!R || !R.extremo || !R.t0) return;
+  R.frames = Math.round(((R.fin || performance.now()) - R.t0) / 1000 * 60);
 }
 // Cierra el nivel que se acaba de terminar y devuelve la diferencia contra el
 // parcial de tu mejor maratón (en frames), o null si todavía no hay con qué
@@ -2165,12 +2190,12 @@ function finishRun(){
   const record = !prev || R.frames < prev;
   if (record) SAVE.run[R.k] = { best:R.frames, splits:R.splits.slice(), deaths:R.deaths };
   saveSave();
-  GAME.lastRun = { def:R.def, n:R.n, frames:R.frames, prev, record,
+  GAME.lastRun = { def:R.def, n:R.n, frames:R.frames, prev, record, extremo:R.extremo,
     deaths:R.deaths, splits:R.splits.slice(), mejor:(SAVE.run[R.k] || null) };
   GAME.run = null;
   GAME.mode = 'menu'; GAME.w = null;
   document.getElementById('hud').classList.add('hidden');
-  if (record) { SFX.star(); FX.flash = .6; subirRecord(R.def.k, R.frames, R.deaths); }
+  if (record) { SFX.star(); FX.flash = .6; subirRecord(claveNet(R.def.k), R.frames, R.deaths); }
   // Y recién ahora los récords de nivel que hayas hecho durante el recorrido.
   for (const i of R.pb){ const r = lvRec(i); if (r.best) subirRecord('n' + i, r.best, r.deaths); }
   showRunEnd();
@@ -2229,7 +2254,12 @@ function onWin(){
   // En un maratón la vuelta cuenta igual para el récord del nivel (arriba),
   // pero no hay pantalla de resultado: el parcial se cierra acá y el nivel
   // siguiente arranca solo desde el bucle.
-  if (GAME.run) GAME.run.flash = runSplit();
+  if (GAME.run){
+    // En extremo el reloj se para EXACTO en la bandera del último nivel.
+    if (GAME.run.extremo && i + 1 >= GAME.run.b) GAME.run.fin = performance.now();
+    runTick(GAME.run);
+    GAME.run.flash = runSplit();
+  }
   GAME.mode = 'win'; GAME.wonAt = performance.now();
   SFX.goal(); FX.flash = .7; FX.shake = 6;
   fxBurst(w.L.goal.x + TS/2, w.L.goal.y + TS/2, 30, COL.goal, 200, 120);
@@ -2265,7 +2295,7 @@ function hudUpdate(){
   const hr = document.getElementById('hudRun');
   if (GAME.run){
     const R = GAME.run, k = GAME.idx - R.a + 1;
-    hr.innerHTML = esc(R.n) + ' · ' + k + '/' + (R.b - R.a) +
+    hr.innerHTML = esc(R.n) + (R.extremo ? ' · EXTREMO' : '') + ' · ' + k + '/' + (R.b - R.a) +
       ' · <span class="rec">' + fmtT(R.frames) + '</span>';
   } else hr.textContent = '';
   const g = document.getElementById('goals');
@@ -2286,6 +2316,8 @@ function frame(now){
   requestAnimationFrame(frame);
   const dt = Math.min(.25, (now - GAME.last)/1000);
   GAME.last = now;
+  runTick(GAME.run);            // el extremo corre siempre: jugando, en el
+                                // respiro entre niveles y en pausa
   if (GAME.mode === 'play' && GAME.w){
     GAME.acc += dt;
     let n = 0;
@@ -2295,7 +2327,7 @@ function frame(now){
       stepWorld(w, inp);
       // El reloj del maratón arranca con tu primer movimiento y ya no para:
       // ni al morir (por eso `on` no se apaga nunca), ni al reintentar.
-      if (GAME.run){
+      if (GAME.run && !GAME.run.extremo){
         if (w.started) GAME.run.on = true;
         if (GAME.run.on) GAME.run.frames++;
       }
@@ -2453,12 +2485,24 @@ function showWin(){
 }
 function renderRuns(){
   const defs = runDefs();
+  $('runModo').innerHTML =
+    '<button class="chip' + (OPTS.extremo ? '' : ' on') + '" data-x="0">NORMAL</button>' +
+    '<button class="chip' + (OPTS.extremo ? ' on' : '') + '" data-x="1">EXTREMO</button>';
+  $('runModo').querySelectorAll('.chip').forEach(el => el.addEventListener('click', () => {
+    OPTS.extremo = +el.dataset.x ? 1 : 0; saveOpts(); SFX.ui(); renderRuns();
+  }));
   $('runsHint').innerHTML = 'Un recorrido entero de un tirón, con un cronómetro solo. ' +
-    'Los niveles se encadenan sin apretar nada.<br>' +
-    'Acá el reloj <b>no se reinicia al morir</b>: reintentar sigue siendo instantáneo, pero cuesta tiempo.' +
+    'Los niveles se encadenan sin apretar nada. En los dos modos el reloj ' +
+    '<b>no se reinicia al morir</b>: reintentar sigue siendo instantáneo, pero cuesta tiempo.<br>' +
+    (OPTS.extremo
+      ? '<b>EXTREMO:</b> cronómetro de pared. Arranca cuando aparece la primera sala y para ' +
+        'cuando tocás la última bandera. Cuenta <b>todo</b>: leer el nivel, el respiro entre uno ' +
+        'y otro, y la pausa. No hay nada gratis.'
+      : '<b>NORMAL:</b> suma el tiempo que estuviste jugando. Arranca con tu primer movimiento ' +
+        'y la pausa lo frena, así que mirar cada sala sale gratis.') +
     (OPTS.mirror ? '<br><b>Estás en modo espejo:</b> estos récords son los del espejo.' : '');
   $('runList').innerHTML = defs.map(d => {
-    const rec = runRec(d.k + modeSuf()), open = unlocked(d.a);
+    const rec = runRec(runKey(d.k)), open = unlocked(d.a);
     const n = Math.min(d.b, LEVELS.length) - d.a;
     return '<button class="runrow" data-run="' + esc(d.k) + '"' + (open ? '' : ' disabled') + '>' +
       '<span class="rn">' + esc(d.n) + '<div class="rs">' + n + ' nivel' + (n === 1 ? '' : 'es') +
@@ -2474,7 +2518,7 @@ function renderRuns(){
 }
 function showRunEnd(){
   const R = GAME.lastRun; if (!R) return;
-  $('reName').textContent = R.n + (OPTS.mirror ? ' · ESPEJO' : '');
+  $('reName').textContent = R.n + (R.extremo ? ' · EXTREMO' : '') + (OPTS.mirror ? ' · ESPEJO' : '');
   $('reTime').textContent = fmtT(R.frames);
   const d = $('reDelta');
   if (R.record && R.prev){
@@ -2518,7 +2562,7 @@ function abrirTabla(clave){
 async function refrescarTabla(silencioso){
   const clave = NET.viendo; if (!clave) return;
   if (!silencioso) $('tbList').innerHTML = '<div class="tbrow"><span class="who">cargando…</span></div>';
-  const filas = await traerTabla(clave, !!OPTS.mirror);
+  const filas = await traerTabla(claveNet(clave), !!OPTS.mirror);
   if (NET.viendo !== clave) return;              // cambiaste de pestaña mientras cargaba
   if (!filas){
     if (!silencioso) $('tbList').innerHTML =
@@ -2534,7 +2578,8 @@ async function refrescarTabla(silencioso){
   $('tbHint').innerHTML = (NET.name
     ? 'Firmás como <b>' + esc(NET.name) + '</b>. Se actualiza sola.'
     : 'Todavía no tenés nombre: ponelo en <b>Opciones</b> y tus récords aparecen acá.') +
-    (OPTS.mirror ? '<br>Estás viendo la tabla del <b>espejo</b>.' : '');
+    '<br>Viendo <b>' + (OPTS.extremo ? 'EXTREMO' : 'NORMAL') + '</b>' +
+    (OPTS.mirror ? ' · <b>ESPEJO</b>' : '') + ' — se cambia desde Maratón.';
 }
 function renderStats(){
   let medals = 0, gold = 0, stars = 0, done = 0, best = 0;

@@ -21,7 +21,8 @@ servicio de eso.
   nube —la tabla de récords compartida (Supabase)— y es estrictamente
   opcional: sin nombre puesto o sin internet, el juego anda igual.
 - Además del juego suelto hay **maratón** (un mundo o el juego entero de un
-  tirón, con parciales) y **espejo** (las salas dadas vuelta).
+  tirón, con parciales, en dos relojes: normal y **extremo**) y **espejo**
+  (las salas dadas vuelta).
 
 ## Arquitectura (importante)
 
@@ -36,7 +37,7 @@ servicio de eso.
 ## Estructura de archivos
 
 - `index.html` — **todo el juego** (markup + `<style>` + `<script>`).
-- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v7`**.
+- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v8`**.
 - `manifest.webmanifest`, `icon-*.png` — PWA (instalación, iconos).
 - `test/` — `_load.cjs` (carga el juego en node), `_bot.cjs` (el bot),
   `solver.test.cjs` (¿se pueden terminar los niveles?), `pwa.test.cjs`
@@ -110,6 +111,13 @@ grep -n "===== js/" index.html
   `modeSuf()`). Son dos juegos distintos: si compartieran casillero, el
   récord de un lado borraría el del otro y ninguno significaría nada. El
   desbloqueo de niveles, en cambio, se mira siempre contra el juego normal.
+- **Los dos relojes del maratón miden cosas distintas** y por eso van a
+  casilleros distintos (`runKey()` le pega una `'x'` al extremo). El normal
+  suma pasos de física mientras jugás; el **extremo** es tiempo real desde
+  que aparece la primera sala hasta que tocás la última bandera, y cuenta
+  también lo que tardás en leer el nivel, el respiro entre uno y otro y la
+  pausa. No mezclarlos: un tiempo extremo siempre es peor que el normal de
+  la misma vuelta, así que compararlos no querría decir nada.
 
 ## Cómo se diseñan y validan los niveles
 
