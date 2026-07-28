@@ -37,7 +37,7 @@ servicio de eso.
 ## Estructura de archivos
 
 - `index.html` — **todo el juego** (markup + `<style>` + `<script>`).
-- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v9`**.
+- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v10`**.
 - `manifest.webmanifest`, `icon-*.png` — PWA (instalación, iconos).
 - `test/` — `_load.cjs` (carga el juego en node), `_bot.cjs` (el bot),
   `solver.test.cjs` (¿se pueden terminar los niveles?), `pwa.test.cjs`
@@ -70,7 +70,7 @@ grep -n "===== js/" index.html
 | `js/levels.js` | Los niveles en ASCII + `LEVELS`/`ABIL` (qué habilidad abre cada mundo) |
 | `js/fx.js` | Partículas y sacudida (adorno; acá SÍ hay `Math.random`) |
 | `js/render.js` | `layout()` (canvas, orientación, controles) y el dibujo de la sala |
-| `js/ghost.js` | Grabar/reproducir la mejor vuelta |
+| `js/ghost.js` | Grabar/reproducir la mejor vuelta (la tuya y la del récord de la tabla) |
 | `js/net.js` | Tabla de récords en Supabase (REST + realtime a mano). **Todo opcional y no bloqueante** |
 | `js/game.js` | Máquina de estados, bucle de paso fijo, HUD, resultado |
 | `js/ui.js` | Pantallas: menú, niveles, opciones, estadísticas, pausa, habilidad nueva |
@@ -107,6 +107,13 @@ grep -n "===== js/" index.html
   todo lo que la toca va dentro de `try/catch`, no hay `await` en el camino
   de jugar, y sin nombre puesto ni siquiera se intenta. Si Supabase se cae,
   el juego no se entera. El guardado de verdad sigue siendo `localStorage`.
+  El fantasma del récord se pide **sin `await`** al entrar al nivel: si llega,
+  aparece; si no, no pasa nada.
+- **Las pantallas se centran con `justify-content:safe center`, no con
+  `center`.** Un flex centrado que desborda se derrama por ARRIBA y esa parte
+  no se alcanza ni con scroll. En un celu apaisado —que es como se juega— eso
+  dejaba media pantalla de Opciones y de Maratón fuera de alcance. **Pantalla
+  nueva: probala a 844x390**, no solo en escritorio.
 - **El espejo tiene sus propios récords** (clave con `'m'` pegada, ver
   `modeSuf()`). Son dos juegos distintos: si compartieran casillero, el
   récord de un lado borraría el del otro y ninguno significaría nada. El

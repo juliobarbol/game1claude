@@ -236,6 +236,99 @@ const check = (name, pass, extra) => {
   check('los cuatro casilleros de recorrido son distintos',
     new Set(casillerosRun).size === 4, casillerosRun.join(' '));
 
+  // ── Fantasma del récord de la tabla ──
+  // La red real ya se probó aparte contra Supabase (sube, un tiempo peor no
+  // lo pisa, la lista no lo arrastra y uno gigante se rechaza). Acá se prueba
+  // lo que hace el JUEGO: qué manda, qué entiende de lo que le devuelven y
+  // qué hace cuando la respuesta es basura.
+  const fantasma = await page.evaluate(async () => {
+    const rec = [];
+    for (let i = 0; i < 300; i++) rec.push(100 + i, 200 - (i % 40), i % 4);
+    const enviados = [];
+    const real = window.fetch;
+    window.fetch = async (url, opt) => {
+      enviados.push({ url:String(url), body: opt && opt.body ? JSON.parse(opt.body) : null });
+      if (String(url).includes('/rpc/')) return { ok:true, json:async () => null };
+      return { ok:true, json:async () => [{ jugador:'otro', frames:777,
+        fantasma:JSON.stringify(rec) }] };
+    };
+    NET.name = 'yo'; NET.aparato = '44444444-4444-4444-8444-444444444444';
+    OPTS.mirror = 0; OPTS.rival = 1;
+
+    subirRecord('n0', 999, 2, rec);
+    await new Promise(r => setTimeout(r, 30));
+    const mandado = enviados.find(e => e.url.includes('/rpc/'));
+
+    const g = await traerFantasmaRecord(0);
+
+    // Un fantasma más largo que el tope no se manda (el servidor lo rechaza).
+    enviados.length = 0;
+    const largo = [];
+    for (let i = 0; i < 90*60; i++) largo.push(1, 2, 3);
+    subirRecord('n1', 500, 0, largo);
+    await new Promise(r => setTimeout(r, 30));
+    const recortado = enviados.find(e => e.url.includes('/rpc/'));
+
+    // Respuesta rota: no puede tirar una excepción ni devolver algo a medias.
+    window.fetch = async () => ({ ok:true, json:async () => [{ jugador:'x', frames:1, fantasma:'no-es-json' }] });
+    const roto = await traerFantasmaRecord(0);
+    window.fetch = real;
+    return {
+      mandoFantasma: !!(mandado && mandado.body.p_fantasma),
+      cuadrosMandados: mandado ? JSON.parse(mandado.body.p_fantasma).length / 3 : 0,
+      clave: mandado ? mandado.body.p_clave : null,
+      bajado: g ? { n:g.n, quien:g.quien, frames:g.frames, primeros:g.d.slice(0, 6) } : null,
+      recorte: recortado ? JSON.parse(recortado.body.p_fantasma).length / 3 : -1,
+      roto,
+    };
+  });
+  check('el récord de nivel viaja con su fantasma',
+    fantasma.mandoFantasma && fantasma.cuadrosMandados === 300 && fantasma.clave === 'n0',
+    `${fantasma.cuadrosMandados} cuadros en ${fantasma.clave}`);
+  check('el fantasma que baja se entiende entero',
+    !!fantasma.bajado && fantasma.bajado.n === 300 && fantasma.bajado.quien === 'otro' &&
+    String(fantasma.bajado.primeros) === String([100,200,0,101,199,1]),
+    fantasma.bajado ? `${fantasma.bajado.n} cuadros de ${fantasma.bajado.quien}` : 'null');
+  check('una vuelta larguísima se recorta antes de mandarla',
+    fantasma.recorte === 60*60, fantasma.recorte + ' cuadros');
+  check('un fantasma roto no rompe el juego', fantasma.roto === null);
+
+  // Con la opción apagada no se pide nada.
+  const apagado = await page.evaluate(async () => {
+    const real = window.fetch;
+    let pedidos = 0;
+    window.fetch = async () => { pedidos++; return { ok:true, json:async () => [] }; };
+    OPTS.rival = 0;
+    pedirFantasmaRecord(0);
+    await new Promise(r => setTimeout(r, 30));
+    OPTS.rival = 1;
+    window.fetch = real;
+    return { pedidos, rival:GAME.rival };
+  });
+  check('con el fantasma del récord apagado no se pide nada',
+    apagado.pedidos === 0 && apagado.rival === null, apagado.pedidos + ' pedidos');
+
+  // ── Mapa de muertes ──
+  const mapa = await page.evaluate(() => {
+    try { localStorage.clear(); } catch(_){}
+    loadSave();
+    OPTS.mirror = 0;
+    anotarMuerte(3, 5, 7); anotarMuerte(3, 5, 7); anotarMuerte(3, 9, 2);
+    anotarMuerte(3, -1, 0); anotarMuerte(3, 999, 0);   // fuera de la sala: se ignora
+    const normal = Object.assign({}, muertesDe(3));
+    OPTS.mirror = 1; const espejo = Object.assign({}, muertesDe(3)); OPTS.mirror = 0;
+    saveSave(); loadSave();                            // ida y vuelta por localStorage
+    const tras = Object.assign({}, muertesDe(3));
+    return { normal, espejo, tras, celda:7*ROOM_W + 5 };
+  });
+  check('cuenta las muertes por casilla',
+    mapa.normal[mapa.celda] === 2 && Object.keys(mapa.normal).length === 2,
+    JSON.stringify(mapa.normal));
+  check('lo que cae fuera de la sala no se anota', Object.keys(mapa.normal).length === 2);
+  check('el mapa del espejo va aparte', Object.keys(mapa.espejo).length === 0);
+  check('el mapa sobrevive a guardar y cargar',
+    mapa.tras[mapa.celda] === 2, JSON.stringify(mapa.tras));
+
   // ── La tabla sin internet ──
   const tabla = await page.evaluate(async () => {
     abrirTabla(null);

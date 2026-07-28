@@ -63,6 +63,15 @@ tabla compartida que se actualiza sola. Es opcional de punta a punta: sin
 nombre o sin internet, el juego anda exactamente igual y tu progreso sigue
 guardado en el aparato.
 
+**Fantasma de la tabla.** Con el récord viaja también la vuelta grabada, así
+que al entrar a un nivel corrés al lado del que está primero — en celeste, el
+tuyo en blanco. Una tabla de números no te dice nada sobre *cómo*; el
+fantasma sí.
+
+**Dónde moriste.** Antes de arrancar, la sala se pinta con las casillas donde
+te viene comiendo la vuelta. Se apaga sola en cuanto te movés: es para leer
+el nivel, no para jugarlo.
+
 ## Instalarlo
 
 Es una PWA: entrás con el navegador y le das "Agregar a la pantalla de

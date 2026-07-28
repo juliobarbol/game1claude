@@ -215,6 +215,7 @@ kbd{background:#ffffff14; border:1px solid var(--line); border-radius:5px; paddi
   </div>
   <div class="grow right">
     <div class="sub" id="hudDeaths">☠ 0</div>
+    <div class="sub" id="hudRival"></div>
   </div>
   <button class="hbtn" id="btnRetry" title="Reintentar (R)">↺</button>
   <button class="hbtn" id="btnPause" title="Pausa (Esc)">❚❚</button>
@@ -311,14 +312,16 @@ kbd{background:#ffffff14; border:1px solid var(--line); border-radius:5px; paddi
 
   <section class="screen hidden" id="scr-opts">
     <h2>OPCIONES</h2>
-    <div class="opt"><span>Fantasma del récord</span><button class="val" id="oGhost">SÍ</button></div>
+    <div class="opt"><span>Tu fantasma</span><button class="val" id="oGhost">SÍ</button></div>
+    <div class="opt"><span>Fantasma de la tabla</span><button class="val" id="oRival">SÍ</button></div>
+    <div class="opt"><span>Dónde moriste</span><button class="val" id="oMapa">SÍ</button></div>
+    <div class="opt"><span>Tu nombre</span><button class="val" id="oName">—</button></div>
+    <div class="opt"><span>Modo espejo</span><button class="val" id="oMirror">NO</button></div>
     <div class="opt"><span>Sonido</span><button class="val" id="oSound">SÍ</button></div>
     <div class="opt"><span>Vibración</span><button class="val" id="oVibe">SÍ</button></div>
     <div class="opt"><span>Sacudida de pantalla</span><button class="val" id="oShake">SÍ</button></div>
-    <div class="opt"><span>Controles zurdo/diestro</span><button class="val" id="oSwap">DIESTRO</button></div>
-    <div class="opt"><span>Modo espejo</span><button class="val" id="oMirror">NO</button></div>
-    <div class="opt"><span>Tu nombre</span><button class="val" id="oName">—</button></div>
     <div class="opt"><span>Ayudas en pantalla</span><button class="val" id="oHints">SÍ</button></div>
+    <div class="opt"><span>Controles zurdo/diestro</span><button class="val" id="oSwap">DIESTRO</button></div>
     <div class="menu" style="margin-top:6px">
       <button class="btn ghost" id="oBack">VOLVER</button>
       <button class="btn ghost" id="oReset" style="color:var(--bad)">BORRAR PROGRESO</button>
@@ -404,7 +407,7 @@ const COL = {
   player:'#ffd166', playerNo:'#7cc3ff',
   goal:'#4ade80', crystal:'#c084fc', spring:'#fb923c',
   crumb:'#8a6b45', mover:'#38bdf8', saw:'#ff4757', star:'#ffe066', pad:'#a78bfa',
-  ghost:'#ffffff',
+  ghost:'#ffffff', rival:'#7cc3ff',
 };
 
 const LS = {
@@ -418,8 +421,9 @@ const LS = {
 // Progreso y opciones en localStorage. Nada de backend: el récord es tuyo
 // y vive en el aparato. Todo lo que entra se valida (un JSON tocado a mano
 // no puede romper el juego).
-const OPTS_DEF = { ghost:1, sound:1, vibe:1, shake:1, swap:0, hints:1, mirror:0, extremo:0 };
-let SAVE = { v:1, lv:{}, run:{}, deaths:0, frames:0, wins:0 };
+const OPTS_DEF = { ghost:1, sound:1, vibe:1, shake:1, swap:0, hints:1, mirror:0, extremo:0,
+  rival:1, mapa:1 };
+let SAVE = { v:1, lv:{}, run:{}, mu:{}, deaths:0, frames:0, wins:0 };
 let OPTS = Object.assign({}, OPTS_DEF);
 
 // El espejo es OTRO juego: las mismas salas, pero tu mano está al revés. Sus
@@ -465,13 +469,25 @@ function loadSave(){
         deaths: Math.max(0, Math.floor(+e.deaths || 0)),
       };
     }
+    // Mapa de muertes por nivel: casilla → cuántas veces moriste ahí.
+    const mu = {};
+    const msrc = (raw && typeof raw.mu === 'object' && raw.mu) ? raw.mu : {};
+    for (const k of Object.keys(msrc)){
+      const e = msrc[k]; if (!e || typeof e !== 'object') continue;
+      const o = {};
+      for (const c of Object.keys(e)){
+        const ci = Math.floor(+c), n = Math.floor(+e[c]);
+        if (ci >= 0 && ci < ROOM_W*ROOM_H && n > 0) o[ci] = n;
+      }
+      mu[k] = o;
+    }
     SAVE = {
-      v:1, lv, run,
+      v:1, lv, run, mu,
       deaths: Math.max(0, Math.floor(+raw.deaths || 0)),
       frames: Math.max(0, Math.floor(+raw.frames || 0)),
       wins:   Math.max(0, Math.floor(+raw.wins   || 0)),
     };
-  } catch(_){ SAVE = { v:1, lv:{}, run:{}, deaths:0, frames:0, wins:0 }; }
+  } catch(_){ SAVE = { v:1, lv:{}, run:{}, mu:{}, deaths:0, frames:0, wins:0 }; }
   try {
     const o = JSON.parse(lsGet(LS.OPTS) || '{}');
     for (const k of Object.keys(OPTS_DEF)) OPTS[k] = (o && k in o) ? (o[k] ? 1 : 0) : OPTS_DEF[k];
@@ -489,9 +505,22 @@ function lvRec(i, suf){
   return SAVE.lv[k];
 }
 function runRec(key){ return SAVE.run[key] || null; }
+// Dónde moriste en cada nivel, contado por casilla. Es la respuesta a "¿en
+// qué tramo se me va la vuelta?", que hoy hay que deducir a ojo. Se guarda
+// como un objeto casilla→cuántas, que para una sala de 30x17 no pesa nada.
+function muertesDe(i){
+  const k = String(i) + modeSuf();
+  if (!SAVE.mu[k]) SAVE.mu[k] = {};
+  return SAVE.mu[k];
+}
+function anotarMuerte(i, tx, ty){
+  if (tx < 0 || ty < 0 || tx >= ROOM_W || ty >= ROOM_H) return;
+  const m = muertesDe(i), c = ty*ROOM_W + tx;
+  m[c] = (m[c] || 0) + 1;
+}
 function ghostKey(i){ return LS.GHOST + i + modeSuf(); }
 function wipeSave(){
-  SAVE = { v:1, lv:{}, run:{}, deaths:0, frames:0, wins:0 };
+  SAVE = { v:1, lv:{}, run:{}, mu:{}, deaths:0, frames:0, wins:0 };
   saveSave();
   for (let i = 0; i < LEVELS.length; i++) for (const s of ['', 'm'])
     { try { localStorage.removeItem(LS.GHOST + i + s); } catch(_){} }
@@ -1868,14 +1897,34 @@ function drawWorld(w){
   ctx.beginPath(); ctx.rect(0, 0, VIEW_W, VIEW_H); ctx.clip();
   drawBG(w.grav);
   drawTiles(w);
-  // Fantasma del récord
-  if (OPTS.ghost && GAME.ghost && GAME.mode === 'play' && w.timer > 0){
-    const f = GAME.ghost, i = Math.min(w.timer - 1, f.n - 1);
-    if (i >= 0 && f.n){
-      const gx = f.d[i*3]/2, gy = f.d[i*3+1]/2, fl = f.d[i*3+2];
-      drawPlayer({ x:gx, y:gy, face:(fl & 1) ? 1 : -1, sqx:1, sqy:1 }, .22, COL.ghost,
-        (fl & 2) ? -1 : 1);
+  // Mapa de muertes: dónde te viene comiendo la vuelta. Va DEBAJO de todo lo
+  // que se mueve para que no estorbe, y se apaga solo mientras el nivel
+  // corre —te sirve para leer la sala antes de largarte, no durante—.
+  if (OPTS.mapa && !w.started){
+    const m = muertesDe(GAME.idx);
+    let peor = 1;
+    for (const c in m) if (m[c] > peor) peor = m[c];
+    for (const c in m){
+      const ci = +c, tx = ci % ROOM_W, ty = (ci - tx)/ROOM_W;
+      ctx.globalAlpha = .10 + .38*(m[c]/peor);
+      ctx.fillStyle = COL.spike;
+      ctx.fillRect(tx*TS + 2, ty*TS + 2, TS - 4, TS - 4);
     }
+    ctx.globalAlpha = 1;
+  }
+  // Fantasmas: el de la tabla primero (va más atrás) y el tuyo encima.
+  // Dos colores distintos y a propósito: el tuyo blanco, el del récord
+  // celeste. Si son del mismo color no sabés a quién le estás ganando.
+  if (GAME.mode === 'play' && w.timer > 0){
+    const pinta = (f, alpha, color) => {
+      const i = Math.min(w.timer - 1, f.n - 1);
+      if (i < 0 || !f.n) return;
+      const fl = f.d[i*3+2];
+      drawPlayer({ x:f.d[i*3]/2, y:f.d[i*3+1]/2, face:(fl & 1) ? 1 : -1, sqx:1, sqy:1 },
+        alpha, color, (fl & 2) ? -1 : 1);
+    };
+    if (OPTS.rival && GAME.rival) pinta(GAME.rival, .26, COL.rival);
+    if (OPTS.ghost && GAME.ghost) pinta(GAME.ghost, .22, COL.ghost);
   }
   // Partículas
   for (const q of FX.p){
@@ -1995,10 +2044,51 @@ async function rpc(fn, body){
   } catch(_){ return null; }
 }
 // `clave`: 'n6' = nivel 7 · 'w2' = mundo 3 · 'todo' = el juego entero.
-function subirRecord(clave, frames, muertes){
+// `rec` es la vuelta grabada (solo para niveles): viaja con el récord para
+// que otro pueda correr contra ella.
+const FANTASMA_MAX_F = 60*60;          // 60 s: más que eso no lo mandamos
+function subirRecord(clave, frames, muertes, rec){
   if (!netOn() || !NET.name || !frames) return;
+  let f = null;
+  if (rec && rec.length >= 3){
+    const d = rec.length > FANTASMA_MAX_F*3 ? rec.slice(0, FANTASMA_MAX_F*3) : rec;
+    f = JSON.stringify(d);
+    if (f.length > 150000) f = null;   // el servidor lo rechazaría igual
+  }
   rpc('enviar_record', { p_jugador:NET.name, p_aparato:NET.aparato, p_clave:clave,
-    p_espejo:!!OPTS.mirror, p_frames:Math.floor(frames), p_muertes:Math.floor(muertes || 0) });
+    p_espejo:!!OPTS.mirror, p_frames:Math.floor(frames), p_muertes:Math.floor(muertes || 0),
+    p_fantasma:f });
+}
+// El fantasma del que está primero en este nivel. Se pide aparte de la tabla
+// —la lista nunca trae los fantasmas— y solo para el nivel que vas a jugar.
+async function traerFantasmaRecord(idx){
+  if (!netOn()) return null;
+  const q = '/rest/v1/records?select=jugador,frames,fantasma' +
+    '&clave=eq.n' + idx + '&espejo=is.' + (OPTS.mirror ? 'true' : 'false') +
+    '&fantasma=not.is.null&order=frames.asc&limit=1';
+  try {
+    const r = await fetch(NET.url + q, { headers:{ 'apikey':NET.key, 'Authorization':'Bearer ' + NET.key } });
+    if (!r.ok) return null;
+    const j = await r.json();
+    if (!j || !j.length || !j[0].fantasma) return null;
+    const d = JSON.parse(j[0].fantasma);
+    if (!Array.isArray(d) || d.length < 3) return null;
+    return { n:Math.floor(d.length/3), d, quien:j[0].jugador, frames:j[0].frames };
+  } catch(_){ return null; }
+}
+// Se pide sin await desde `startLevel`: cuando llega, llega. Si el nivel ya
+// cambió cuando vuelve la respuesta, se descarta.
+function pedirFantasmaRecord(idx){
+  GAME.rival = null;
+  if (!netOn() || !OPTS.rival) return;
+  const esperado = idx + modeSuf();
+  traerFantasmaRecord(idx).then(g => {
+    if (!g || GAME.idx + modeSuf() !== esperado) return;
+    // No tiene gracia correr contra vos mismo.
+    if (g.quien === NET.name && g.frames >= lvRec(idx).best && lvRec(idx).best) return;
+    GAME.rival = g;
+    hudUpdate();
+  }).catch(() => {});
 }
 // Se llama al hacer un récord: manda SOLO el que cambió. El envío masivo es
 // `sincronizarTodo`, y ese corre una sola vez, cuando ponés (o cambiás) el nombre.
@@ -2007,7 +2097,7 @@ function subirRecords(){
   const R = GAME.run;
   if (R) return;                       // dentro de un maratón se sube al final
   const r = lvRec(GAME.idx);
-  if (r.best) subirRecord('n' + GAME.idx, r.best, r.deaths);
+  if (r.best) subirRecord('n' + GAME.idx, r.best, r.deaths, GAME.rec);
 }
 async function sincronizarTodo(){
   if (!netOn() || !NET.name) return;
@@ -2076,7 +2166,7 @@ function netCallar(){
 // ===== js/game.js =====
 let optsFrom = 'menu';
 const GAME = { mode:'menu', w:null, idx:0, ghost:null, rec:[], acc:0, last:0, hintT:0,
-  deaths:0, wonAt:0, lastResult:null, run:null, lastRun:null };
+  deaths:0, wonAt:0, lastResult:null, run:null, lastRun:null, rival:null };
 
 function startLevel(i, keepDeaths){
   // Momento de desbloqueo: la primera vez que entrás a un mundo nuevo, el
@@ -2098,6 +2188,7 @@ function startLevel(i, keepDeaths){
   GAME.idx = i;
   GAME.w = newWorld(i);
   GAME.ghost = OPTS.ghost ? ghostLoad(i) : null;
+  pedirFantasmaRecord(i);
   GAME.rec = [];
   GAME.deaths = keepDeaths ? GAME.deaths : 0;
   GAME.hintT = LEVELS[i].hint ? 260 : 0;
@@ -2223,7 +2314,9 @@ function handleEvents(w){
       case 'crumble':  fxBurst(cx, p.y + PH + 6, 8, COL.crumb, 90, 500); break;
       case 'star':     SFX.star(); fxBurst(cx, cy, 16, COL.star, 170, 40); FX.flash = .5; break;
       case 'die':      SFX.die(); fxBurst(cx, cy, 26, COL.player, 210, 380); FX.shake = 10;
-                       vibrate(38); contarMuerte(); GAME.rec = []; break;
+                       vibrate(38);
+                       anotarMuerte(GAME.idx, Math.floor(cx/TS), Math.floor(cy/TS));
+                       contarMuerte(); GAME.rec = []; break;
       case 'goal':     onWin(); break;
     }
   }
@@ -2313,6 +2406,11 @@ function hudUpdate(){
       '<br>' + (r.best ? 'tu récord <b>' + fmtT(r.best) + '</b>' : 'todavía sin récord') +
       (r.star ? '  ·  ★' : '') + '<br><span style="opacity:.7">' + esc(LEVELS[GAME.idx].hint) + '</span>';
   }
+  // Contra quién estás corriendo, si bajó el fantasma de la tabla.
+  document.getElementById('hudRival').innerHTML = (OPTS.rival && GAME.rival)
+    ? '<span style="color:' + COL.rival + '">◆</span> ' + esc(GAME.rival.quien) +
+      ' <span class="rec">' + fmtT(GAME.rival.frames) + '</span>'
+    : '';
   document.getElementById('btnDash').classList.toggle('dim', !w.p.dashAvail);
 }
 
@@ -2612,6 +2710,8 @@ function renderOpts(){
   $('oShake').textContent = on(OPTS.shake);
   $('oHints').textContent = on(OPTS.hints);
   $('oSwap').textContent  = OPTS.swap ? 'ZURDO' : 'DIESTRO';
+  $('oRival').textContent = OPTS.rival ? 'SÍ' : 'NO';
+  $('oMapa').textContent = OPTS.mapa ? 'SÍ' : 'NO';
   $('oMirror').textContent = OPTS.mirror ? 'SÍ' : 'NO';
   $('oName').textContent = NET.name || 'PONER';
   document.body.classList.toggle('swap', !!OPTS.swap);
@@ -2646,6 +2746,8 @@ function bindUI(){
     OPTS[key] = OPTS[key] ? 0 : 1; saveOpts(); renderOpts(); SFX.ui(); if (after) after();
   });
   tog('oGhost','ghost', () => { if (GAME.w) GAME.ghost = OPTS.ghost ? ghostLoad(GAME.idx) : null; });
+  tog('oRival','rival', () => { if (GAME.w) pedirFantasmaRecord(GAME.idx); });
+  tog('oMapa','mapa');
   tog('oSound','sound'); tog('oVibe','vibe'); tog('oShake','shake'); tog('oHints','hints');
   tog('oSwap','swap');
   // El espejo cambia las salas, así que no se puede prender a mitad de una
