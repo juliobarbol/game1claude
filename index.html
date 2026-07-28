@@ -384,6 +384,9 @@ const PHY = {
   WJ_X:       205,   // patada horizontal del salto de pared
   WJ_Y:       335,
   WJ_LOCK:      9,   // frames en que el input horizontal no manda (salto comprometido)
+  IMP_X:      300,   // impulso: velocidad horizontal que te queda (RUN es 170)
+  IMP_Y:      240,   // …y su salto, MÁS BAJO que el normal: es largo, no alto
+  OVER_DEC:   300,   // cuánto se frena lo que va por encima de RUN (era DEC_G)
   DASH:       335,
   DASH_F:      10,   // duración del dash, en frames
   DASH_FREEZE:  3,   // hitstop al arrancar el dash (se siente el golpe)
@@ -573,6 +576,9 @@ const SFX = {
   die:    () => { noise(.28, .34, 400); blip(300, 60, .3, 'sawtooth', .22); },
   crystal:() => blip(880, 1320, .10, 'triangle', .3),
   spring: () => blip(300, 900, .14, 'triangle', .32),
+  // El impulso suena distinto del salto a propósito: es la señal de que te
+  // salió, y es lo único que te avisa que lo hiciste bien.
+  impulso:() => { blip(520, 980, .13, 'square', .3); noise(.10, .16, 1400); },
   star:   () => { blip(990, 990, .08, 'triangle', .3); setTimeout(()=>blip(1480,1480,.12,'triangle',.3), 80); },
   goal:   () => { [660, 880, 1320].forEach((f,i) => setTimeout(()=>blip(f, f, .14, 'triangle', .3), i*90)); },
   flip:   () => { blip(240, 620, .16, 'triangle', .3); noise(.12, .18, 500); },
@@ -1059,6 +1065,11 @@ function stepWorld(w, inp){
     else if (inp.x === 0) a = (p.grounded ? PHY.DEC_G : PHY.DEC_A);
     else a = (same || p.vx === 0) ? (p.grounded ? PHY.ACC_G : PHY.ACC_A)
                                   : (p.grounded ? PHY.DEC_G : PHY.DEC_A) * 1.4;
+    // Ir MÁS RÁPIDO que la velocidad de correr no es un error a corregir: es
+    // lo que te ganaste con un impulso o un salto de pared. Mientras sigas
+    // apretando para ese lado, el sobrante se va de a poco en vez de
+    // evaporarse. Sin esto el impulso duraría tres cuadros y no serviría.
+    if (inp.x && same && Math.abs(p.vx) > PHY.RUN) a = PHY.OVER_DEC;
     if (a > 0){
       if (p.vx < want) p.vx = Math.min(want, p.vx + a*DT);
       else if (p.vx > want) p.vx = Math.max(want, p.vx - a*DT);
@@ -1127,6 +1138,25 @@ function stepWorld(w, inp){
   else p.grounded = false;
   if (!p.grounded) p.grounded = blocked(w, p.x, p.y + gv) || !!moverAt(w, p.x, p.y + gv) ||
                                 onewayHit(w, p.x, p.y + gv, p.y, gv) >= 0;
+  // ── Impulso ──────────────────────────────────────────────────────
+  // Tocar el piso EN PLENO DASH con el salto ya apretado no apaga el dash:
+  // lo convierte en un salto largo y BAJO que conserva el envión. Es la
+  // única forma de ir más rápido que corriendo, y hay que apretarlo dentro
+  // de la ventana del buffer (8 cuadros), así que no sale sin querer.
+  //
+  // Existe para que el techo del juego suba sin que suba el piso: quien no
+  // lo conoce juega exactamente igual que antes, y quien lo practica saca
+  // segundos. La altura es a propósito menor que la de un salto normal —si
+  // fuera igual sería un salto mejor en todo y no una elección.
+  if (p.grounded && dashing && p.buf > 0 && L.ab.dash){
+    const d = p.dashDx > 0 ? 1 : p.dashDx < 0 ? -1 : p.face;
+    p.vx = d * PHY.IMP_X;
+    p.vy = -PHY.IMP_Y * gv;
+    p.face = d;
+    p.grounded = false; p.buf = 0; p.coyote = 0;
+    p.sqx = .72; p.sqy = 1.3;
+    w.events.push('impulso');
+  }
   if (p.grounded){ p.dashAvail = true; p.dash = 0; }
 
   // ── Pared (solo cuenta si apretás contra ella) ──
@@ -1664,7 +1694,7 @@ LEVELS.forEach((L, i) => { L.wall = i >= 5; L.dash = i >= 10; L.grav = i >= 15; 
 const ABIL = [
   { at:0,  t:'SALTO',          d:'← → para moverte, SALTO para saltar. Soltá antes para saltar más bajo.' },
   { at:5,  t:'SALTO DE PARED', d:'Pegate a una pared en el aire: mantené la dirección y saltá.' },
-  { at:10, t:'DASH',           d:'Un envión en la dirección que apuntás. Se recarga al tocar piso o un cristal.' },
+  { at:10, t:'DASH',           d:'Un envión en la dirección que apuntás. Se recarga al tocar piso o un cristal. Y si dasheás en diagonal contra el piso y saltás JUSTO al tocar, sale un IMPULSO: un salto largo y bajo que te deja más rápido que corriendo.' },
   { at:15, t:'GRAVEDAD',       d:'Las baldosas violetas dan vuelta la gravedad: el techo pasa a ser el piso. Saltar, rebotar y dashear funcionan igual… para el otro lado.' },
   // El mundo 5 no abre nada: cobra. La pantalla es la misma, pero decirle
   // "nueva habilidad" sería mentir, así que el cartel y el botón cambian.
@@ -2307,6 +2337,8 @@ function handleEvents(w){
       case 'land':     SFX.land(); fxDust(cx, w.grav > 0 ? p.y + PH : p.y, 0); break;
       case 'dash':     SFX.dash(); fxBurst(cx, cy, 10, COL.crystal, 150, 60); FX.shake = 5; vibrate(12); break;
       case 'spring':   SFX.spring(); fxBurst(cx, p.y + PH, 10, COL.spring, 160, 200); vibrate(14); break;
+      case 'impulso':  SFX.impulso(); fxBurst(cx, w.grav > 0 ? p.y + PH : p.y, 14, COL.crystal, 200, 40);
+                       FX.shake = 4; vibrate(16); break;
       case 'crystal':  SFX.crystal(); fxBurst(cx, cy, 10, COL.crystal, 130, 0); break;
       case 'crack':    fxDust(cx, w.grav > 0 ? p.y + PH : p.y, 0); break;
       case 'flip':     SFX.flip(); fxBurst(cx, cy, 14, COL.pad, 150, 0); FX.shake = 6;
@@ -2769,7 +2801,9 @@ function bindUI(){
       '<kbd>R</kbd> reintentar · <kbd>Esc</kbd> pausa<br>' +
       'También anda con joystick. Pegado a una pared: dirección + salto.';
   $('pauseHint').innerHTML = 'Reintentar no penaliza: en este juego se muere para aprender.<br>' +
-    'Si un nivel se te resiste, después de un rato se abre el siguiente igual.';
+    'Si un nivel se te resiste, después de un rato se abre el siguiente igual.<br>' +
+    '<b>Impulso:</b> dash en diagonal contra el piso y salto justo al tocar. Suena distinto ' +
+    'cuando sale, y es la forma de bajar tus récords.';
 }
 
 // ===== js/core.js =====

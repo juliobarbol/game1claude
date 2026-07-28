@@ -42,7 +42,8 @@ servicio de eso.
 - `test/` — `_load.cjs` (carga el juego en node), `_bot.cjs` (el bot),
   `solver.test.cjs` (¿se pueden terminar los niveles?), `pwa.test.cjs`
   (navegador real: SW, offline, paridad de física, persistencia),
-  `modos.test.cjs` (maratón, espejo y tabla, también en navegador).
+  `modos.test.cjs` (maratón, espejo y tabla, también en navegador),
+  `fisica.test.cjs` (los números de `PHY` medidos con regla, sin niveles).
 - `tools/trace.cjs` — dibuja una sala y el camino del bot en la terminal.
   **Es la herramienta de diseño de niveles.**
 - `tools/star-spots.cjs` — prueba posiciones para la estrella de un nivel.
@@ -273,11 +274,28 @@ Números útiles para diseñar (salen de `PHY`):
 | Dash | ~3,5 tiles (+ lo que ya traías) |
 | Salto + dash | ~**9 tiles** de largo, ~6,7 de alto |
 | Resorte | ~6 tiles de alto |
+| **Impulso** | ~**9,7 tiles** de largo, solo ~1,4 de alto |
 
 (Con la gravedad invertida son los mismos números, para el otro lado.)
 
 Regla práctica: escalones de **2 tiles** son cómodos, de **3** son al límite
 (precisión), de **4 o más** son imposibles sin pared/dash/resorte.
+
+### El impulso (el techo del juego)
+
+Tocar el piso **en pleno dash** con el salto ya apretado no apaga el dash: lo
+convierte en un salto largo y **bajo** que te deja a `IMP_X` (300 px/s contra
+los 170 de correr), y ese sobrante se gasta despacio (`OVER_DEC`) en vez de
+evaporarse. Hay que apretar dentro de la ventana del buffer (8 cuadros), así
+que no sale sin querer.
+
+Existe para que **suba el techo sin que suba el piso**: quien no lo conoce
+juega igual que siempre y termina todos los niveles; quien lo practica saca
+segundos. Por eso el salto del impulso es más BAJO que el normal — si fuera
+igual de alto sería un salto mejor en todo, y no una elección.
+
+Al diseñar: un pasillo bajo y largo es donde el impulso brilla; una repisa
+alta lo anula. Si querés que un tramo NO se pueda impulsar, ponele techo.
 
 **Largo de un nivel:** lo que sube la dificultad en este género no es el
 movimiento más difícil sino el **largo de la cadena que hay que ejecutar sin
@@ -317,6 +335,9 @@ NODE_PATH=/opt/node22/lib/node_modules node test/modos.test.cjs
 
 # 5) Si tocaste niveles o PHY, el solver TAMBIÉN espejado
 node test/solver.test.cjs --espejo
+
+# 6) La física mide lo que dice (obligatorio si tocaste PHY o stepWorld)
+node test/fisica.test.cjs
 ```
 
 **Si tocás una constante de `PHY`, corré el solver.** Bajar el salto 10 px

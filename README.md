@@ -23,6 +23,12 @@ récord.
 **Salto de pared:** en el aire, contra una pared, mantené apretada la
 dirección de la pared y saltá.
 
+**Impulso:** dasheá en diagonal contra el piso y apretá salto **justo** al
+tocar. El dash no se apaga: se convierte en un salto largo y bajo que te deja
+más rápido que corriendo. Se puede terminar el juego entero sin saberlo —
+está para que el que practica pueda bajar sus récords. Cuando sale, suena
+distinto.
+
 ## Los mundos
 
 1. **Suelo** (1-5): solo salto. Medir la distancia, soltar el salto antes
