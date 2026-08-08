@@ -16,6 +16,10 @@
 *,*::before,*::after{box-sizing:border-box;}
 body,h1,h2,h3,h4,p,ul,ol,dl,dd,table,figure{margin:0;padding:0;}
 
+/* `hidden` gana siempre. Sin esto, cualquier regla con `display:flex` lo pisa
+   y queda un panel invisible tapando la pantalla y comiéndose los clics. */
+[hidden]{display:none !important;}
+
 :root{
   --paper:#FCFCFD; --surface:#FFFFFF; --ink:#141922; --ink-2:#4B5563; --ink-3:#6B7480;
   --line:#E1E5EC; --line-strong:#C9CFD9;
@@ -529,3 +533,20 @@ ul.problemas li b{color:var(--ink);}
 .fila-campos.compacta > .campo{flex:1 1 8rem;min-width:0;}
 .fila-campos.compacta > .campo.chico{flex:0 0 7rem;max-width:7rem;}
 .fila-campos.compacta .ayuda{display:none;}
+
+/* ─── la nube ─── */
+.btn.conectado{border-color:var(--vocab);background:var(--vocab-bg);color:var(--vocab);}
+.nube-fondo{position:fixed;inset:0;z-index:60;background:rgba(10,14,20,.55);
+  display:flex;align-items:center;justify-content:center;padding:1rem;}
+.nube-panel{background:var(--surface);border:1px solid var(--line-strong);
+  padding:1.25rem;max-width:26rem;width:100%;display:flex;flex-direction:column;gap:.8rem;}
+.nube-panel h3{font-size:1.25rem;}
+.nube-panel .campo{gap:.25rem;}
+.nube-acciones{display:flex;gap:.5rem;align-items:center;flex-wrap:wrap;}
+.nube-acciones .spacer{flex:1;}
+.nube-error{font-size:.85rem;color:var(--alert);background:var(--alert-bg);
+  border:1px solid var(--alert-line);padding:.4rem .6rem;}
+.banda-nube{background:var(--speak-bg);border-bottom:1px solid var(--speak-line);
+  color:var(--ink);font-size:.88rem;padding:.5rem clamp(1rem,4vw,2rem);
+  display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;}
+@media print{ .nube-fondo,.banda-nube{display:none !important;} }

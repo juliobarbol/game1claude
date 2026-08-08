@@ -13,12 +13,38 @@
     <span class="spacer"></span>
     <button type="button" id="exportar" class="cta-print">Exportar archivo</button>
     <button type="button" id="importar" class="btn">Importar</button>
+    <button type="button" id="nube" class="btn">Nube</button>
     <button type="button" id="descartar" class="btn peligro">Descartar borrador</button>
     <a class="imprimir" id="ver" href="#">Ver la clase</a>
     <button data-tema-boton type="button" class="tema"></button>
     <input type="file" id="archivo" accept=".js,.json" hidden>
   </div>
 </nav>
+
+<!-- Aviso de que hay una versión más nueva del otro lado. La nube NUNCA
+     pisa lo local sin preguntar. -->
+<div class="banda-nube" id="bandaNube" hidden></div>
+
+<!-- Entrar a la nube -->
+<div class="nube-fondo" id="nubeFondo" hidden>
+  <form class="nube-panel" id="nubeForm">
+    <h3>Trabajar desde cualquier computadora</h3>
+    <p class="note">Los borradores se guardan también en la nube, así podés
+      empezar una clase en la compu y seguirla en otra. Sin esto, el editor
+      anda igual: lo que escribís queda en esta computadora.</p>
+    <label class="campo"><span class="et">Tu nombre</span>
+      <input type="text" id="nubeQuien" autocomplete="name" placeholder="Vicky"></label>
+    <label class="campo"><span class="et">Frase de acceso</span>
+      <input type="password" id="nubeFrase" autocomplete="current-password"></label>
+    <p class="nube-error" id="nubeError" hidden></p>
+    <div class="nube-acciones">
+      <button type="submit" class="cta-print" id="nubeEntrar">Entrar</button>
+      <button type="button" class="btn" id="nubeCerrar">Cancelar</button>
+      <span class="spacer"></span>
+      <button type="button" class="btn peligro" id="nubeSalir" hidden>Desconectar</button>
+    </div>
+  </form>
+</div>
 
 <div class="editor">
 
@@ -60,6 +86,7 @@
 <script src="data/indice.js"></script>
 <script src="esquema.js"></script>
 <script src="borradores.js"></script>
+<script src="nube.js"></script>
 <script src="render.js"></script>
 <script>
 // ════════════════════════════════════════════════════════════════════
@@ -252,6 +279,7 @@
       const e = document.getElementById('estado');
       e.textContent = bien ? 'borrador guardado' : '¡NO se pudo guardar!';
       e.className = 'estado ' + (bien ? 'guardado' : 'error');
+      if (bien) subirANube();
     }, 400);
     refrescar();
   }
@@ -344,12 +372,114 @@
     if (!confirm('Se borra el borrador de esta clase y vuelve a la versión publicada.\n\n' +
                  'Esto no se puede deshacer. ¿Seguimos?')) return;
     BORRADORES.borrar(idActual);
+    if (NUBE.conectada()) NUBE.borrar(idActual);
     location.reload();
   });
 
   document.getElementById('cual').addEventListener('change', ev => {
     location.search = '?u=' + ev.target.value;
   });
+
+  // ─── La nube ──────────────────────────────────────────────────────
+  // Nunca hace falta: el editor funciona igual sin ella. Lo local se guarda
+  // primero (instantáneo) y la nube se sincroniza detrás, sin bloquear.
+  let subirPronto = null;
+
+  function pintarNube(){
+    const b = document.getElementById('nube');
+    if (NUBE.conectada()){
+      b.textContent = 'Nube ✓';
+      b.classList.add('conectado');
+      b.title = 'Conectada como ' + (NUBE.quien() || 'sin nombre');
+    } else {
+      b.textContent = 'Nube';
+      b.classList.remove('conectado');
+      b.title = 'Trabajar desde varias computadoras';
+    }
+  }
+
+  function abrirNube(){
+    document.getElementById('nubeFondo').hidden = false;
+    document.getElementById('nubeSalir').hidden = !NUBE.conectada();
+    document.getElementById('nubeQuien').value = NUBE.quien();
+    document.getElementById('nubeError').hidden = true;
+    document.getElementById('nubeFrase').focus();
+  }
+  function cerrarNube(){ document.getElementById('nubeFondo').hidden = true; }
+
+  document.getElementById('nube').addEventListener('click', abrirNube);
+  document.getElementById('nubeCerrar').addEventListener('click', cerrarNube);
+  document.getElementById('nubeFondo').addEventListener('click', ev => {
+    if (ev.target.id === 'nubeFondo') cerrarNube();
+  });
+
+  document.getElementById('nubeSalir').addEventListener('click', () => {
+    NUBE.salir(); pintarNube(); cerrarNube();
+  });
+
+  document.getElementById('nubeForm').addEventListener('submit', async ev => {
+    ev.preventDefault();
+    const err = document.getElementById('nubeError');
+    const btn = document.getElementById('nubeEntrar');
+    err.hidden = true; btn.disabled = true; btn.textContent = 'Probando…';
+    try {
+      await NUBE.entrar(document.getElementById('nubeFrase').value,
+                        document.getElementById('nubeQuien').value);
+      pintarNube(); cerrarNube();
+      if (BORRADORES.hay(idActual)) subirANube();
+      mirarLaNube();
+    } catch (e){
+      err.textContent = e.message === 'frase'
+        ? 'Esa frase no es. Fijate que no tenga espacios de más.'
+        : 'No se pudo conectar. ¿Hay internet?';
+      err.hidden = false;
+    } finally { btn.disabled = false; btn.textContent = 'Entrar'; }
+  });
+
+  function subirANube(){
+    if (!NUBE.conectada()) return;
+    clearTimeout(subirPronto);
+    subirPronto = setTimeout(async () => {
+      const cuando = await NUBE.guardar(idActual, modelo);
+      const e = document.getElementById('estado');
+      if (cuando) e.textContent = 'guardado · en la nube';
+      else if (e.textContent.indexOf('nube') < 0) e.textContent += ' · nube sin conexión';
+    }, 1500);
+  }
+
+  // Al abrir: ¿hay algo más nuevo del otro lado? Se avisa, no se pisa.
+  async function mirarLaNube(){
+    const banda = document.getElementById('bandaNube');
+    banda.hidden = true;
+    if (!NUBE.conectada()) return;
+
+    const alla = await NUBE.ficha(idActual);
+    if (!alla) return;
+
+    const aca = BORRADORES.cuando(idActual);
+    if (aca && new Date(aca) >= new Date(alla.actualizado)) return;
+
+    const cuando = new Date(alla.actualizado).toLocaleString('es-AR',
+      { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+    banda.innerHTML =
+      `En la nube hay una versión <b>más nueva</b> de esta clase` +
+      (alla.quien ? `, de <b>${esc(alla.quien)}</b>` : '') +
+      ` (${esc(cuando)}). ` +
+      `<button type="button" class="btn" id="traerNube">Traerla</button>` +
+      `<button type="button" class="btn" id="ignorarNube">Seguir con la mía</button>`;
+    banda.hidden = false;
+
+    document.getElementById('ignorarNube').addEventListener('click', () => { banda.hidden = true; });
+    document.getElementById('traerNube').addEventListener('click', async () => {
+      const datos = await NUBE.leer(idActual);
+      if (!datos){ alert('No se pudo traer. Probá de nuevo.'); return; }
+      modelo = ESQUEMA.molde(idActual, datos);
+      BORRADORES.guardar(idActual, modelo);
+      banda.hidden = true;
+      dibujarFormulario();
+      refrescar();
+    });
+  }
 
   // ─── Arranque ─────────────────────────────────────────────────────
   function llenarSelector(id){
@@ -369,11 +499,18 @@
     const borrador = BORRADORES.hay(id);
     const aviso = document.getElementById('aviso');
     aviso.classList.toggle('con-borrador', borrador);
+    if (NUBE.conectada())
+      aviso.innerHTML = '<b>Conectada a la nube.</b> Lo que escribís se guarda ' +
+        'en esta computadora y también en la nube, así lo seguís desde otra. ' +
+        'Cuando la clase esté lista, <b>Exportar archivo</b> y guardalo en el repo: ' +
+        'ese sigue siendo el archivo definitivo.';
     document.getElementById('estado').textContent = borrador ? 'borrador guardado' : 'sin cambios';
     document.getElementById('estado').className = 'estado ' + (borrador ? 'guardado' : '');
 
     dibujarFormulario();
     refrescar();
+    pintarNube();
+    mirarLaNube();
   }
 
   const params = new URLSearchParams(location.search);

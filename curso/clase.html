@@ -20,6 +20,7 @@
 
 <script src="data/indice.js"></script>
 <script src="borradores.js"></script>
+<script src="nube.js"></script>
 <script src="render.js"></script>
 <script>
 // Esta página solo elige QUÉ clase y CÓMO, y se lo pide a render.js.
@@ -75,6 +76,18 @@
     if (b){ esBorrador = true; return b; }
     return publicada;
   }
+  // Si en ESTE aparato hay frase de la nube, se mira si hay un borrador allá.
+  // Nunca bloquea el dibujado: la clase se ve primero y esto llega después.
+  // Un alumno nunca tiene frase guardada, así que para él no hay red.
+  function mirarLaNube(c){
+    if (!window.NUBE || !NUBE.conectada() || esBorrador) return;
+    NUBE.leer(id).then(datos => {
+      if (!datos || !datos.titulo) return;
+      esBorrador = true;
+      try { dibujar(datos); } catch (e){}
+    }).catch(() => {});
+  }
+
   function bandaBorrador(){
     if (!esBorrador) return;
     const d = document.createElement('div');
@@ -99,6 +112,7 @@
     RENDER.conectar(document);
     bandaBorrador();
     barra(c);
+    mirarLaNube(c);
     if (window.TEMA) TEMA.conectar();
   }
 

@@ -25,6 +25,7 @@ curso/tema.js              claro/oscuro
 curso/esquema.js           EL ESQUEMA declarado + la validación  ← de acá sale el formulario
 curso/render.js            EL renderizador — el único que sabe dibujar una caja
 curso/borradores.js        lo que se edita, guardado en el navegador
+curso/nube.js              los mismos borradores, compartidos (Supabase)
 curso/clase.html           una clase en pantalla (alumno o profesora)
 curso/editor.html          el editor: formulario + vista previa + qué falta
 curso/imprimir.html        varias clases seguidas → imprimir / PDF
@@ -97,19 +98,46 @@ reglas propias se desincronizarían y el editor mentiría. El test además se
 asegura de que la validación **detecte** los errores, rompiendo una clase a
 propósito: si no, podría quedar ciega y todo seguiría en verde.
 
-## Borradores
+## Borradores y la nube
 
-Mientras no haya nube (etapa 4), lo que se edita vive en **localStorage de ese
-navegador**. Consecuencias que la interfaz tiene que gritar, no susurrar:
+Lo que se edita se guarda **primero en este navegador** (instantáneo) y
+**después en la nube** (Supabase), sin bloquear. Las reglas son las mismas que
+las del juego:
 
-- desde otra computadora no se ve;
-- si se limpia el navegador, se pierde.
-
-Por eso **Exportar archivo** es el botón más prominente del editor: baja el
-`curso/data/<id>.js` definitivo, que es el que va al repo.
+- **La nube nunca hace falta.** Sin internet o sin frase de acceso, el editor
+  anda exactamente igual contra localStorage.
+- **Nada de `await` en el camino de escribir.**
+- **La nube NUNCA pisa lo local sin preguntar.** Si del otro lado hay algo más
+  nuevo, se avisa con una banda que dice de quién y de cuándo, y decide la
+  persona.
 
 Un borrador **pisa** a la clase publicada cuando existe, así se corrige y se
 ve el cambio al instante. `clase.html` lo avisa con una banda arriba.
+
+**El archivo sigue siendo la verdad publicada.** La nube guarda trabajo en
+curso, no publica: para publicar hay que **Exportar archivo** y guardarlo en
+`curso/data/`. Por eso ese botón sigue siendo el más prominente del editor.
+
+### Cómo está cerrada
+
+Las tablas `curso_acceso` y `curso_borradores` tienen RLS **sin ninguna
+política**: desde el navegador no se tocan nunca de forma directa. El único
+camino son las funciones `curso_listar / curso_leer / curso_guardar /
+curso_borrar`, que piden la frase de acceso. Es el mismo patrón que
+`enviar_record` para la tabla del juego.
+
+De la frase solo se guarda el **hash** (bcrypt). `curso_ok`, que es la que
+compara, **no está expuesta**: si lo estuviera, sería el camino más barato
+para probar frases.
+
+Un alumno nunca tiene frase guardada, así que su navegador **no habla con
+Supabase nunca**. El test lo verifica.
+
+### El proyecto de Supabase
+
+Es el mismo del juego (`filo`), en la misma cuenta. La clave que está en
+`curso/nube.js` es la **publicable**, la que va en el HTML a propósito. **La
+clave de servicio no entra al repo jamás.**
 
 ## Impresión
 
@@ -143,7 +171,17 @@ exista, así que no se agregan ni se sacan cajas sin pensarlo dos veces.
 ```bash
 # Datos, esquema, coherencia y renderizado en un navegador de verdad
 NODE_PATH=/opt/node22/lib/node_modules node test/curso.test.cjs
+
+# Los borradores compartidos, con dos navegadores
+NODE_PATH=/opt/node22/lib/node_modules node test/nube.test.cjs
 ```
+
+`nube.test.cjs` corre en dos modos y avisa en cuál: **REAL** contra Supabase
+(hay que pasarle `CURSO_FRASE=…`) o **DOBLE**, interceptando las llamadas con
+un servidor de mentira. El doble prueba todo el lado del navegador —la URL,
+las cabeceras, el cuerpo, los avisos, la mezcla— sin depender de la red; en el
+sandbox de Claude Code el navegador no sale a internet, así que ahí corre
+siempre así.
 
 Sin playwright el test corre igual, pero se saltea la parte del navegador y
 lo avisa.
@@ -168,8 +206,8 @@ guardar en `curso/data/`. Después, estado a `'listo'` en el índice.
 - **Etapa 3 (hecha):** el editor. Formulario generado desde el esquema, vista
   previa al lado, validación en vivo, exportar/importar, y borradores que
   pisan a la clase publicada.
-- **Etapa 4 (siguiente):** guardado en la nube, para trabajar desde cualquier
-  aparato y que los borradores no dependan de un navegador.
+- **Etapa 4 (hecha):** guardado en la nube. Los borradores se comparten entre
+  aparatos y entre personas, con aviso de conflicto en vez de pisadas.
 - **Pendiente del editor:** todavía no se pueden crear unidades nuevas fuera
   de las que ya están en `data/indice.js` (haría falta editar el índice desde
   la interfaz). Alcanza para armar las 12 de la Parte 1.
