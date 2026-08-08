@@ -26,8 +26,11 @@ const check = (nombre, pasa, extra) => {
   console.log(`${pasa ? 'PASS' : 'FAIL'}  ${nombre}${extra ? '  — ' + extra : ''}`);
 };
 
-// ─── 1 · Cargar el índice ───────────────────────────────────────────
+// ─── 1 · Cargar el índice y el esquema ──────────────────────────────
 const { CURSO } = require(path.join(DATA, 'indice.js'));
+// La validación es LA MISMA que ve la profesora en el editor: si el test y el
+// editor tuvieran reglas propias, se desincronizarían y el editor mentiría.
+const { ESQUEMA } = require(path.join(ROOT, 'curso', 'esquema.js'));
 const todas = CURSO.todas();
 
 check('el índice carga y tiene unidades', todas.length > 0, `${todas.length} unidades`);
@@ -83,33 +86,38 @@ for (const u of listas){
     clase.id === u.id && clase.clase === u.clase && clase.titulo === u.titulo,
     `índice="${u.titulo}" datos="${clase.titulo}"`);
 
-  // las 6 + 6 cajas, ninguna vacía
-  const faltanG = CAJAS_GRAMMAR.filter(k => !clase.grammar || vacia(clase.grammar[k]));
-  const faltanV = CAJAS_VOCAB.filter(k => !clase.vocabulary || vacia(clase.vocabulary[k]));
-  check(`${u.id}: las 6 cajas del Grammar Book`, faltanG.length === 0, faltanG.join(', ') || undefined);
-  check(`${u.id}: las 6 cajas del Vocabulary Book`, faltanV.length === 0, faltanV.join(', ') || undefined);
+  // Todo lo demás lo dice la validación compartida con el editor: las 12 cajas
+  // completas, la unidad que termina hablando, la práctica que termina en
+  // personalizar y las marcas de texto cerradas.
+  const problemas = ESQUEMA.validar(clase);
+  const errores = problemas.filter(p => p.nivel === 'error');
+  check(`${u.id}: pasa la validación del editor`, errores.length === 0,
+    errores.map(e => `${e.donde}: ${e.texto}`).join(' | ') || undefined);
 
-  // la unidad termina hablando: es la regla que no se negocia
-  check(`${u.id}: tiene situación de speaking con guion y rondas`,
-    !!(clase.grammar.speaking && clase.grammar.speaking.situacion &&
-       clase.grammar.speaking.guion?.length && clase.grammar.speaking.rondas?.length));
+  const avisos = problemas.filter(p => p.nivel === 'aviso');
+  if (avisos.length)
+    console.log(`      avisos: ${avisos.map(a => `${a.donde}: ${a.texto}`).join(' | ')}`);
+}
 
-  // la práctica sigue el orden completar → transformar → personalizar
-  const tipos = (clase.grammar.practice?.pasos || []).map(p => p.tipo);
-  check(`${u.id}: la práctica termina en personalizar`,
-    tipos[tipos.length - 1] === 'renglones', tipos.join(' → '));
-
-  // Marcas de texto bien cerradas. Se mira SOLO el texto del contenido: si se
-  // contara sobre el JSON entero, cada objeto anidado aportaría un `}}` falso.
-  const texto = textos(clase).join('\n');
-  for (const [a, b] of [['{{','}}'], ['[[',']]']]){
-    const na = texto.split(a).length - 1, nb = texto.split(b).length - 1;
-    check(`${u.id}: las marcas ${a}…${b} están balanceadas`, na === nb, `${na} vs ${nb}`);
-  }
-  const asteriscos = (texto.match(/\*\*/g) || []).length;
-  check(`${u.id}: las marcas **…** están balanceadas`, asteriscos % 2 === 0, `${asteriscos} marcas`);
-  const barras = (texto.match(/\/\//g) || []).length;
-  check(`${u.id}: las marcas //…// están balanceadas`, barras % 2 === 0, `${barras} marcas`);
+// ─── 2b · La validación detecta lo que tiene que detectar ───────────
+// Si la validación no se prueba a sí misma, un cambio la puede volver ciega
+// y el test seguiría en verde con clases rotas.
+{
+  const base = cargar(listas[0].id).clase;
+  const clonar = () => JSON.parse(JSON.stringify(base));
+  const rompe = (nombre, romper) => {
+    const c = clonar(); romper(c);
+    const hay = ESQUEMA.validar(c).some(p => p.nivel === 'error');
+    check(`la validación detecta: ${nombre}`, hay);
+  };
+  rompe('una caja vacía',            c => { c.vocabulary.chunks = {}; });
+  rompe('speaking sin rondas',       c => { c.grammar.speaking.rondas = []; });
+  rompe('práctica sin personalizar', c => { c.grammar.practice.pasos.pop(); });
+  rompe('un [[ sin cerrar',          c => { c.titulo += ' [['; });
+  rompe('un ** sin cerrar',          c => { c.promesa += ' **'; });
+  rompe('falta el título',           c => { c.titulo = ''; });
+  check('la validación aprueba una clase buena',
+    ESQUEMA.validar(base).filter(p => p.nivel === 'error').length === 0);
 }
 
 // ─── 3 · Archivos de datos huérfanos ────────────────────────────────
@@ -157,7 +165,14 @@ const MIME = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css',
   const page = await ctx.newPage();
   const errs = [];
   page.on('pageerror', e => errs.push('pageerror: ' + e.message));
-  page.on('console', m => { if (m.type() === 'error') errs.push('console: ' + m.text()); });
+  // Un 404 de curso/data/<id>.js NO es un error: es lo que pasa cuando se abre
+  // una clase que todavía no está armada, y es justamente lo que se está
+  // probando. Se filtra por origen, no por el momento en que ocurre.
+  const esperado404 = m => /\/curso\/data\/.*\.js/.test((m.location() || {}).url || '') &&
+                           /404/.test(m.text());
+  page.on('console', m => {
+    if (m.type() === 'error' && !esperado404(m)) errs.push('console: ' + m.text());
+  });
 
   // ── la portada se dibuja desde el índice ──
   await page.goto(base + '/', { waitUntil:'load' });
@@ -304,6 +319,82 @@ const MIME = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css',
     check(`imprimir solo ${libro}: no está el otro`, !(await page.$(ausente)));
   }
 
+  // ── el editor ──
+  const pendiente0 = todas.find(u => u.estado !== 'listo');
+
+  await page.goto(`${base}/curso/editor.html?u=${listas[0].id}`, { waitUntil:'load' });
+  await page.waitForSelector('details.caja', { timeout: 5000 }).catch(() => {});
+
+  const cajasForm = await page.$$eval('details.caja', e => e.length);
+  check('el editor arma el formulario desde el esquema', cajasForm === 14, `${cajasForm} secciones`);
+
+  const previa = await page.$$eval('.vista .card', e => e.length);
+  check('el editor muestra la vista previa completa', previa === 12, `${previa} cajas`);
+
+  const validoAlAbrir = await page.$eval('#resumen-val', e => e.textContent);
+  check('una clase publicada abre sin errores en el editor',
+    validoAlAbrir.includes('completa'), validoAlAbrir);
+
+  // escribir el título y ver que la vista previa cambia
+  const campoTitulo = await page.$('input[data-ruta=\'["titulo"]\']');
+  check('el editor tiene el campo del título', !!campoTitulo);
+  await campoTitulo.fill('Título de prueba');
+  await page.waitForTimeout(150);
+  const enVista = await page.$eval('.vista header.top h1 .en', e => e.textContent);
+  check('la vista previa se actualiza mientras escribe', enVista === 'Título de prueba', enVista);
+
+  // se guarda solo
+  await page.waitForTimeout(700);
+  const estado = await page.$eval('#estado', e => e.textContent);
+  check('el borrador se guarda solo', estado.includes('guardado'), estado);
+
+  const guardado = await page.evaluate(id =>
+    (JSON.parse(localStorage.getItem('curso-borrador-' + id) || '{}').clase || {}).titulo,
+    listas[0].id);
+  check('el borrador queda en el navegador', guardado === 'Título de prueba', guardado);
+
+  // la clase muestra el borrador y avisa
+  await page.goto(`${base}/curso/clase.html?u=${listas[0].id}`, { waitUntil:'load' });
+  await page.waitForSelector('.card', { timeout: 5000 }).catch(() => {});
+  const banda = await page.$('.banda-borrador');
+  check('la clase avisa que está mostrando un borrador', !!banda);
+  const tituloConBorrador = await page.$eval('header.top h1 .en', e => e.textContent);
+  check('el borrador pisa a la clase publicada',
+    tituloConBorrador === 'Título de prueba', tituloConBorrador);
+
+  // exportar produce un archivo que se puede volver a leer
+  await page.goto(`${base}/curso/editor.html?u=${listas[0].id}`, { waitUntil:'load' });
+  await page.waitForSelector('details.caja', { timeout: 5000 }).catch(() => {});
+  const ida = await page.evaluate(() => {
+    const texto = BORRADORES.comoArchivo(
+      JSON.parse(localStorage.getItem('curso-borrador-' + document.getElementById('cual').value)).clase);
+    const vuelta = BORRADORES.desdeTexto(texto);
+    return { titulo: vuelta.titulo, cajas: Object.keys(vuelta.grammar).length,
+             arranca: texto.indexOf('CLASES[') > 0 };
+  });
+  check('exportar e importar devuelve la misma clase',
+    ida.titulo === 'Título de prueba' && ida.cajas === 6 && ida.arranca, JSON.stringify(ida));
+
+  // descartar el borrador vuelve a la versión publicada
+  await page.evaluate(id => localStorage.removeItem('curso-borrador-' + id), listas[0].id);
+  await page.goto(`${base}/curso/clase.html?u=${listas[0].id}`, { waitUntil:'load' });
+  await page.waitForSelector('.card', { timeout: 5000 }).catch(() => {});
+  check('sin borrador vuelve la versión publicada',
+    (await page.$eval('header.top h1 .en', e => e.textContent)) === listas[0].titulo);
+  check('y desaparece el aviso de borrador', !(await page.$('.banda-borrador')));
+
+  // una clase sin armar se puede empezar desde el índice
+  if (pendiente0){
+    await page.goto(`${base}/curso/editor.html?u=${pendiente0.id}`, { waitUntil:'load' });
+    await page.waitForSelector('details.caja', { timeout: 5000 }).catch(() => {});
+    const arranque = await page.$eval('input[data-ruta=\'["titulo"]\']', e => e.value);
+    check('una clase sin armar arranca con los datos del índice',
+      arranque === pendiente0.titulo, arranque);
+    const faltan = await page.$eval('#resumen-val', e => e.textContent);
+    check('y avisa todo lo que falta', /falta/i.test(faltan), faltan);
+    await page.evaluate(id => localStorage.removeItem('curso-borrador-' + id), pendiente0.id);
+  }
+
   // ── el tema abre SIEMPRE claro, aunque el sistema esté en oscuro ──
   const oscuro = await browser.newContext({ colorScheme: 'dark', viewport:{ width:1100, height:900 } });
   const po = await oscuro.newPage();
@@ -332,11 +423,6 @@ const MIME = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css',
   check('se puede volver a claro', vuelta === 'light', vuelta);
   await oscuro.close();
 
-  // A partir de acá se prueban a propósito clases que NO existen. El 404 del
-  // archivo de datos es justamente lo que dispara el aviso, así que se deja de
-  // contar errores de consola: si no, el test se acusaría a sí mismo.
-  const erroresReales = errs.length;
-
   // ── una clase que está en el índice pero no armada avisa bien ──
   const pendiente = todas.find(u => u.estado !== 'listo');
   if (pendiente){
@@ -352,8 +438,7 @@ const MIME = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css',
   const aviso404 = await page.$eval('.oops h2', e => e.textContent).catch(() => null);
   check('un id inexistente avisa en vez de romperse', !!aviso404, aviso404 || 'sin aviso');
 
-  check('ningún error de consola dibujando las clases',
-    erroresReales === 0, errs.slice(0, erroresReales).join(' | '));
+  check('ningún error de consola en todo el recorrido', errs.length === 0, errs.join(' | '));
 
   await browser.close();
   server.close();

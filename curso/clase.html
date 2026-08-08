@@ -19,6 +19,7 @@
 <div class="wrap" id="app"></div>
 
 <script src="data/indice.js"></script>
+<script src="borradores.js"></script>
 <script src="render.js"></script>
 <script>
 // Esta página solo elige QUÉ clase y CÓMO, y se lo pide a render.js.
@@ -49,17 +50,39 @@
   s.src = 'data/' + id + '.js';
 
   s.onload = function (){
-    const c = CLASES[id];
+    const c = conBorrador(CLASES[id]);
     if (!c) return error('El archivo cargó pero no declaró la clase',
       `<code>curso/data/${esc(id)}.js</code> tiene que hacer <code>CLASES['${esc(id)}'] = { … }</code>.`);
     try { dibujar(c); }
     catch (e){ error('No se pudo dibujar la clase', `<code>${esc(e.message)}</code>`); }
   };
   s.onerror = function (){
+    // Puede no existir el archivo pero sí un borrador sin exportar todavía.
+    const c = conBorrador(null);
+    if (c){ try { return dibujar(c); } catch (e){} }
     error('Esta clase todavía no está armada',
-      `Falta el archivo <code>curso/data/${esc(id)}.js</code>. En el índice figura como <b>${esc(ficha.titulo)}</b>.`);
+      `Falta el archivo <code>curso/data/${esc(id)}.js</code>. En el índice figura como <b>${esc(ficha.titulo)}</b>.` +
+      ` <a href="editor.html?u=${esc(id)}">Armarla en el editor →</a>`);
   };
   document.head.appendChild(s);
+
+  // Un borrador del editor PISA a la clase publicada, así se ve el cambio al
+  // instante. Se avisa con una banda arriba, porque solo existe en este
+  // navegador: nadie más lo ve hasta que se exporte y se suba.
+  let esBorrador = false;
+  function conBorrador(publicada){
+    const b = (window.BORRADORES && BORRADORES.leer(id)) || null;
+    if (b){ esBorrador = true; return b; }
+    return publicada;
+  }
+  function bandaBorrador(){
+    if (!esBorrador) return;
+    const d = document.createElement('div');
+    d.className = 'banda-borrador';
+    d.innerHTML = 'Estás viendo un <b>borrador sin publicar</b>, guardado solo en esta ' +
+      'computadora. <a href="editor.html?u=' + esc(id) + '">Seguir editando →</a>';
+    document.querySelector('nav.bar').after(d);
+  }
 
   function dibujar(c){
     document.title = `Clase ${String(c.clase).padStart(2,'0')} · ${c.titulo}` +
@@ -74,6 +97,7 @@
       </footer>`;
 
     RENDER.conectar(document);
+    bandaBorrador();
     barra(c);
     if (window.TEMA) TEMA.conectar();
   }

@@ -82,6 +82,8 @@
   a.tile.link{text-decoration:none;color:inherit;}
   a.tile.link b{color:var(--grammar);}
   a.tile.link:hover,a.tile.link:focus-visible{border-color:var(--grammar);background:var(--grammar-bg);}
+  a.tile.destacado{border-color:var(--grammar);background:var(--grammar-bg);}
+  a.tile.destacado:hover{background:var(--surface);}
 
   footer{margin-top:clamp(3rem,7vw,4.5rem);padding-top:1.25rem;
     border-top:1px solid var(--line);align-items:baseline;}
@@ -145,17 +147,17 @@
       <h2>Imprimir y armar</h2>
     </div>
     <div class="grid3">
-      <a class="tile link" href="curso/imprimir.html?parte=n1p1&amp;libro=grammar">
-        <b>Grammar Book →</b>
-        <p>La parte entera en PDF, lista para imprimir o mandar.</p>
-      </a>
-      <a class="tile link" href="curso/imprimir.html?parte=n1p1&amp;libro=vocabulary">
-        <b>Vocabulary Book →</b>
-        <p>El mismo libro, con las palabras y los chunks.</p>
+      <a class="tile link destacado" href="curso/editor.html">
+        <b>Editor de clases →</b>
+        <p>Armar una clase nueva o corregir una existente, con vista previa al lado y aviso de lo que falta.</p>
       </a>
       <a class="tile link" href="curso/imprimir.html?parte=n1p1&amp;v=profesor">
         <b>Versión profesora →</b>
         <p>Con el plan minuto a minuto, qué anticipar y las respuestas puestas.</p>
+      </a>
+      <a class="tile link" href="curso/imprimir.html?parte=n1p1">
+        <b>Imprimir / PDF →</b>
+        <p>Una clase o la parte entera. Grammar, Vocabulary o los dos.</p>
       </a>
     </div>
   </section>

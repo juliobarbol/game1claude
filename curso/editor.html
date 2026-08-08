@@ -1,0 +1,408 @@
+<meta charset="utf-8">
+<title>Editor de clases — Curso de inglés</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1E3A63">
+<link rel="stylesheet" href="estilo.css">
+<script src="tema.js"></script>
+
+<nav class="bar editor-bar">
+  <div class="bar-in">
+    <a class="home" href="../index.html">← Curso</a>
+    <select id="cual" class="sel-clase"></select>
+    <span id="estado" class="estado"></span>
+    <span class="spacer"></span>
+    <button type="button" id="exportar" class="cta-print">Exportar archivo</button>
+    <button type="button" id="importar" class="btn">Importar</button>
+    <button type="button" id="descartar" class="btn peligro">Descartar borrador</button>
+    <a class="imprimir" id="ver" href="#">Ver la clase</a>
+    <button data-tema-boton type="button" class="tema"></button>
+    <input type="file" id="archivo" accept=".js,.json" hidden>
+  </div>
+</nav>
+
+<div class="editor">
+
+  <!-- ─── columna izquierda: el formulario ─── -->
+  <div class="col-form">
+    <div class="aviso-guardado" id="aviso">
+      <b>Lo que escribís se guarda solo en esta computadora.</b>
+      Cuando la clase esté lista, apretá <b>Exportar archivo</b> y guardalo en el repo:
+      ese es el archivo definitivo.
+    </div>
+
+    <details class="ayuda-marcas">
+      <summary>Cómo se marca el texto</summary>
+      <ul>
+        <li><code>**negrita**</code> → énfasis, sílaba tónica</li>
+        <li><code>//inglés//</code> → una palabra en inglés dentro del castellano</li>
+        <li><code>{{resaltado}}</code> → la estructura nueva, en el diálogo</li>
+        <li><code>[[respuesta]]</code> → el hueco de un ejercicio, con su respuesta</li>
+      </ul>
+    </details>
+
+    <div id="form"></div>
+  </div>
+
+  <!-- ─── columna derecha: control y vista previa ─── -->
+  <div class="col-vista">
+    <div class="panel-control">
+      <div class="control-fila">
+        <b id="resumen-val">Revisando…</b>
+        <label class="mini"><input type="checkbox" id="ver-profe"> Ver versión profesora</label>
+      </div>
+      <ul class="problemas" id="problemas"></ul>
+    </div>
+    <div class="vista" id="vista"></div>
+  </div>
+
+</div>
+
+<script src="data/indice.js"></script>
+<script src="esquema.js"></script>
+<script src="borradores.js"></script>
+<script src="render.js"></script>
+<script>
+// ════════════════════════════════════════════════════════════════════
+// EDITOR DE CLASES
+//
+// El formulario NO está escrito acá: se construye a partir de
+// curso/esquema.js. Agregar un campo al esquema lo hace aparecer solo.
+// ════════════════════════════════════════════════════════════════════
+(function (){
+  const esc = RENDER.esc;
+  window.CLASES = window.CLASES || {};
+
+  let modelo = null;     // la clase que se está editando
+  let idActual = null;
+  let guardarPronto = null;
+
+  // ─── Leer y escribir por ruta: ['grammar','inContext','dialogo',0,'linea'] ──
+  function getEn(obj, ruta){
+    let v = obj;
+    for (const p of ruta){ if (v == null) return undefined; v = v[p]; }
+    return v;
+  }
+  function setEn(obj, ruta, valor){
+    let v = obj;
+    for (let i = 0; i < ruta.length - 1; i++) v = v[ruta[i]];
+    v[ruta[ruta.length - 1]] = valor;
+  }
+
+  // ─── Construcción del formulario ──────────────────────────────────
+  const r = (ruta) => esc(JSON.stringify(ruta));
+
+  function campoHTML(campo, ruta, valor, padre){
+    const ayuda = campo.ayuda ? `<small class="ayuda">${esc(campo.ayuda)}</small>` : '';
+    const marca = campo.marcas ? ' <i class="marcas" title="admite **negrita**, //inglés//, {{resaltado}} y [[respuesta]]">✳</i>' : '';
+    const cab = `<label class="et">${esc(campo.etiqueta || campo.clave)}${marca}</label>${ayuda}`;
+
+    switch (campo.tipo){
+
+      case 'parrafo':
+        return `<div class="campo"><div>${cab}</div>
+          <textarea data-ruta='${r(ruta)}' rows="2">${esc(valor || '')}</textarea></div>`;
+
+      case 'numero':
+        return `<div class="campo chico"><div>${cab}</div>
+          <input type="number" data-ruta='${r(ruta)}' data-num value="${esc(valor == null ? '' : valor)}"></div>`;
+
+      case 'lista': {
+        const filas = (valor || []).map((t, i) => `<div class="fila-lista">
+            <input type="text" data-ruta='${r(ruta.concat(i))}' value="${esc(t)}">
+            <button type="button" class="mini-btn" data-quitar='${r(ruta.concat(i))}' title="Quitar">×</button>
+          </div>`).join('');
+        return `<div class="campo"><div>${cab}</div>
+          <div class="lista">${filas}
+            <button type="button" class="mini-btn mas" data-agregar='${r(ruta)}' data-que="texto">+ Agregar</button>
+          </div></div>`;
+      }
+
+      case 'matriz': {
+        const cols = Math.max(((padre || {}).cabecera || []).length,
+                              ((valor || [])[0] || []).length, 2);
+        const filas = (valor || []).map((fila, i) => `<div class="fila-matriz" style="--cols:${cols}">
+            ${Array.from({ length: cols }, (_, j) =>
+              `<input type="text" data-ruta='${r(ruta.concat(i, j))}' value="${esc(fila[j] || '')}">`).join('')}
+            <button type="button" class="mini-btn" data-quitar='${r(ruta.concat(i))}' title="Quitar fila">×</button>
+          </div>`).join('');
+        return `<div class="campo"><div>${cab}</div>
+          <div class="lista">${filas}
+            <button type="button" class="mini-btn mas" data-agregar='${r(ruta)}' data-que="matriz" data-cols="${cols}">+ Agregar fila</button>
+          </div></div>`;
+      }
+
+      case 'filas': {
+        // Si todos los subcampos son de una línea (palabra/traducción,
+        // dato/valor), la fila va horizontal: una lista de 20 palabras apilada
+        // de a dos campos es imposible de recorrer.
+        const simple = campo.campos.every(x => !x.tipo || x.tipo === 'texto' || x.tipo === 'numero');
+        const filas = (valor || []).map((item, i) => `<div class="fila-obj${simple ? ' simple' : ''}">
+            <div class="fila-cab">
+              <span class="n-fila">${i + 1}</span>
+              <span class="spacer"></span>
+              <button type="button" class="mini-btn" data-mover='${r(ruta.concat(i))}' data-dir="-1" title="Subir">↑</button>
+              <button type="button" class="mini-btn" data-mover='${r(ruta.concat(i))}' data-dir="1" title="Bajar">↓</button>
+              <button type="button" class="mini-btn" data-quitar='${r(ruta.concat(i))}' title="Quitar">×</button>
+            </div>
+            <div class="fila-campos${simple ? ' compacta' : ''}">
+              ${campo.campos.map(sub =>
+                campoHTML(sub, ruta.concat(i, sub.clave), item[sub.clave], item)).join('')}
+            </div>
+          </div>`).join('');
+        return `<div class="campo bloque"><div>${cab}</div>
+          <div class="lista">${filas}
+            <button type="button" class="mini-btn mas" data-agregar='${r(ruta)}' data-que="obj"
+              data-campos='${esc(JSON.stringify(campo.campos.map(x => [x.clave, x.tipo])))}'>+ Agregar</button>
+          </div></div>`;
+      }
+
+      default: {
+        const opciones = campo.opciones
+          ? `<select data-ruta='${r(ruta)}'>${campo.opciones.map(o =>
+              `<option value="${esc(o)}"${o === valor ? ' selected' : ''}>${esc(o)}</option>`).join('')}</select>`
+          : `<input type="text" data-ruta='${r(ruta)}' value="${esc(valor || '')}">`;
+        return `<div class="campo ${campo.ancho === 'chico' ? 'chico' : ''}"><div>${cab}</div>${opciones}</div>`;
+      }
+    }
+  }
+
+  function cajaHTML(caja, libro){
+    const d = modelo[libro][caja.clave] || {};
+    return `<details class="caja ${caja.color}" open>
+      <summary><span class="tag">${esc(caja.etiqueta)}</span>
+        <small>${esc(caja.ayuda || '')}</small></summary>
+      <div class="caja-cuerpo">
+        ${caja.campos.map(campo =>
+          campoHTML(campo, [libro, caja.clave, campo.clave], d[campo.clave], d)).join('')}
+      </div>
+    </details>`;
+  }
+
+  function dibujarFormulario(){
+    const num = (clave, etiqueta) =>
+      `<div class="campo chico"><div><label class="et">${etiqueta}</label></div>
+       <input type="number" data-ruta='${r([clave])}' data-num value="${esc(modelo[clave])}"></div>`;
+
+    document.getElementById('form').innerHTML = `
+      <details class="caja slate" open>
+        <summary><span class="tag">La clase</span><small>Dónde va y cómo se llama</small></summary>
+        <div class="caja-cuerpo">
+          <div class="fila-numeros">
+            ${num('nivel','Nivel')}${num('parte','Parte')}${num('unidad','Unidad')}${num('clase','Nº de clase')}
+          </div>
+          ${ESQUEMA.CABECERA.map(c => campoHTML(c, [c.clave], modelo[c.clave], modelo)).join('')}
+          ${campoHTML({ clave:'carga', tipo:'texto', etiqueta:'Carga léxica',
+            ayuda:'El texto del encabezado del Vocabulary Book: “26 palabras · 8 chunks”.' },
+            ['vocabulary','carga'], modelo.vocabulary.carga, modelo.vocabulary)}
+        </div>
+      </details>
+
+      <details class="caja slate" open>
+        <summary><span class="tag">Para la profesora</span><small>No va en el libro del alumno</small></summary>
+        <div class="caja-cuerpo">
+          ${ESQUEMA.PROFE.map(c =>
+            campoHTML(c, ['profe', c.clave], (modelo.profe || {})[c.clave], modelo.profe)).join('')}
+        </div>
+      </details>
+
+      <h2 class="titulo-libro g">Grammar Book</h2>
+      ${ESQUEMA.GRAMMAR.map(c => cajaHTML(c, 'grammar')).join('')}
+
+      <h2 class="titulo-libro v">Vocabulary Book</h2>
+      ${ESQUEMA.VOCABULARY.map(c => cajaHTML(c, 'vocabulary')).join('')}`;
+  }
+
+  // ─── Vista previa y validación ────────────────────────────────────
+  function refrescar(){
+    const profe = document.getElementById('ver-profe').checked;
+    try {
+      document.getElementById('vista').innerHTML =
+        RENDER.clase(modelo, { profe: profe, botones: false });
+    } catch (e){
+      document.getElementById('vista').innerHTML =
+        `<div class="oops"><h2>No se pudo dibujar la vista previa</h2>
+         <p><code>${esc(e.message)}</code></p></div>`;
+    }
+
+    const problemas = ESQUEMA.validar(modelo);
+    const errores = problemas.filter(p => p.nivel === 'error');
+    const avisos  = problemas.filter(p => p.nivel === 'aviso');
+
+    const resumen = document.getElementById('resumen-val');
+    if (!errores.length && !avisos.length){
+      resumen.textContent = '✓ La clase está completa';
+      resumen.className = 'ok';
+    } else {
+      resumen.textContent =
+        (errores.length ? `${errores.length} ${errores.length === 1 ? 'cosa falta' : 'cosas faltan'}` : 'Completa') +
+        (avisos.length ? ` · ${avisos.length} para mirar` : '');
+      resumen.className = errores.length ? 'mal' : 'medio';
+    }
+
+    document.getElementById('problemas').innerHTML = problemas.map(p =>
+      `<li class="${p.nivel}"><b>${esc(p.donde)}</b> ${esc(p.texto)}</li>`).join('');
+  }
+
+  function tocado(){
+    clearTimeout(guardarPronto);
+    document.getElementById('estado').textContent = 'guardando…';
+    document.getElementById('estado').className = 'estado guardando';
+    guardarPronto = setTimeout(() => {
+      const bien = BORRADORES.guardar(idActual, modelo);
+      const e = document.getElementById('estado');
+      e.textContent = bien ? 'borrador guardado' : '¡NO se pudo guardar!';
+      e.className = 'estado ' + (bien ? 'guardado' : 'error');
+    }, 400);
+    refrescar();
+  }
+
+  // ─── Eventos del formulario ───────────────────────────────────────
+  document.getElementById('form').addEventListener('input', ev => {
+    const el = ev.target;
+    if (!el.dataset.ruta) return;
+    const ruta = JSON.parse(el.dataset.ruta);
+    setEn(modelo, ruta, el.dataset.num !== undefined ? Number(el.value) : el.value);
+    tocado();
+  });
+  document.getElementById('form').addEventListener('change', ev => {
+    const el = ev.target;
+    if (el.tagName === 'SELECT' && el.dataset.ruta){
+      setEn(modelo, JSON.parse(el.dataset.ruta), el.value);
+      dibujarFormulario(); tocado();
+    }
+  });
+
+  document.getElementById('form').addEventListener('click', ev => {
+    const btn = ev.target.closest('button[data-agregar], button[data-quitar], button[data-mover]');
+    if (!btn) return;
+    ev.preventDefault();
+
+    if (btn.dataset.agregar){
+      const ruta = JSON.parse(btn.dataset.agregar);
+      const lista = getEn(modelo, ruta);
+      if (btn.dataset.que === 'texto') lista.push('');
+      else if (btn.dataset.que === 'matriz') lista.push(Array(Number(btn.dataset.cols)).fill(''));
+      else {
+        const campos = JSON.parse(btn.dataset.campos);
+        const nuevo = {};
+        for (const [clave, tipo] of campos)
+          nuevo[clave] = (tipo === 'lista' || tipo === 'filas' || tipo === 'matriz') ? []
+                       : (tipo === 'numero' ? 0 : '');
+        lista.push(nuevo);
+      }
+    }
+    if (btn.dataset.quitar){
+      const ruta = JSON.parse(btn.dataset.quitar);
+      const i = ruta[ruta.length - 1];
+      getEn(modelo, ruta.slice(0, -1)).splice(i, 1);
+    }
+    if (btn.dataset.mover){
+      const ruta = JSON.parse(btn.dataset.mover);
+      const i = ruta[ruta.length - 1];
+      const lista = getEn(modelo, ruta.slice(0, -1));
+      const j = i + Number(btn.dataset.dir);
+      if (j >= 0 && j < lista.length){
+        const t = lista[i]; lista[i] = lista[j]; lista[j] = t;
+      }
+    }
+    dibujarFormulario();
+    tocado();
+  });
+
+  document.getElementById('ver-profe').addEventListener('change', refrescar);
+
+  // ─── Barra de herramientas ────────────────────────────────────────
+  document.getElementById('exportar').addEventListener('click', () => {
+    BORRADORES.descargar(modelo);
+  });
+
+  document.getElementById('importar').addEventListener('click', () => {
+    document.getElementById('archivo').click();
+  });
+  document.getElementById('archivo').addEventListener('change', ev => {
+    const f = ev.target.files[0];
+    if (!f) return;
+    const lector = new FileReader();
+    lector.onload = () => {
+      try {
+        const c = BORRADORES.desdeTexto(String(lector.result));
+        modelo = ESQUEMA.molde(c.id || idActual, c);
+        idActual = modelo.id;
+        BORRADORES.guardar(idActual, modelo);
+        arrancar(idActual);
+      } catch (e){ alert(e.message); }
+    };
+    lector.readAsText(f);
+    ev.target.value = '';
+  });
+
+  document.getElementById('descartar').addEventListener('click', () => {
+    if (!BORRADORES.hay(idActual)){
+      alert('Esta clase no tiene borrador: lo que ves es la versión publicada.');
+      return;
+    }
+    if (!confirm('Se borra el borrador de esta clase y vuelve a la versión publicada.\n\n' +
+                 'Esto no se puede deshacer. ¿Seguimos?')) return;
+    BORRADORES.borrar(idActual);
+    location.reload();
+  });
+
+  document.getElementById('cual').addEventListener('change', ev => {
+    location.search = '?u=' + ev.target.value;
+  });
+
+  // ─── Arranque ─────────────────────────────────────────────────────
+  function llenarSelector(id){
+    const sel = document.getElementById('cual');
+    sel.innerHTML = CURSO.todas().map(u => {
+      const marca = BORRADORES.hay(u.id) ? ' ●' : (u.estado === 'listo' ? '' : ' · sin armar');
+      return `<option value="${esc(u.id)}"${u.id === id ? ' selected' : ''}>Clase ${
+        String(u.clase).padStart(2,'0')} — ${esc(u.titulo)}${marca}</option>`;
+    }).join('');
+  }
+
+  function arrancar(id){
+    idActual = id;
+    llenarSelector(id);
+    document.getElementById('ver').href = 'clase.html?u=' + id;
+
+    const borrador = BORRADORES.hay(id);
+    const aviso = document.getElementById('aviso');
+    aviso.classList.toggle('con-borrador', borrador);
+    document.getElementById('estado').textContent = borrador ? 'borrador guardado' : 'sin cambios';
+    document.getElementById('estado').className = 'estado ' + (borrador ? 'guardado' : '');
+
+    dibujarFormulario();
+    refrescar();
+  }
+
+  const params = new URLSearchParams(location.search);
+  const id = (params.get('u') || '').trim() || CURSO.todas()[0].id;
+  const enIndice = CURSO.buscar(id);
+
+  if (!enIndice){
+    document.getElementById('form').innerHTML =
+      `<div class="oops"><h2>Esa clase no está en el índice</h2>
+       <p>No hay ninguna unidad con id <code>${esc(id)}</code>.</p></div>`;
+    return;
+  }
+
+  // Base: el borrador si existe; si no, la clase publicada; si tampoco,
+  // un molde vacío con los datos que ya sabemos por el índice.
+  function conBase(publicada){
+    const borrador = BORRADORES.leer(id);
+    modelo = ESQUEMA.molde(id, borrador || publicada || {
+      id: id, nivel: enIndice.nivel, parte: enIndice.parte,
+      unidad: enIndice.clase, clase: enIndice.clase,
+      codigo: enIndice.codigo || '', titulo: enIndice.titulo || '',
+    });
+    arrancar(id);
+  }
+
+  const s = document.createElement('script');
+  s.src = 'data/' + id + '.js';
+  s.onload  = () => conBase(CLASES[id]);
+  s.onerror = () => conBase(null);
+  document.head.appendChild(s);
+})();
+</script>

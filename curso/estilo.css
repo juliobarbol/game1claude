@@ -388,3 +388,144 @@ ol.indice i{font-family:var(--mono);font-size:.65rem;text-transform:uppercase;
   a{ color:inherit; text-decoration:none; }
   .oops{ display:none; }
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   EDITOR — solo se usa en curso/editor.html
+   ══════════════════════════════════════════════════════════════════ */
+
+.editor-bar .bar-in{max-width:none;}
+.sel-clase{font-family:var(--sans);font-size:.85rem;padding:.3rem .4rem;
+  border:1px solid var(--line-strong);background:var(--paper);color:var(--ink);max-width:20rem;}
+.estado{font-family:var(--mono);font-size:.66rem;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-3);white-space:nowrap;}
+.estado.guardando{color:var(--speak);}
+.estado.guardado{color:var(--vocab);}
+.estado.error{color:var(--alert);font-weight:700;}
+.btn{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+  padding:.32rem .6rem;border:1px solid var(--line-strong);background:var(--paper);
+  color:var(--ink-2);cursor:pointer;white-space:nowrap;}
+.btn:hover{border-color:var(--ink-3);color:var(--ink);}
+.btn.peligro{border-color:var(--alert-line);color:var(--alert);background:var(--alert-bg);}
+.btn.peligro:hover{background:var(--alert);color:var(--surface);border-color:var(--alert);}
+
+.editor{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);
+  gap:0;align-items:start;}
+.col-form{padding:1rem clamp(.75rem,2vw,1.5rem) 6rem;min-width:0;}
+.col-vista{position:sticky;top:3.1rem;height:calc(100vh - 3.1rem);overflow-y:auto;
+  border-left:1px solid var(--line);background:var(--paper);min-width:0;}
+.vista{padding:0 clamp(.75rem,2vw,1.5rem) 4rem;}
+.vista .card{margin-top:.7rem;}
+.vista header.top{padding-top:1rem;}
+.vista .bookhead{margin-top:1.4rem;}
+
+.aviso-guardado{border:1px solid var(--speak-line);background:var(--speak-bg);
+  padding:.7rem .9rem;font-size:.88rem;color:var(--ink);}
+.aviso-guardado.con-borrador{border-color:var(--vocab-line);background:var(--vocab-bg);}
+
+.ayuda-marcas{margin-top:.7rem;border:1px solid var(--line);background:var(--surface);
+  padding:.5rem .8rem;font-size:.85rem;}
+.ayuda-marcas summary{cursor:pointer;font-family:var(--mono);font-size:.66rem;
+  letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);}
+.ayuda-marcas ul{list-style:none;margin-top:.5rem;display:flex;flex-direction:column;gap:.25rem;}
+.ayuda-marcas code{font-family:var(--mono);font-size:.82rem;color:var(--grammar);}
+
+.titulo-libro{font-size:1.15rem;margin-top:1.8rem;padding:.5rem .8rem;color:var(--surface);}
+.titulo-libro.g{background:var(--grammar);}
+.titulo-libro.v{background:var(--vocab);}
+
+details.caja{border:1px solid var(--line);background:var(--surface);margin-top:.7rem;}
+details.caja > summary{padding:.55rem .8rem;cursor:pointer;display:flex;
+  align-items:baseline;gap:.6rem;flex-wrap:wrap;border-bottom:1px solid transparent;}
+details.caja[open] > summary{border-bottom-color:var(--line);}
+details.caja > summary .tag{font-family:var(--mono);font-size:.7rem;letter-spacing:.13em;
+  text-transform:uppercase;font-weight:600;}
+details.caja > summary small{font-size:.8rem;color:var(--ink-3);}
+details.caja.grammar{border-color:var(--grammar-line);}
+details.caja.grammar > summary{background:var(--grammar-bg);}
+details.caja.grammar > summary .tag{color:var(--grammar);}
+details.caja.vocab{border-color:var(--vocab-line);}
+details.caja.vocab > summary{background:var(--vocab-bg);}
+details.caja.vocab > summary .tag{color:var(--vocab);}
+details.caja.speak{border-color:var(--speak-line);}
+details.caja.speak > summary{background:var(--speak-bg);}
+details.caja.speak > summary .tag{color:var(--speak);}
+details.caja.alert{border-color:var(--alert-line);}
+details.caja.alert > summary{background:var(--alert-bg);}
+details.caja.alert > summary .tag{color:var(--alert);}
+details.caja.slate{border-color:var(--slate-line);}
+details.caja.slate > summary{background:var(--slate-bg);}
+details.caja.slate > summary .tag{color:var(--slate);}
+.caja-cuerpo{padding:.8rem;display:flex;flex-direction:column;gap:.8rem;}
+
+.campo{display:flex;flex-direction:column;gap:.2rem;min-width:0;}
+.campo.chico{max-width:11rem;}
+.campo .et{font-family:var(--mono);font-size:.64rem;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--ink-2);font-weight:600;}
+.campo .ayuda{display:block;font-size:.78rem;color:var(--ink-3);margin-bottom:.15rem;}
+.campo .marcas{font-style:normal;color:var(--speak);cursor:help;font-size:.7rem;}
+.campo input[type=text],.campo input[type=number],.campo textarea,.campo select{
+  font-family:var(--sans);font-size:.9rem;padding:.35rem .5rem;width:100%;
+  border:1px solid var(--line-strong);background:var(--paper);color:var(--ink);}
+.campo textarea{resize:vertical;min-height:2.4rem;line-height:1.45;}
+.campo input:focus,.campo textarea:focus,.campo select:focus{
+  outline:2px solid var(--grammar);outline-offset:0;border-color:var(--grammar);}
+
+.fila-numeros{display:flex;gap:.6rem;flex-wrap:wrap;}
+.lista{display:flex;flex-direction:column;gap:.4rem;}
+.fila-lista{display:flex;gap:.35rem;align-items:center;}
+.fila-matriz{display:grid;grid-template-columns:repeat(var(--cols),minmax(0,1fr)) auto;gap:.3rem;}
+.fila-matriz input{font-family:var(--sans);font-size:.85rem;padding:.3rem .4rem;width:100%;
+  border:1px solid var(--line-strong);background:var(--paper);color:var(--ink);}
+.fila-obj{border:1px solid var(--line);background:var(--paper);}
+.fila-cab{display:flex;align-items:center;gap:.3rem;padding:.25rem .4rem;
+  background:var(--slate-bg);border-bottom:1px solid var(--line);}
+.fila-cab .spacer{flex:1;}
+.n-fila{font-family:var(--mono);font-size:.66rem;color:var(--ink-3);}
+.fila-campos{padding:.5rem;display:flex;flex-direction:column;gap:.5rem;}
+.mini-btn{font-family:var(--mono);font-size:.72rem;line-height:1;padding:.25rem .45rem;
+  border:1px solid var(--line-strong);background:var(--surface);color:var(--ink-2);cursor:pointer;}
+.mini-btn:hover{border-color:var(--grammar);color:var(--grammar);}
+.mini-btn.mas{align-self:flex-start;font-size:.66rem;letter-spacing:.1em;
+  text-transform:uppercase;padding:.3rem .6rem;}
+.campo.bloque > .lista{border-left:2px solid var(--line);padding-left:.6rem;}
+
+.panel-control{position:sticky;top:0;z-index:5;background:var(--surface);
+  border-bottom:1px solid var(--line);padding:.6rem clamp(.75rem,2vw,1.5rem);}
+.control-fila{display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;}
+.control-fila b{font-size:.9rem;}
+.control-fila b.ok{color:var(--vocab);}
+.control-fila b.medio{color:var(--speak);}
+.control-fila b.mal{color:var(--alert);}
+.mini{font-size:.8rem;color:var(--ink-2);display:flex;align-items:center;gap:.3rem;}
+ul.problemas{list-style:none;margin-top:.5rem;display:flex;flex-direction:column;gap:.25rem;
+  max-height:9rem;overflow-y:auto;}
+ul.problemas li{font-size:.82rem;padding-left:.9rem;position:relative;color:var(--ink-2);}
+ul.problemas li::before{position:absolute;left:0;font-family:var(--mono);}
+ul.problemas li.error::before{content:"×";color:var(--alert);font-weight:700;}
+ul.problemas li.aviso::before{content:"!";color:var(--speak);}
+ul.problemas li b{color:var(--ink);}
+
+/* aviso de que se está mirando un borrador, en clase.html */
+.banda-borrador{background:var(--vocab-bg);border-bottom:1px solid var(--vocab-line);
+  color:var(--vocab);font-size:.85rem;padding:.5rem clamp(1rem,4vw,2rem);
+  display:flex;gap:.75rem;align-items:center;flex-wrap:wrap;}
+.banda-borrador a{color:var(--vocab);}
+
+@media (max-width:900px){
+  .editor{grid-template-columns:1fr;}
+  .col-vista{position:static;height:auto;border-left:0;border-top:1px solid var(--line);}
+  .panel-control{position:static;}
+}
+@media print{
+  .editor-bar,.col-form,.panel-control,.aviso-guardado,.ayuda-marcas,
+  .banda-borrador{display:none !important;}
+  .editor{display:block;}
+  .col-vista{position:static;height:auto;border:0;overflow:visible;}
+}
+
+/* filas de campos de una línea: horizontal, para poder recorrer una lista larga */
+.fila-obj.simple .fila-cab{padding:.15rem .3rem;}
+.fila-campos.compacta{flex-direction:row;flex-wrap:wrap;gap:.5rem;align-items:flex-end;}
+.fila-campos.compacta > .campo{flex:1 1 8rem;min-width:0;}
+.fila-campos.compacta > .campo.chico{flex:0 0 7rem;max-width:7rem;}
+.fila-campos.compacta .ayuda{display:none;}

@@ -22,8 +22,11 @@ renderizador para todas.
 index.html                 portada; dibuja la lista desde el índice
 curso/estilo.css           el sistema visual entero (tokens + cajas)
 curso/tema.js              claro/oscuro
+curso/esquema.js           EL ESQUEMA declarado + la validación  ← de acá sale el formulario
 curso/render.js            EL renderizador — el único que sabe dibujar una caja
+curso/borradores.js        lo que se edita, guardado en el navegador
 curso/clase.html           una clase en pantalla (alumno o profesora)
+curso/editor.html          el editor: formulario + vista previa + qué falta
 curso/imprimir.html        varias clases seguidas → imprimir / PDF
 curso/data/indice.js       la estructura del curso (qué clases hay y su estado)
 curso/data/<id>.js         el contenido de una clase
@@ -75,6 +78,39 @@ las páginas también andan abiertas con doble clic (`file://`), sin servidor.
   clases dura y qué va a poder decir el alumno. Si se agrega contenido, se
   ajusta la promesa; no se estira la parte en silencio.
 
+## Las tres piezas que no hay que confundir
+
+| Archivo | Responde a |
+|---|---|
+| `esquema.js` | **qué campos tiene** una clase, y si está bien |
+| `render.js` | **cómo se ve** |
+| `data/<id>.js` | **qué dice** esta clase |
+
+El formulario del editor **no está escrito**: se construye recorriendo
+`esquema.js`. Agregar un campo ahí lo hace aparecer en el editor, en la
+validación y en el test, los tres a la vez. Lo único que hay que tocar aparte
+es `render.js`, que decide cómo se dibuja.
+
+**La validación es una sola.** `ESQUEMA.validar()` la usan el editor (para
+mostrarle a la profesora qué le falta) y `test/curso.test.cjs`. Si tuvieran
+reglas propias se desincronizarían y el editor mentiría. El test además se
+asegura de que la validación **detecte** los errores, rompiendo una clase a
+propósito: si no, podría quedar ciega y todo seguiría en verde.
+
+## Borradores
+
+Mientras no haya nube (etapa 4), lo que se edita vive en **localStorage de ese
+navegador**. Consecuencias que la interfaz tiene que gritar, no susurrar:
+
+- desde otra computadora no se ve;
+- si se limpia el navegador, se pierde.
+
+Por eso **Exportar archivo** es el botón más prominente del editor: baja el
+`curso/data/<id>.js` definitivo, que es el que va al repo.
+
+Un borrador **pisa** a la clase publicada cuando existe, así se corrige y se
+ve el cambio al instante. `clase.html` lo avisa con una banda arriba.
+
 ## Impresión
 
 El PDF sale del navegador: `imprimir.html` → Imprimir → destino **Guardar
@@ -114,8 +150,13 @@ lo avisa.
 
 ## Agregar una clase
 
-Ver `curso/ESQUEMA.md`. Resumen: entrada en `indice.js`, archivo en
+**A mano:** ver `curso/ESQUEMA.md`. Entrada en `indice.js`, archivo en
 `data/<id>.js`, estado a `'listo'`, correr el test. **No se toca HTML.**
+
+**Desde el editor:** `curso/editor.html`, elegir la clase en el desplegable
+(las que están en el índice pero sin armar aparecen como *sin armar* y
+arrancan con el título ya puesto), llenar, y **Exportar archivo** →
+guardar en `curso/data/`. Después, estado a `'listo'` en el índice.
 
 ## Estado y qué sigue
 
@@ -124,8 +165,13 @@ Ver `curso/ESQUEMA.md`. Resumen: entrada en `indice.js`, archivo en
 - **Etapa 2 (hecha):** impresión y PDF (`@media print`), versión
   profesora/alumno, impresión de una parte entera con portada e índice, y de
   un libro solo.
-- **Etapa 3 (siguiente):** el editor, para que la profesora arme y corrija
-  clases sin tocar archivos.
-- **Etapa 4:** guardado en la nube, para trabajar desde cualquier aparato.
+- **Etapa 3 (hecha):** el editor. Formulario generado desde el esquema, vista
+  previa al lado, validación en vivo, exportar/importar, y borradores que
+  pisan a la clase publicada.
+- **Etapa 4 (siguiente):** guardado en la nube, para trabajar desde cualquier
+  aparato y que los borradores no dependan de un navegador.
+- **Pendiente del editor:** todavía no se pueden crear unidades nuevas fuera
+  de las que ya están en `data/indice.js` (haría falta editar el índice desde
+  la interfaz). Alcanza para armar las 12 de la Parte 1.
 - **Pendiente menor:** `syllabus.html` todavía tiene su CSS propio en vez de
   usar `curso/estilo.css`. Migrarlo la próxima vez que haya que tocarlo.

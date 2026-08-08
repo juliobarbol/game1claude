@@ -1,5 +1,10 @@
 # El esquema de una clase
 
+> **Este documento explica el esquema; quien lo *define* es
+> `curso/esquema.js`.** De ahí salen el formulario del editor, la validación
+> que ve la profesora y el test. Si agregás un campo, va ahí — y después a
+> `curso/render.js`, que decide cómo se ve.
+
 Una clase **es un archivo de datos**, no una página. `curso/clase.html` es el
 único que sabe dibujarla. Si cambia cómo se ve una caja, se cambia ahí y
 cambia en las 36 clases a la vez.
@@ -138,7 +143,13 @@ numeros:  { titulo: 'Numbers 0–20', items: ['zero','one',…] }   // el índic
 Además, `vocabulary.carga` es el texto del encabezado del libro
 (`'26 palabras · 8 chunks'`).
 
-## Agregar una clase
+## Agregar una clase — desde el editor
+
+`curso/editor.html` → elegir la clase en el desplegable → llenar →
+**Exportar archivo** → guardarlo en `curso/data/` → poner `estado: 'listo'`
+en el índice.
+
+## Agregar una clase — a mano
 
 1. Entrada en `curso/data/indice.js` con `estado: 'pendiente'`.
 2. Archivo `curso/data/<id>.js` siguiendo este esquema.
