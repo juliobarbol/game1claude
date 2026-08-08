@@ -10,7 +10,10 @@
   //
   // `not_found_handling` manda cualquier ruta desconocida al index de la raíz:
   // si alguien escribe mal una URL, cae en la portada del curso en vez de un 404.
-  "name": "filo",
+  // El nombre TIENE que coincidir con el Worker ya creado en Cloudflare
+  // (`game1claude`). Si no coincide, el build despliega a otro Worker y la URL
+  // de siempre se queda con la versión vieja.
+  "name": "game1claude",
   "compatibility_date": "2026-07-27",
   "assets": {
     "directory": ".",
