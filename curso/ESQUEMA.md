@@ -7,8 +7,21 @@ cambia en las 36 clases a la vez.
 ```
 curso/data/indice.js       la estructura del curso (qué clases hay)
 curso/data/<id>.js         el contenido de una clase
-curso/clase.html?u=<id>    el renderizador
+curso/render.js            EL renderizador — el único que sabe dibujar una caja
+curso/clase.html?u=<id>    una clase en pantalla
+curso/imprimir.html        varias clases seguidas, para imprimir o hacer PDF
 ```
+
+## Las direcciones
+
+| URL | Da |
+|---|---|
+| `clase.html?u=n1p1u01` | la clase, versión alumno |
+| `clase.html?u=n1p1u01&v=profesor` | la misma, con respuestas puestas y plan de clase |
+| `imprimir.html?u=n1p1u01` | esa clase sola, lista para PDF |
+| `imprimir.html?parte=n1p1` | la parte entera, con portada e índice |
+| `imprimir.html?parte=n1p1&libro=grammar` | solo el Grammar Book |
+| `imprimir.html?parte=n1p1&v=profesor` | la parte entera, versión profesora |
 
 ## El id
 
@@ -47,6 +60,27 @@ CLASES['n1p1u01'] = {
   vocabulary: { … },   // 6 cajas, ninguna vacía
 };
 ```
+
+## `profe` — la versión profesora (opcional)
+
+No va en el libro del alumno: se ve solo con `&v=profesor`. Una clase sin
+`profe` funciona igual, pero conviene tenerlo — es lo que convierte la clase
+en algo que se puede dar sin volver a prepararla.
+
+```js
+profe: {
+  plan: [ { min: '0–5', que: 'Recibirla en inglés desde la puerta…' }, … ],
+  ojo:  [ 'El sujeto omitido aparece en la primera frase. Marcalo **una vez**…', … ],
+}
+```
+
+- **`plan`** — el reparto del tiempo de la clase. Los tramos van en orden y
+  suman la duración de la ficha.
+- **`ojo`** — qué anticipar: el error que va a aparecer sí o sí, qué hacer
+  cuando algo se traba, y qué recortar si el tiempo aprieta.
+
+En la versión profesora, además, **las respuestas de los ejercicios vienen
+puestas** en vez de tapadas.
 
 ## Las 6 cajas del Grammar Book
 

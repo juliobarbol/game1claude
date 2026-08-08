@@ -215,6 +215,78 @@ const MIME = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css',
     await page.setViewportSize({ width: 1100, height: 900 });
   }
 
+  // ── versión profesora ──
+  for (const u of listas){
+    await page.goto(`${base}/curso/clase.html?u=${u.id}&v=profesor`, { waitUntil:'load' });
+    await page.waitForSelector('.card', { timeout: 5000 }).catch(() => {});
+
+    const tapados = await page.$$eval('.gap.hidden', e => e.length);
+    check(`${u.id}: en versión profesora las respuestas vienen puestas`, tapados === 0, `${tapados} tapados`);
+
+    const { clase } = cargar(u.id);
+    if (clase && clase.profe){
+      const cajaProfe = await page.$('.card.profe');
+      check(`${u.id}: la versión profesora muestra el plan de clase`, !!cajaProfe);
+      const filasPlan = await page.$$eval('.plan-clase tbody tr', e => e.length).catch(() => 0);
+      check(`${u.id}: el plan tiene todos los tramos`,
+        filasPlan === (clase.profe.plan || []).length, `${filasPlan}`);
+    }
+
+    // y en la versión alumno NO aparece
+    await page.goto(`${base}/curso/clase.html?u=${u.id}`, { waitUntil:'load' });
+    await page.waitForSelector('.card', { timeout: 5000 }).catch(() => {});
+    const seFiltro = await page.$('.card.profe');
+    check(`${u.id}: la caja de la profesora NO aparece en la versión alumno`, !seFiltro);
+  }
+
+  // ── impresión ──
+  await page.goto(`${base}/curso/imprimir.html?parte=n1p1`, { waitUntil:'load' });
+  await page.waitForSelector('.clase', { timeout: 5000 }).catch(() => {});
+  const impresas = await page.$$eval('.clase', e => e.length);
+  check('imprimir una parte dibuja todas las clases armadas', impresas === listas.length, `${impresas}`);
+  check('imprimir una parte pone portada', !!(await page.$('.portada')));
+
+  await page.emulateMedia({ media: 'print' });
+  const ocultos = await page.evaluate(() => {
+    const oculto = sel => {
+      const e = document.querySelector(sel);
+      return !e || getComputedStyle(e).display === 'none';
+    };
+    return ['.panel', 'button.toggle', 'button.tema', 'footer'].every(oculto);
+  });
+  check('en impresión no salen los controles de pantalla', ocultos);
+
+  const fondoImpreso = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  check('en impresión el fondo es blanco', fondoImpreso === 'rgb(255, 255, 255)', fondoImpreso);
+
+  const traduccionesImpresas = await page.evaluate(() => {
+    const t = document.querySelector('.bank li .t');
+    return t ? getComputedStyle(t).visibility : 'sin-word-bank';
+  });
+  check('en impresión las traducciones se ven', traduccionesImpresas === 'visible', traduccionesImpresas);
+
+  const cortes = await page.evaluate(() => {
+    const c = document.querySelector('.card');
+    return c ? getComputedStyle(c).breakInside : 'sin-cajas';
+  });
+  check('en impresión una caja no se parte entre hojas', cortes === 'avoid', cortes);
+
+  // el tema oscuro no debe ensuciar el papel
+  await page.evaluate(() => document.documentElement.setAttribute('data-theme','dark'));
+  const fondoOscuroImpreso = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
+  check('en impresión se fuerza el claro aunque esté en tema oscuro',
+    fondoOscuroImpreso === 'rgb(255, 255, 255)', fondoOscuroImpreso);
+  await page.emulateMedia({ media: 'screen' });
+
+  // ── imprimir un solo libro ──
+  for (const [libro, cabecera, ausente] of [['grammar','.bookhead.g','.bookhead.v'],
+                                            ['vocabulary','.bookhead.v','.bookhead.g']]){
+    await page.goto(`${base}/curso/imprimir.html?parte=n1p1&libro=${libro}`, { waitUntil:'load' });
+    await page.waitForSelector('.clase', { timeout: 5000 }).catch(() => {});
+    check(`imprimir solo ${libro}: está el libro pedido`, !!(await page.$(cabecera)));
+    check(`imprimir solo ${libro}: no está el otro`, !(await page.$(ausente)));
+  }
+
   // ── el tema abre SIEMPRE claro, aunque el sistema esté en oscuro ──
   const oscuro = await browser.newContext({ colorScheme: 'dark', viewport:{ width:1100, height:900 } });
   const po = await oscuro.newPage();

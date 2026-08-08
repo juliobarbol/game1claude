@@ -79,6 +79,9 @@
   .tile.v b{color:var(--vocab);}
   .tile.s{border-color:var(--speak-line);background:var(--speak-bg);}
   .tile.s b{color:var(--speak);}
+  a.tile.link{text-decoration:none;color:inherit;}
+  a.tile.link b{color:var(--grammar);}
+  a.tile.link:hover,a.tile.link:focus-visible{border-color:var(--grammar);background:var(--grammar-bg);}
 
   footer{margin-top:clamp(3rem,7vw,4.5rem);padding-top:1.25rem;
     border-top:1px solid var(--line);align-items:baseline;}
@@ -136,9 +139,31 @@
     </div>
   </section>
 
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Para la profesora</span>
+      <h2>Imprimir y armar</h2>
+    </div>
+    <div class="grid3">
+      <a class="tile link" href="curso/imprimir.html?parte=n1p1&amp;libro=grammar">
+        <b>Grammar Book →</b>
+        <p>La parte entera en PDF, lista para imprimir o mandar.</p>
+      </a>
+      <a class="tile link" href="curso/imprimir.html?parte=n1p1&amp;libro=vocabulary">
+        <b>Vocabulary Book →</b>
+        <p>El mismo libro, con las palabras y los chunks.</p>
+      </a>
+      <a class="tile link" href="curso/imprimir.html?parte=n1p1&amp;v=profesor">
+        <b>Versión profesora →</b>
+        <p>Con el plan minuto a minuto, qué anticipar y las respuestas puestas.</p>
+      </a>
+    </div>
+  </section>
+
   <footer>
     <span id="pie"></span>
     <a href="curso/nivel-1/parte-1/syllabus.html">Temario</a>
+    <a href="curso/imprimir.html?parte=n1p1">Imprimir</a>
     <button data-tema-boton type="button" class="tema"></button>
     <span class="spacer"></span>
     <a href="juego/">FILO (el juego) →</a>

@@ -1,0 +1,137 @@
+<meta charset="utf-8">
+<title>Imprimir — Curso de inglés</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="estilo.css">
+<script src="tema.js"></script>
+
+<!-- El panel no se imprime: es solo para elegir qué imprimir. -->
+<div class="panel" id="panel">
+  <div class="panel-in">
+    <a class="home" href="../index.html">← Curso</a>
+    <span class="spacer"></span>
+    <label>Qué <select id="que"></select></label>
+    <label>Libro <select id="libro">
+      <option value="todo">Los dos</option>
+      <option value="grammar">Grammar</option>
+      <option value="vocabulary">Vocabulary</option>
+    </select></label>
+    <label>Versión <select id="version">
+      <option value="alumno">Alumno</option>
+      <option value="profesor">Profesora</option>
+    </select></label>
+    <button type="button" id="imprimir" class="cta-print">Imprimir / Guardar PDF</button>
+    <button data-tema-boton type="button" class="tema"></button>
+  </div>
+  <p class="panel-tip">En el diálogo de impresión, elegí <b>“Guardar como PDF”</b> como destino.
+    Para que salgan los colores de los cuadros, dejá tildado <b>“Gráficos de fondo”</b>.</p>
+</div>
+
+<div class="wrap hoja" id="app"></div>
+
+<script src="data/indice.js"></script>
+<script src="render.js"></script>
+<script>
+(function (){
+  const esc = RENDER.esc;
+  const params = new URLSearchParams(location.search);
+  window.CLASES = window.CLASES || {};
+
+  const partes = [];
+  for (const n of CURSO.niveles)
+    for (const p of n.partes)
+      partes.push({ clave: `n${n.nivel}p${p.parte}`, nivel: n, parte: p });
+
+  // ─── Qué se va a imprimir ─────────────────────────────────────────
+  // ?u=<id>      una clase
+  // ?parte=n1p1  todas las clases armadas de esa parte
+  function seleccion(){
+    const u = (params.get('u') || '').trim();
+    if (u) return { tipo:'clase', ids:[u] };
+    const clave = (params.get('parte') || partes[0].clave).trim();
+    const p = partes.find(x => x.clave === clave) || partes[0];
+    return {
+      tipo: 'parte', clave: p.clave, meta: p,
+      ids: p.parte.unidades.filter(x => x.estado === 'listo').map(x => x.id),
+    };
+  }
+
+  const sel = seleccion();
+  const libro = params.get('libro') || 'todo';
+  const profe = params.get('v') === 'profesor';
+
+  // ─── Panel ────────────────────────────────────────────────────────
+  const que = document.getElementById('que');
+  que.innerHTML =
+    partes.map(p => `<option value="parte:${p.clave}">Parte entera — ${esc(p.parte.nombre)}</option>`).join('') +
+    CURSO.todas().filter(u => u.estado === 'listo').map(u =>
+      `<option value="clase:${u.id}">Clase ${String(u.clase).padStart(2,'0')} — ${esc(u.titulo)}</option>`).join('');
+  que.value = sel.tipo === 'clase' ? 'clase:' + sel.ids[0] : 'parte:' + sel.clave;
+  document.getElementById('libro').value = libro;
+  document.getElementById('version').value = profe ? 'profesor' : 'alumno';
+
+  function recargar(){
+    const [tipo, valor] = que.value.split(':');
+    const q = new URLSearchParams();
+    if (tipo === 'clase') q.set('u', valor); else q.set('parte', valor);
+    const l = document.getElementById('libro').value;
+    if (l !== 'todo') q.set('libro', l);
+    if (document.getElementById('version').value === 'profesor') q.set('v', 'profesor');
+    location.search = '?' + q.toString();
+  }
+  ['que','libro','version'].forEach(x =>
+    document.getElementById(x).addEventListener('change', recargar));
+  document.getElementById('imprimir').addEventListener('click', () => window.print());
+
+  // ─── Cargar los datos de todas las clases elegidas ────────────────
+  function cargar(id){
+    return new Promise(resolve => {
+      if (CLASES[id]) return resolve(id);
+      const s = document.createElement('script');
+      s.src = 'data/' + id + '.js';
+      s.onload = () => resolve(id);
+      s.onerror = () => resolve(null);
+      document.head.appendChild(s);
+    });
+  }
+
+  const app = document.getElementById('app');
+
+  if (!sel.ids.length){
+    app.innerHTML = `<div class="oops"><h2>No hay nada armado todavía para imprimir</h2>
+      <p>Cuando una clase pase a <code>estado: 'listo'</code> en el índice, aparece acá.</p></div>`;
+    return;
+  }
+
+  Promise.all(sel.ids.map(cargar)).then(res => {
+    const buenas = res.filter(Boolean).map(id => CLASES[id]).filter(Boolean);
+
+    if (!buenas.length){
+      app.innerHTML = `<div class="oops"><h2>No se encontraron los datos</h2>
+        <p>Faltan los archivos <code>curso/data/&lt;id&gt;.js</code> de lo que elegiste.</p></div>`;
+      return;
+    }
+
+    const nombreLibro = { todo:'Grammar + Vocabulary', grammar:'Grammar Book', vocabulary:'Vocabulary Book' }[libro];
+
+    // Portada, solo cuando se imprime una parte entera.
+    const portada = sel.tipo !== 'parte' ? '' : `<section class="portada">
+      <span class="eyebrow">Nivel ${sel.meta.nivel.nivel} · ${esc(sel.meta.nivel.nombre)} · Parte ${sel.meta.parte.parte}</span>
+      <h1>${esc(sel.meta.parte.nombre)}</h1>
+      <p class="lead">${esc(nombreLibro)} · ${buenas.length} ${buenas.length === 1 ? 'clase' : 'clases'}${
+        profe ? ' · versión profesora' : ''}</p>
+      <ol class="indice">${sel.meta.parte.unidades.map(u =>
+        `<li><b>${String(u.clase).padStart(2,'0')}</b> <span>${esc(u.titulo)}</span>
+         <i>${u.estado === 'listo' ? '' : 'en preparación'}</i></li>`).join('')}</ol>
+    </section>`;
+
+    document.title = sel.tipo === 'parte'
+      ? `${sel.meta.parte.nombre} — ${nombreLibro}${profe ? ' (profesora)' : ''}`
+      : `Clase ${String(buenas[0].clase).padStart(2,'0')} · ${buenas[0].titulo}${profe ? ' (profesora)' : ''}`;
+
+    app.innerHTML = portada + buenas.map(c =>
+      RENDER.clase(c, { libro: libro, profe: profe, botones: false })).join('');
+
+    if (window.TEMA) TEMA.conectar();
+  });
+})();
+</script>

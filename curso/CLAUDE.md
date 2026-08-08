@@ -22,7 +22,9 @@ renderizador para todas.
 index.html                 portada; dibuja la lista desde el índice
 curso/estilo.css           el sistema visual entero (tokens + cajas)
 curso/tema.js              claro/oscuro
-curso/clase.html           EL renderizador — el único que sabe dibujar una clase
+curso/render.js            EL renderizador — el único que sabe dibujar una caja
+curso/clase.html           una clase en pantalla (alumno o profesora)
+curso/imprimir.html        varias clases seguidas → imprimir / PDF
 curso/data/indice.js       la estructura del curso (qué clases hay y su estado)
 curso/data/<id>.js         el contenido de una clase
 curso/ESQUEMA.md           el contrato de un archivo de clase  ← LEER ANTES DE AGREGAR UNA
@@ -73,6 +75,22 @@ las páginas también andan abiertas con doble clic (`file://`), sin servidor.
   clases dura y qué va a poder decir el alumno. Si se agrega contenido, se
   ajusta la promesa; no se estira la parte en silencio.
 
+## Impresión
+
+El PDF sale del navegador: `imprimir.html` → Imprimir → destino **Guardar
+como PDF**. No hay librería de PDF ni servidor: la hoja `@media print` de
+`curso/estilo.css` es todo.
+
+Dos cosas de esa hoja **no se tocan**:
+
+- **Se fuerza el tema claro** aunque esté trabajando de noche en oscuro. Un
+  PDF con fondo negro no se puede imprimir.
+- **`print-color-adjust: exact`**, para que los cuadros de color salgan. El
+  color es el sistema entero; igual todo se lee en blanco y negro porque
+  cada caja lleva su etiqueta en versalitas.
+
+Y una caja nunca se parte entre dos hojas (`break-inside: avoid`).
+
 ## Anatomía fija de una unidad
 
 **Grammar:** `IN CONTEXT` → `THE RULE` → `WATCH OUT` → `PRACTICE` →
@@ -101,9 +119,13 @@ Ver `curso/ESQUEMA.md`. Resumen: entrada en `indice.js`, archivo en
 
 ## Estado y qué sigue
 
-- **Hecho:** contenido como datos + renderizador único + tema claro/oscuro +
-  tests. Clase 01 armada.
-- **Siguiente:** impresión y PDF (`@media print`), versión profesor/alumno,
-  y después el editor para que la profesora arme clases sin tocar archivos.
+- **Etapa 1 (hecha):** contenido como datos + renderizador único + tema
+  claro/oscuro + tests. Clase 01 armada.
+- **Etapa 2 (hecha):** impresión y PDF (`@media print`), versión
+  profesora/alumno, impresión de una parte entera con portada e índice, y de
+  un libro solo.
+- **Etapa 3 (siguiente):** el editor, para que la profesora arme y corrija
+  clases sin tocar archivos.
+- **Etapa 4:** guardado en la nube, para trabajar desde cualquier aparato.
 - **Pendiente menor:** `syllabus.html` todavía tiene su CSS propio en vez de
   usar `curso/estilo.css`. Migrarlo la próxima vez que haya que tocarlo.

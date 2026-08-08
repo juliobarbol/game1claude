@@ -19,6 +19,28 @@ CLASES['n1p1u01'] = {
     { k: 'Hablás en',       v: 'minuto 12' },
   ],
 
+  // ══════════════ PARA LA PROFESORA ══════════════
+  // No va en el libro del alumno. Se ve solo en la versión profesora.
+  profe: {
+    plan: [
+      { min: '0–5',   que: 'Recibirla en inglés desde la puerta. //Hi! Good morning!// y esperar respuesta. El castellano arranca recién en el minuto 5.' },
+      { min: '5–12',  que: '**In context**: el diálogo dos veces, la segunda siguiendo con el dedo. **No explicar nada todavía** — preguntar qué entendió y qué palabras reconoce.' },
+      { min: '12–20', que: '**Primera producción, temprano.** Que se presente con //I\'m//. Corregir SOLO el sujeto; todo lo demás se deja pasar.' },
+      { min: '20–30', que: '**The rule** + **Watch out**. El cuadro se lee junto, no se dicta. Los tres errores se muestran, no se explican.' },
+      { min: '30–38', que: '**Practice** A y B por escrito, corrección en voz alta. El paso C queda de tarea si el tiempo aprieta.' },
+      { min: '38–45', que: 'Alfabeto por sonido y ronda de deletreo: nombre, apellido, ciudad.' },
+      { min: '45–57', que: '**Now you speak**, las tres rondas seguidas. Acá se va la mitad de la clase y está bien.' },
+      { min: '57–60', que: 'Cerrar con **I can…** en voz alta y la tarea: deletrear cinco palabras propias.' },
+    ],
+    ojo: [
+      'El sujeto omitido (//Am Marta//) aparece en la primera frase. Marcalo **una vez** y después señalá con la mano; corregirlo cada vez corta el habla.',
+      'La **G** y la **J** se confunden siempre. Si el deletreo se traba, volvé al cuadro agrupado por sonido en vez de repetir la letra suelta.',
+      'Si pide traducción de todo, redirigí con //How do you say…?// — es una de las frases de la unidad, así la practica en vez de esquivarla.',
+      '//Nice to meet you// se responde con //too//. Si se lo come, no es error de gramática: le falta el chunk entero, se vuelve a la caja de chunks.',
+      'La **ronda 3** con el nombre difícil es la que hace que el deletreo importe de verdad. Si hay que recortar por tiempo, recortá el paso C, no la ronda 3.',
+    ],
+  },
+
   // ══════════════ GRAMMAR BOOK ══════════════
   grammar: {
 
