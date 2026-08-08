@@ -550,3 +550,14 @@ ul.problemas li b{color:var(--ink);}
   color:var(--ink);font-size:.88rem;padding:.5rem clamp(1rem,4vw,2rem);
   display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;}
 @media print{ .nube-fondo,.banda-nube{display:none !important;} }
+
+/* El botón de conectar es una INVITACIÓN cuando no hay nube: tiene que
+   encontrarse sin buscarlo. Cuando ya está conectada, se apaga. */
+.nube-btn{border-color:var(--speak);background:var(--speak-bg);color:var(--speak);font-weight:700;}
+.nube-btn:hover{background:var(--speak);color:var(--surface);}
+.nube-btn.conectado{border-color:var(--vocab);background:var(--vocab-bg);
+  color:var(--vocab);font-weight:600;}
+.nube-btn.conectado:hover{background:var(--vocab);color:var(--surface);}
+.aviso-guardado{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;}
+.aviso-guardado .cta-print{margin-left:auto;white-space:nowrap;}
+.aviso-guardado.con-nube{border-color:var(--vocab-line);background:var(--vocab-bg);}

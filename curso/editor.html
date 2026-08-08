@@ -13,7 +13,7 @@
     <span class="spacer"></span>
     <button type="button" id="exportar" class="cta-print">Exportar archivo</button>
     <button type="button" id="importar" class="btn">Importar</button>
-    <button type="button" id="nube" class="btn">Nube</button>
+    <button type="button" id="nube" class="btn nube-btn">☁ Conectar</button>
     <button type="button" id="descartar" class="btn peligro">Descartar borrador</button>
     <a class="imprimir" id="ver" href="#">Ver la clase</a>
     <button data-tema-boton type="button" class="tema"></button>
@@ -50,11 +50,7 @@
 
   <!-- ─── columna izquierda: el formulario ─── -->
   <div class="col-form">
-    <div class="aviso-guardado" id="aviso">
-      <b>Lo que escribís se guarda solo en esta computadora.</b>
-      Cuando la clase esté lista, apretá <b>Exportar archivo</b> y guardalo en el repo:
-      ese es el archivo definitivo.
-    </div>
+    <div class="aviso-guardado" id="aviso"></div>
 
     <details class="ayuda-marcas">
       <summary>Cómo se marca el texto</summary>
@@ -387,14 +383,29 @@
 
   function pintarNube(){
     const b = document.getElementById('nube');
+    const aviso = document.getElementById('aviso');
+    const quien = NUBE.quien();
+
     if (NUBE.conectada()){
-      b.textContent = 'Nube ✓';
+      b.textContent = '☁ ' + (quien || 'Conectada');
       b.classList.add('conectado');
-      b.title = 'Conectada como ' + (NUBE.quien() || 'sin nombre');
+      b.title = 'Tocá para desconectar o cambiar de nombre';
+      aviso.classList.add('con-nube');
+      aviso.innerHTML =
+        '<b>☁ Tu trabajo se guarda en la nube.</b> Lo que escribís queda en esta ' +
+        'computadora <b>y</b> en internet, así lo seguís desde otra. Cuando la clase ' +
+        'esté lista, apretá <b>Exportar archivo</b>: ese sigue siendo el archivo definitivo.';
     } else {
-      b.textContent = 'Nube';
+      b.textContent = '☁ Conectar';
       b.classList.remove('conectado');
-      b.title = 'Trabajar desde varias computadoras';
+      b.title = 'Guardar tu trabajo en la nube y seguirlo desde otra computadora';
+      aviso.classList.remove('con-nube');
+      aviso.innerHTML =
+        '<b>Ojo: lo que escribís se guarda SOLO en esta computadora.</b> ' +
+        'Desde otra no lo vas a ver, y si limpiás el navegador se pierde.' +
+        '<button type="button" class="cta-print" id="conectarAviso">☁ Conectar con la nube</button>';
+      const bo = document.getElementById('conectarAviso');
+      if (bo) bo.addEventListener('click', abrirNube);
     }
   }
 
@@ -499,11 +510,6 @@
     const borrador = BORRADORES.hay(id);
     const aviso = document.getElementById('aviso');
     aviso.classList.toggle('con-borrador', borrador);
-    if (NUBE.conectada())
-      aviso.innerHTML = '<b>Conectada a la nube.</b> Lo que escribís se guarda ' +
-        'en esta computadora y también en la nube, así lo seguís desde otra. ' +
-        'Cuando la clase esté lista, <b>Exportar archivo</b> y guardalo en el repo: ' +
-        'ese sigue siendo el archivo definitivo.';
     document.getElementById('estado').textContent = borrador ? 'borrador guardado' : 'sin cambios';
     document.getElementById('estado').className = 'estado ' + (borrador ? 'guardado' : '');
 
