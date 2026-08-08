@@ -108,12 +108,25 @@ personalizar*):
 
 | Clave | Forma |
 |---|---|
-| `wordBank` | `{ grupos: [{titulo, items:[{en, es}]}], alfabeto?, numeros? }` |
+| `wordBank` | `{ grupos: [{titulo, items:[{en, es}]}], tablas?, alfabeto?, numeros? }` |
 | `chunks` | `{ items: [{c, m}], nota }` — `c` es el chunk, `m` para qué sirve |
 | `sayItRight` | `{ items: [{etiqueta, texto}] }` — la sílaba fuerte con `**…**` |
 | `useIt` | `{ pasos: [{titulo, texto}] }` |
 | `cards` | `{ items: [{titulo, texto, frases}] }` |
 | `myWords` | `{ renglones: 8 }` |
+
+**`tablas`** es para el léxico que **no** es un par palabra–traducción: país /
+nacionalidad / idioma, los números que se confunden al oído, cualquier cosa de
+varias columnas. Las celdas admiten marcas de texto, así que la sílaba tónica
+se marca ahí mismo.
+
+```js
+tablas: [{
+  titulo: 'Países y nacionalidades — la nacionalidad va SIEMPRE con mayúscula',
+  cabecera: ['País', 'Nacionalidad', 'Idioma'],
+  filas: [ ['Japan', 'Japanese', 'Japanese'], … ],
+}]
+```
 
 `alfabeto` y `numeros` son opcionales y solo tienen sentido en la Unidad 1.1:
 

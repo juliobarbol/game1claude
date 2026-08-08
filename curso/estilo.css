@@ -214,6 +214,13 @@ button.toggle.v:hover{background:var(--surface);}
 .abc b{display:block;font-family:var(--serif);font-size:1.15rem;color:var(--vocab);}
 .abc span{font-family:var(--mono);font-size:.68rem;color:var(--ink-2);}
 
+.tabla-vocab{border-color:var(--vocab-line);background:var(--surface);}
+.tabla-vocab table{min-width:20rem;font-size:.92rem;}
+.tabla-vocab th,.tabla-vocab td{border-bottom-color:var(--vocab-line);padding:.45rem .7rem;}
+.tabla-vocab thead th{color:var(--vocab);background:var(--vocab-bg);}
+.tabla-vocab td{font-family:var(--serif);font-size:1rem;}
+.tabla-vocab td:first-child{color:var(--ink-2);}
+
 .nums{display:flex;flex-wrap:wrap;gap:.3rem;}
 .nums span{border:1px solid var(--vocab-line);background:var(--surface);
   padding:.28rem .5rem;font-size:.86rem;}

@@ -194,6 +194,23 @@ const MIME = { '.html':'text/html', '.js':'text/javascript', '.css':'text/css',
     const huecos = await page.$$eval('.gap', e => e.length);
     check(`${u.id}: la práctica tiene huecos`, huecos > 0, `${huecos} huecos`);
 
+    // las tablas del word bank (país/nacionalidad, números) se dibujan
+    const { clase: datos } = cargar(u.id);
+    const tablasEsperadas = ((datos && datos.vocabulary.wordBank.tablas) || []);
+    if (tablasEsperadas.length){
+      const dibujadas = await page.$$eval('.tabla-vocab', e => e.length);
+      check(`${u.id}: dibuja las tablas del word bank`,
+        dibujadas === tablasEsperadas.length, `${dibujadas} de ${tablasEsperadas.length}`);
+      const filas = await page.$$eval('.tabla-vocab tbody tr', e => e.length);
+      const esperadas = tablasEsperadas.reduce((n, t) => n + t.filas.length, 0);
+      check(`${u.id}: las tablas tienen todas las filas`, filas === esperadas, `${filas} de ${esperadas}`);
+      const columnasOk = await page.$$eval('.tabla-vocab', ts => ts.every(t => {
+        const n = t.querySelectorAll('thead th').length;
+        return [...t.querySelectorAll('tbody tr')].every(f => f.children.length === n);
+      }));
+      check(`${u.id}: cada fila tiene tantas celdas como columnas`, columnasOk);
+    }
+
     // los botones andan
     const ocultosAntes = await page.$$eval('.gap.hidden', e => e.length);
     await page.click('button[data-respuestas]');

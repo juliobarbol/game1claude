@@ -121,6 +121,16 @@
     }).join('');
 
     let extra = '';
+    // Tablas de varias columnas: país / nacionalidad / idioma, los números que
+    // se confunden al oído, cualquier cosa que no sea un par palabra–traducción.
+    for (const t of (d.tablas || [])){
+      const th = t.cabecera.map(c => `<th>${esc(c)}</th>`).join('');
+      const tr = t.filas.map(f =>
+        `<tr>${f.map(c => `<td>${fmt(c, o)}</td>`).join('')}</tr>`).join('');
+      extra += `<div class="bank"><h4>${esc(t.titulo)}</h4>
+        <div class="tablewrap tabla-vocab"><table>
+          <thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div></div>`;
+    }
     if (d.alfabeto){
       const cel = d.alfabeto.grupos.map(a =>
         `<div><b>${esc(a.letras)}</b><span>${esc(a.son)}</span></div>`).join('');
