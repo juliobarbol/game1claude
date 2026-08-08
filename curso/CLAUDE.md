@@ -1,43 +1,56 @@
 # Curso de inglés — Guía del proyecto (para Claude Code)
 
-> Material propio de ELT para adultos: **dos libros por parte** (Grammar y
-> Vocabulary) que comparten unidades, y un syllabus maestro por parte.
-> Nada que ver con el juego que vive en la raíz del repo (`index.html`).
+> Material propio de ELT para adultos, y la plataforma para armarlo.
+> Nada que ver con el juego, que vive en `juego/` y se sirve en `/juego/`.
 
 ## Qué se está construyendo
 
 Un curso de inglés propietario, vendible **por partes**, para reemplazar el
 parche de PDFs y libros de terceros. Tres niveles, tres partes por nivel,
-**12 clases por parte** (36 por nivel). Cada parte se entrega como dos libros:
+**12 clases por parte** (36 por nivel). Cada clase son dos libros que se
+hablan: **Grammar** y **Vocabulary**.
 
-- **Grammar Book** — la estructura, en cuadros.
-- **Vocabulary Book** — el léxico y los *chunks*, en cuadros.
+Y, alrededor, una plataforma para que la profesora arme, corrija y publique
+clases sin tocar código.
 
-Los dos comparten numeración de unidad y **la misma tarea de speaking**.
+## Arquitectura — lo que hay que entender antes de tocar nada
 
-## Estructura de archivos
+**Una clase es un archivo de DATOS, no una página.** Hay un solo
+renderizador para todas.
 
 ```
-curso/
-  CLAUDE.md                       ← esto
-  nivel-1/
-    parte-1/
-      syllabus.md                 ← FUENTE DE VERDAD del contenido
-      syllabus.html               ← la versión visual del syllabus
+index.html                 portada; dibuja la lista desde el índice
+curso/estilo.css           el sistema visual entero (tokens + cajas)
+curso/tema.js              claro/oscuro
+curso/clase.html           EL renderizador — el único que sabe dibujar una clase
+curso/data/indice.js       la estructura del curso (qué clases hay y su estado)
+curso/data/<id>.js         el contenido de una clase
+curso/ESQUEMA.md           el contrato de un archivo de clase  ← LEER ANTES DE AGREGAR UNA
+curso/nivel-1/parte-1/syllabus.md    el temario, fuente de verdad del diseño
+curso/nivel-1/parte-1/syllabus.html  el temario en versión visual
+test/curso.test.cjs        esquema + coherencia + renderizado en navegador
 ```
 
-Lo que viene después (mismo patrón por parte):
-`grammar-book.html` · `vocabulary-book.html` · `speaking-cards.html`.
+Los datos se cargan con un `<script>` inyectado y **no con `fetch()`**: así
+las páginas también andan abiertas con doble clic (`file://`), sin servidor.
 
 ## Reglas que NO se negocian
 
-- **`syllabus.md` manda.** Si cambia el contenido de una unidad, se cambia
-  primero ahí y después se propaga al HTML y a los libros. Nunca al revés.
+- **El contenido no vive en HTML.** Si te encontrás escribiendo una caja a
+  mano en un `.html`, parás: va en `curso/data/<id>.js`.
+- **`syllabus.md` manda sobre el diseño del curso.** Si cambia el contenido
+  de una unidad, se cambia ahí primero y después en los datos.
 - **Regla de oro de integración:** en el Vocabulary Book no puede aparecer
   una palabra que la gramática de esa unidad no permita usar en una frase
   completa. Y la gramática se practica con las palabras de **esa** unidad.
-- **Toda unidad termina hablando.** Si una unidad no tiene una situación de
-  uso real concreta (con quién, dónde, para qué), la unidad no está lista.
+- **Toda unidad termina hablando.** Sin situación de uso real concreta (con
+  quién, dónde, para qué), la unidad no está lista. El test lo exige.
+- **La práctica va siempre completar → transformar → personalizar.**
+- **El curso abre SIEMPRE en tema claro.** No se mira `prefers-color-scheme`:
+  si la compu está en oscuro, el curso igual abre claro. El oscuro es una
+  elección explícita con el botón, pensada para trabajar de noche, y se
+  recuerda en el aparato (ver `curso/tema.js`). **No volver a meter un
+  `@media (prefers-color-scheme: dark)`.**
 - **Estética adulta.** Cuadros, color funcional y tipografía. **Cero
   ilustraciones infantiles.** Fotografía solo cuando el objeto *es* el
   contenido.
@@ -54,20 +67,43 @@ Lo que viene después (mismo patrón por parte):
 
 - **El color nunca es la única señal.** Todo tiene que leerse impreso en
   blanco y negro: cada caja lleva además su etiqueta en versalitas.
+- **El contenido nunca inyecta HTML.** El renderizador escapa todo y recién
+  después aplica las marcas (`**`, `//`, `{{}}`, `[[]]`).
 - **La promesa comercial es parte del producto.** Cada parte declara cuántas
-  clases dura y qué va a poder decir el alumno al terminar. Si se agrega
-  contenido, se ajusta la promesa; no se estira la parte en silencio.
+  clases dura y qué va a poder decir el alumno. Si se agrega contenido, se
+  ajusta la promesa; no se estira la parte en silencio.
 
 ## Anatomía fija de una unidad
 
-**Grammar:** `IN CONTEXT` → `THE RULE` → `WATCH OUT` → `PRACTICE`
-(completar → transformar → personalizar) → `NOW YOU SPEAK` → `I CAN…`
+**Grammar:** `IN CONTEXT` → `THE RULE` → `WATCH OUT` → `PRACTICE` →
+`NOW YOU SPEAK` → `I CAN…`
 
-**Vocabulary:** `WORD BANK` → `CHUNKS` → `SAY IT RIGHT` → `USE IT`
-(recuperación, no reconocimiento) → `SPEAKING CARDS` → `MY WORDS`
+**Vocabulary:** `WORD BANK` → `CHUNKS` → `SAY IT RIGHT` → `USE IT` →
+`SPEAKING CARDS` → `MY WORDS`
 
-## Cómo se ve el HTML
+Doce cajas, siempre en ese orden. Es lo que hace que el esquema de datos
+exista, así que no se agregan ni se sacan cajas sin pensarlo dos veces.
 
-Sin build y sin frameworks: HTML + `<style>` inline en el mismo archivo, igual
-que el resto del repo. Tokens CSS en `:root`, tema claro y oscuro, y
-`@media print` cuando llegue el momento de imprimir. Se abre con doble clic.
+## Cómo verificar cambios
+
+```bash
+# Datos, esquema, coherencia y renderizado en un navegador de verdad
+NODE_PATH=/opt/node22/lib/node_modules node test/curso.test.cjs
+```
+
+Sin playwright el test corre igual, pero se saltea la parte del navegador y
+lo avisa.
+
+## Agregar una clase
+
+Ver `curso/ESQUEMA.md`. Resumen: entrada en `indice.js`, archivo en
+`data/<id>.js`, estado a `'listo'`, correr el test. **No se toca HTML.**
+
+## Estado y qué sigue
+
+- **Hecho:** contenido como datos + renderizador único + tema claro/oscuro +
+  tests. Clase 01 armada.
+- **Siguiente:** impresión y PDF (`@media print`), versión profesor/alumno,
+  y después el editor para que la profesora arme clases sin tocar archivos.
+- **Pendiente menor:** `syllabus.html` todavía tiene su CSS propio en vez de
+  usar `curso/estilo.css`. Migrarlo la próxima vez que haya que tocarlo.

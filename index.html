@@ -1,52 +1,17 @@
-<title>Curso de inglés — Nivel 1</title>
 <meta charset="utf-8">
+<title>Curso de inglés — Nivel 1</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="description" content="Curso de inglés para adultos. Nivel 1, Parte 1: 12 clases para sostener tu primera conversación.">
 <meta name="theme-color" content="#1E3A63">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231E3A63'/%3E%3Ctext x='16' y='23' font-size='20' font-family='Georgia,serif' fill='%23fff' text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="curso/estilo.css">
+<script src="curso/tema.js"></script>
 
 <style>
-  *,*::before,*::after{box-sizing:border-box;}
-  body,h1,h2,h3,h4,p,ul,ol,dl,dd,figure{margin:0;padding:0;}
-
-  :root{
-    --paper:#FCFCFD; --surface:#FFFFFF; --ink:#141922; --ink-2:#4B5563; --ink-3:#6B7480;
-    --line:#E1E5EC; --line-strong:#C9CFD9;
-    --grammar:#1E3A63; --grammar-bg:#EDF1F8; --grammar-line:#C4D2E7;
-    --vocab:#0E6355;   --vocab-bg:#E6F0ED;   --vocab-line:#B7D6CD;
-    --speak:#94520F;   --speak-bg:#F8EFE2;   --speak-line:#E4CDAD;
-    --slate:#57616F;   --slate-bg:#F0F2F6;   --slate-line:#D5DAE2;
-    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
-    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
-  }
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --paper:#0E1218; --surface:#151A22; --ink:#E7EBF1; --ink-2:#A5AFBC; --ink-3:#87909C;
-      --line:#28303B; --line-strong:#3A4552;
-      --grammar:#93B6E9; --grammar-bg:#15223A; --grammar-line:#2B4066;
-      --vocab:#6ECCB6;   --vocab-bg:#0D2621;   --vocab-line:#1E4A41;
-      --speak:#DFA55F;   --speak-bg:#2B1F10;   --speak-line:#553F1F;
-      --slate:#9AA4B2;   --slate-bg:#191F28;   --slate-line:#2D3541;
-    }
-  }
-  :root[data-theme="dark"]{
-    --paper:#0E1218; --surface:#151A22; --ink:#E7EBF1; --ink-2:#A5AFBC; --ink-3:#87909C;
-    --line:#28303B; --line-strong:#3A4552;
-    --grammar:#93B6E9; --grammar-bg:#15223A; --grammar-line:#2B4066;
-    --vocab:#6ECCB6;   --vocab-bg:#0D2621;   --vocab-line:#1E4A41;
-    --speak:#DFA55F;   --speak-bg:#2B1F10;   --speak-line:#553F1F;
-    --slate:#9AA4B2;   --slate-bg:#191F28;   --slate-line:#2D3541;
-  }
-
-  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;}
-  h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.14;text-wrap:balance;}
+  /* Solo lo propio de la portada. Los tokens y las cajas viven en curso/estilo.css. */
+  .wrap{max-width:58rem;}
   p{max-width:60ch;}
-  .wrap{max-width:58rem;margin:0 auto;padding:0 clamp(1rem,4vw,2rem) 5rem;}
-  .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);}
-  :focus-visible{outline:2px solid var(--grammar);outline-offset:3px;}
 
-  /* ─── portada ─── */
   header.hero{
     padding:clamp(3rem,9vw,6rem) 0 clamp(2rem,5vw,3rem);
     display:flex;flex-direction:column;gap:1.4rem;
@@ -61,54 +26,40 @@
   a.cta{
     display:inline-flex;align-items:center;gap:.5rem;
     padding:.7rem 1.1rem;text-decoration:none;
-    font-weight:600;font-size:.95rem;
-    border:1px solid var(--grammar);
+    font-weight:600;font-size:.95rem;border:1px solid var(--grammar);
   }
   a.cta.primary{background:var(--grammar);color:var(--surface);}
   a.cta.primary:hover{background:var(--ink);border-color:var(--ink);}
   a.cta.ghost{background:transparent;color:var(--grammar);}
   a.cta.ghost:hover{background:var(--grammar-bg);}
-  a.cta .k{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;opacity:.75;}
+  a.cta .k{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;
+    text-transform:uppercase;opacity:.75;}
 
   section{padding-top:clamp(2.75rem,6vw,4rem);display:flex;flex-direction:column;gap:1.2rem;}
   .sec-head{display:flex;flex-direction:column;gap:.3rem;}
   h2{font-size:clamp(1.4rem,3vw,1.95rem);}
 
-  /* ─── qué vas a poder decir ─── */
-  .cando{
-    list-style:none;display:grid;
+  .cando{list-style:none;display:grid;
     grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));
-    gap:.5rem 1.6rem;counter-reset:cd;
-  }
-  .cando li{
-    counter-increment:cd;display:grid;grid-template-columns:1.5rem 1fr;gap:.4rem;
-    font-size:.95rem;
-  }
-  .cando li::before{
-    content:counter(cd,decimal-leading-zero);
-    font-family:var(--mono);font-size:.7rem;color:var(--grammar);padding-top:.3rem;
-  }
+    gap:.5rem 1.6rem;counter-reset:cd;}
+  .cando li{counter-increment:cd;display:grid;grid-template-columns:1.5rem 1fr;
+    gap:.4rem;font-size:.95rem;}
+  .cando li::before{content:counter(cd,decimal-leading-zero);
+    font-family:var(--mono);font-size:.7rem;color:var(--grammar);padding-top:.3rem;}
 
-  /* ─── las 12 clases ─── */
   .classes{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--surface);}
-  .cls{
-    display:grid;grid-template-columns:3.4rem 1fr auto;gap:.2rem 1rem;
-    align-items:center;
-    padding:.75rem 1rem;border-bottom:1px solid var(--line);
-    text-decoration:none;color:inherit;
-  }
+  .cls{display:grid;grid-template-columns:3.4rem 1fr auto;gap:.2rem 1rem;
+    align-items:center;padding:.75rem 1rem;border-bottom:1px solid var(--line);
+    text-decoration:none;color:inherit;}
   .cls:last-child{border-bottom:0;}
-  .cls .n{
-    font-family:var(--mono);font-size:.85rem;color:var(--ink-3);
-    font-variant-numeric:tabular-nums;
-  }
+  .cls .n{font-family:var(--mono);font-size:.85rem;color:var(--ink-3);
+    font-variant-numeric:tabular-nums;}
   .cls .t{display:flex;flex-direction:column;gap:.05rem;min-width:0;}
   .cls .t b{font-family:var(--serif);font-size:1.1rem;font-weight:600;font-style:italic;}
   .cls .t span{font-size:.85rem;color:var(--ink-2);}
-  .state{
-    font-family:var(--mono);font-size:.63rem;letter-spacing:.12em;text-transform:uppercase;
-    padding:.25rem .5rem;border:1px solid var(--line-strong);color:var(--ink-3);white-space:nowrap;
-  }
+  .state{font-family:var(--mono);font-size:.63rem;letter-spacing:.12em;
+    text-transform:uppercase;padding:.25rem .5rem;border:1px solid var(--line-strong);
+    color:var(--ink-3);white-space:nowrap;}
   .cls.live{background:var(--grammar-bg);}
   .cls.live .n{color:var(--grammar);}
   .cls.live .state{border-color:var(--grammar);color:var(--surface);background:var(--grammar);}
@@ -117,9 +68,9 @@
   .cls.check .t b{font-style:normal;font-family:var(--sans);font-size:.98rem;}
   .cls.soon{color:var(--ink-2);}
 
-  /* ─── cómo funciona ─── */
   .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.9rem;}
-  .tile{border:1px solid var(--line);background:var(--surface);padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.4rem;}
+  .tile{border:1px solid var(--line);background:var(--surface);padding:1rem 1.1rem;
+    display:flex;flex-direction:column;gap:.4rem;}
   .tile b{font-family:var(--mono);font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;}
   .tile p{font-size:.92rem;color:var(--ink-2);margin:0;max-width:none;}
   .tile.g{border-color:var(--grammar-line);background:var(--grammar-bg);}
@@ -129,31 +80,23 @@
   .tile.s{border-color:var(--speak-line);background:var(--speak-bg);}
   .tile.s b{color:var(--speak);}
 
-  footer{
-    margin-top:clamp(3rem,7vw,4.5rem);padding-top:1.25rem;border-top:1px solid var(--line);
-    display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;align-items:baseline;
-    font-family:var(--mono);font-size:.72rem;color:var(--ink-3);
-  }
-  footer a{color:var(--ink-3);}
+  footer{margin-top:clamp(3rem,7vw,4.5rem);padding-top:1.25rem;
+    border-top:1px solid var(--line);align-items:baseline;}
   footer .spacer{flex:1;}
 
   @media (max-width:560px){
     .cls{grid-template-columns:2.6rem 1fr;}
     .cls .state{grid-column:2;justify-self:start;margin-top:.3rem;}
   }
-  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
 </style>
 
 <div class="wrap">
 
   <header class="hero">
-    <span class="eyebrow">Curso de inglés para adultos · Nivel 1 · Parte 1</span>
-    <h1>First Contact<em>12 clases</em></h1>
+    <span class="eyebrow" id="eyebrow">Curso de inglés para adultos</span>
+    <h1 id="titulo"></h1>
     <p class="promise">En doce clases vas a <b>sostener tu primera conversación en inglés</b>. No hay etapa de “primero la teoría”: hablás desde la clase&nbsp;1.</p>
-    <div class="actions">
-      <a class="cta primary" href="curso/nivel-1/parte-1/clase-01.html"><span class="k">Clase 01</span> Hi, I'm… →</a>
-      <a class="cta ghost" href="curso/nivel-1/parte-1/syllabus.html">Ver el temario completo</a>
-    </div>
+    <div class="actions" id="acciones"></div>
   </header>
 
   <section>
@@ -161,96 +104,15 @@
       <span class="eyebrow">Al terminar la Parte 1</span>
       <h2>Qué vas a poder decir</h2>
     </div>
-    <ol class="cando">
-      <li>Presentarte, deletrear tu nombre y pedir que te repitan algo.</li>
-      <li>Decir de dónde sos, a qué te dedicás y dar tus datos.</li>
-      <li>Hablar de tu familia y de tus cosas.</li>
-      <li>Describir tu ciudad y tu casa, y decir qué hay cerca.</li>
-      <li>Decir qué sabés hacer y pedir ayuda.</li>
-      <li>Decir la hora y la fecha, y coordinar un encuentro.</li>
-    </ol>
+    <ol class="cando" id="promesa"></ol>
   </section>
 
   <section>
     <div class="sec-head">
       <span class="eyebrow">El temario</span>
-      <h2>Las 12 clases</h2>
+      <h2 id="cuantas">Las clases</h2>
     </div>
-    <div class="classes">
-
-      <a class="cls live" href="curso/nivel-1/parte-1/clase-01.html">
-        <span class="n">01</span>
-        <span class="t"><b>Hi, I'm…</b><span>El verbo BE · saludos y alfabeto · presentarte el primer día</span></span>
-        <span class="state">Entrar</span>
-      </a>
-
-      <div class="cls soon">
-        <span class="n">02</span>
-        <span class="t"><b>Where are you from?</b><span>BE en preguntas · países y nacionalidades · conocer gente en un viaje</span></span>
-        <span class="state">En preparación</span>
-      </div>
-
-      <div class="cls soon">
-        <span class="n">03</span>
-        <span class="t"><b>What do you do?</b><span>a / an y wh-questions · profesiones y números · networking</span></span>
-        <span class="state">En preparación</span>
-      </div>
-
-      <div class="cls soon">
-        <span class="n">04</span>
-        <span class="t"><b>This is my family</b><span>Posesivos y genitivo 's · familia · mostrar fotos</span></span>
-        <span class="state">En preparación</span>
-      </div>
-
-      <div class="cls soon">
-        <span class="n">05</span>
-        <span class="t"><b>What's this?</b><span>this / that / these / those · objetos y colores · objetos perdidos</span></span>
-        <span class="state">En preparación</span>
-      </div>
-
-      <div class="cls check soon">
-        <span class="n">06</span>
-        <span class="t"><b>Checkpoint A — Your first conversation</b><span>Repaso hablando · Speaking Lab de 35 min · devolución</span></span>
-        <span class="state">En preparación</span>
-      </div>
-
-      <div class="cls soon">
-        <span class="n">07</span>
-        <span class="t"><b>It's a great city</b><span>Adjetivos con BE · describir lugares y clima · tu ciudad</span></span>
-        <span class="state">En preparación</span>
-      </div>
-
-      <div class="cls soon">
-        <span class="n">08</span>
-        <span class="t"><b>There's a café near here</b><span>there is / are · lugares de la ciudad · un turista te pregunta</span></span>
-        <span class="state">En preparación</span>
-      </div>
-
-      <div class="cls soon">
-        <span class="n">09</span>
-        <span class="t"><b>Where exactly?</b><span>Preposiciones de lugar · la casa y los muebles · videollamada</span></span>
-        <span class="state">En preparación</span>
-      </div>
-
-      <div class="cls soon">
-        <span class="n">10</span>
-        <span class="t"><b>I can, I can't</b><span>can / can't · habilidades · armar un equipo</span></span>
-        <span class="state">En preparación</span>
-      </div>
-
-      <div class="cls soon">
-        <span class="n">11</span>
-        <span class="t"><b>When's your birthday?</b><span>in / on / at · días, meses y la hora · coordinar un encuentro</span></span>
-        <span class="state">En preparación</span>
-      </div>
-
-      <div class="cls check soon">
-        <span class="n">12</span>
-        <span class="t"><b>Checkpoint B — My World</b><span>Proyecto oral de 3 min · roleplay evaluado · Can-do Passport</span></span>
-        <span class="state">En preparación</span>
-      </div>
-
-    </div>
+    <div class="classes" id="clases"></div>
   </section>
 
   <section>
@@ -275,10 +137,55 @@
   </section>
 
   <footer>
-    <span>Nivel 1 · Parte 1 — First Contact</span>
+    <span id="pie"></span>
     <a href="curso/nivel-1/parte-1/syllabus.html">Temario</a>
+    <button data-tema-boton type="button" class="tema"></button>
     <span class="spacer"></span>
     <a href="juego/">FILO (el juego) →</a>
   </footer>
 
 </div>
+
+<script src="curso/data/indice.js"></script>
+<script>
+// La portada se dibuja desde curso/data/indice.js. Para agregar una clase
+// no se toca este archivo: se agrega la entrada en el índice.
+(function(){
+  const esc = s => String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const nivel = CURSO.niveles[0];
+  const parte = nivel.partes[0];
+
+  document.getElementById('eyebrow').textContent =
+    `Curso de inglés para adultos · Nivel ${nivel.nivel} · Parte ${parte.parte}`;
+  document.getElementById('titulo').innerHTML =
+    `${esc(parte.nombre)}<em>${parte.clases} clases</em>`;
+  document.getElementById('cuantas').textContent = `Las ${parte.clases} clases`;
+  document.getElementById('pie').textContent =
+    `Nivel ${nivel.nivel} · Parte ${parte.parte} — ${parte.nombre}`;
+
+  document.getElementById('promesa').innerHTML =
+    parte.promesa.map(p => `<li>${esc(p)}</li>`).join('');
+
+  const primera = parte.unidades.find(u => u.estado === 'listo');
+  document.getElementById('acciones').innerHTML =
+    (primera
+      ? `<a class="cta primary" href="curso/clase.html?u=${primera.id}"><span class="k">Clase ${
+          String(primera.clase).padStart(2,'0')}</span> ${esc(primera.titulo)} →</a>`
+      : '') +
+    `<a class="cta ghost" href="curso/nivel-1/parte-1/syllabus.html">Ver el temario completo</a>`;
+
+  document.getElementById('clases').innerHTML = parte.unidades.map(u => {
+    const clases = ['cls',
+      u.estado === 'listo' ? 'live' : 'soon',
+      u.tipo === 'checkpoint' ? 'check' : ''].filter(Boolean).join(' ');
+    const dentro = `<span class="n">${String(u.clase).padStart(2,'0')}</span>
+      <span class="t"><b>${esc(u.titulo)}</b><span>${esc(u.resumen)}</span></span>
+      <span class="state">${u.estado === 'listo' ? 'Entrar' : 'En preparación'}</span>`;
+    return u.estado === 'listo'
+      ? `<a class="${clases}" href="curso/clase.html?u=${u.id}">${dentro}</a>`
+      : `<div class="${clases}">${dentro}</div>`;
+  }).join('');
+})();
+</script>

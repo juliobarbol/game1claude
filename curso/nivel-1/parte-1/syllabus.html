@@ -1,6 +1,7 @@
 <meta charset="utf-8">
 <title>Nivel 1 · Parte 1 — First Contact · Syllabus</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="../../tema.js"></script>
 
 <style>
   /* reset mínimo — para que el archivo se vea igual abierto solo o publicado */
@@ -29,23 +30,8 @@
     --wide:66rem;
   }
 
-  @media (prefers-color-scheme: dark){
-    :root:not([data-theme="light"]){
-      --paper:#0E1218;
-      --surface:#151A22;
-      --ink:#E7EBF1;
-      --ink-2:#A5AFBC;
-      --ink-3:#87909C;
-      --line:#28303B;
-      --line-strong:#3A4552;
-
-      --grammar:#93B6E9;   --grammar-bg:#15223A; --grammar-line:#2B4066;
-      --vocab:#6ECCB6;     --vocab-bg:#0D2621;   --vocab-line:#1E4A41;
-      --speak:#DFA55F;     --speak-bg:#2B1F10;   --speak-line:#553F1F;
-      --alert:#E793A0;     --alert-bg:#2B1519;   --alert-line:#532933;
-      --slate:#9AA4B2;     --slate-bg:#191F28;   --slate-line:#2D3541;
-    }
-  }
+  /* Abre SIEMPRE en claro: no se mira `prefers-color-scheme`. El oscuro es
+     una elección explícita, con el botón del pie (ver curso/tema.js). */
 
   :root[data-theme="dark"]{
     --paper:#0E1218;
@@ -446,7 +432,23 @@
     color:var(--ink-3);
     font-size:.82rem;
     font-family:var(--mono);
+    display:flex;
+    gap:1rem;
+    flex-wrap:wrap;
+    align-items:center;
   }
+  button.tema{
+    font-family:var(--mono);
+    font-size:.68rem;
+    letter-spacing:.1em;
+    padding:.32rem .6rem;
+    border:1px solid var(--line);
+    color:var(--ink-2);
+    background:var(--paper);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  button.tema:hover{border-color:var(--line-strong);color:var(--ink);}
 
   @media (max-width:640px){
     .unit{grid-template-columns:1fr;}
@@ -814,6 +816,9 @@
     </ul>
   </section>
 
-  <footer>Documento maestro · Nivel 1 · Parte 1 — First Contact</footer>
+  <footer>
+    <span>Documento maestro · Nivel 1 · Parte 1 — First Contact</span>
+    <button data-tema-boton type="button" class="tema"></button>
+  </footer>
 
 </div>

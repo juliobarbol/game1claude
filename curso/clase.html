@@ -1,0 +1,299 @@
+<meta charset="utf-8">
+<title>Clase — Curso de inglés</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1E3A63">
+<link rel="stylesheet" href="estilo.css">
+<script src="tema.js"></script>
+
+<nav class="bar">
+  <div class="bar-in">
+    <a class="home" href="../index.html">← Curso</a>
+    <span class="spacer"></span>
+    <div class="jump" id="nav"></div>
+    <button data-tema-boton type="button" class="tema"></button>
+  </div>
+</nav>
+
+<div class="wrap" id="app"></div>
+
+<script src="data/indice.js"></script>
+<script>
+// ════════════════════════════════════════════════════════════════════
+// RENDERIZADOR DE CLASES
+//
+// Una clase es un objeto de datos (curso/data/<id>.js). Este archivo es
+// el ÚNICO que sabe cómo se dibuja. Si hay que cambiar cómo se ve una
+// caja, se cambia acá y cambia en las 36 clases a la vez.
+// ════════════════════════════════════════════════════════════════════
+
+var CLASES = {};
+
+// ─── Formato de texto ───────────────────────────────────────────────
+// Marcas admitidas dentro de cualquier texto del contenido:
+//   **negrita**   //inglés en cursiva//   {{resaltado}}   [[respuesta]]
+// Se escapa el HTML PRIMERO: el contenido nunca puede inyectar markup.
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function fmt(s){
+  return esc(s)
+    .replace(/\{\{([^}]+)\}\}/g, '<mark>$1</mark>')
+    .replace(/\[\[([^\]]+)\]\]/g, '<span class="gap hidden">$1</span>')
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>')
+    .replace(/\/\/([^/]+)\/\//g, '<span class="en">$1</span>');
+}
+
+// ─── Caja genérica ──────────────────────────────────────────────────
+function caja(color, n, titulo, subtitulo, cuerpo){
+  return `<section class="card ${color}">
+    <h3><span class="n">${n}</span> ${esc(titulo)}${
+      subtitulo ? ` <span class="es">— ${esc(subtitulo)}</span>` : ''}</h3>
+    <div class="body">${cuerpo}</div>
+  </section>`;
+}
+
+// ─── GRAMMAR BOOK ───────────────────────────────────────────────────
+function inContext(d){
+  const filas = d.dialogo.map(l =>
+    `<dt>${esc(l.quien)}</dt><dd>${fmt(l.linea)}</dd>`).join('');
+  return caja('slate', 1, 'In context', d.subtitulo,
+    `<dl class="dialog">${filas}</dl>` +
+    (d.nota ? `<p class="note">${fmt(d.nota)}</p>` : ''));
+}
+
+function theRule(d){
+  const th = d.cabecera.map(c => `<th>${esc(c)}</th>`).join('');
+  const tr = d.filas.map(f => `<tr>
+      <td class="lbl">${esc(f.etiqueta)}</td>
+      <td class="form">${fmt(f.larga)}</td>
+      <td class="short">${fmt(f.corta)}</td></tr>`).join('');
+  return caja('grammar', 2, 'The rule', d.subtitulo,
+    `<div class="tablewrap"><table><thead><tr>${th}</tr></thead><tbody>${tr}</tbody></table></div>` +
+    (d.nota ? `<p>${fmt(d.nota)}</p>` : ''));
+}
+
+function watchOut(d){
+  const items = d.items.map(e => `<div class="err">
+      <span class="bad"><span class="x">✗</span> <span class="en">${fmt(e.mal)}</span></span>
+      <span class="good">✓ <span class="en">${fmt(e.bien)}</span></span>
+      <span class="why">${fmt(e.porque)}</span>
+    </div>`).join('');
+  return caja('alert', 3, 'Watch out', d.subtitulo, `<div class="errs">${items}</div>`);
+}
+
+function practice(d){
+  const pasos = d.pasos.map((p, i) => {
+    if (p.tipo === 'huecos'){
+      const li = p.items.map(t => `<li><span>${fmt(t)}</span></li>`).join('');
+      return `<div class="step">
+        <h4>${esc(p.titulo)}</h4>
+        <ol class="items" data-answers>${li}</ol>
+        <button class="toggle" type="button" data-respuestas>Mostrar respuestas</button>
+      </div>`;
+    }
+    if (p.tipo === 'renglones'){
+      const r = '<div></div>'.repeat(p.renglones || 3);
+      return `<div class="step">
+        <h4>${esc(p.titulo)}</h4>
+        <div class="lines">${r}</div>
+        ${p.nota ? `<p class="note">${fmt(p.nota)}</p>` : ''}
+      </div>`;
+    }
+    return '';
+  }).join('');
+  return caja('grammar', 4, 'Practice', d.subtitulo, pasos);
+}
+
+function speaking(d, n){
+  const guion = d.guion.map(l =>
+    `<span class="who">${esc(l.quien)}</span><span>${fmt(l.linea)}</span>`).join('');
+  const rondas = d.rondas.map(r =>
+    `<div class="round"><b>${esc(r.n)}</b><span>${fmt(r.texto)}</span></div>`).join('');
+  return caja('speak', n, 'Now you speak', d.subtitulo,
+    `<p>${fmt(d.situacion)}</p>
+     <div class="script">${guion}</div>
+     <div class="rounds">${rondas}</div>
+     ${d.espejo ? `<p class="same">${esc(d.espejo)}</p>` : ''}`);
+}
+
+function iCan(d){
+  const li = d.items.map(t => `<li><span>${fmt(t)}</span></li>`).join('');
+  return caja('slate', 6, 'I can…', d.subtitulo, `<ul class="plain">${li}</ul>`);
+}
+
+// ─── VOCABULARY BOOK ────────────────────────────────────────────────
+function wordBank(d){
+  const grupos = d.grupos.map(g => {
+    const li = g.items.map(w =>
+      `<li><span class="w">${fmt(w.en)}</span><span class="t">${esc(w.es)}</span></li>`).join('');
+    return `<div class="bank"><h4>${esc(g.titulo)}</h4><ul>${li}</ul></div>`;
+  }).join('');
+
+  let extra = '';
+  if (d.alfabeto){
+    const cel = d.alfabeto.grupos.map(a =>
+      `<div><b>${esc(a.letras)}</b><span>${esc(a.son)}</span></div>`).join('');
+    extra += `<div class="bank"><h4>${esc(d.alfabeto.titulo)}</h4><div class="abc">${cel}</div></div>`;
+  }
+  if (d.numeros){
+    const cel = d.numeros.items.map((w, i) =>
+      `<span><b>${i}</b>${esc(w)}</span>`).join('');
+    extra += `<div class="bank"><h4>${esc(d.numeros.titulo)}</h4><div class="nums">${cel}</div></div>`;
+  }
+
+  return caja('vocab', 1, 'Word bank', d.subtitulo,
+    `<div class="banks">${grupos}</div>
+     <button class="toggle v" type="button" data-traducciones>Ocultar traducciones</button>
+     ${extra}`);
+}
+
+function chunks(d){
+  const li = d.items.map(c =>
+    `<li><span class="c">${fmt(c.c)}</span><span class="m">${fmt(c.m)}</span></li>`).join('');
+  return caja('vocab', 2, 'Chunks', d.subtitulo,
+    `<ul class="chunklist">${li}</ul>` +
+    (d.nota ? `<p class="note">${fmt(d.nota)}</p>` : ''));
+}
+
+function sayItRight(d){
+  const rows = d.items.map(r =>
+    `<div class="row"><b>${esc(r.etiqueta)}</b><span class="stress">${fmt(r.texto)}</span></div>`).join('');
+  return caja('vocab', 3, 'Say it right', d.subtitulo, `<div class="say">${rows}</div>`);
+}
+
+function useIt(d){
+  const pasos = d.pasos.map(p =>
+    `<div class="step"><h4>${esc(p.titulo)}</h4><p class="note">${fmt(p.texto)}</p></div>`).join('');
+  return caja('vocab', 4, 'Use it', d.subtitulo, pasos);
+}
+
+function speakingCards(d){
+  const cards = d.items.map(c => `<div class="scard">
+      <b>${esc(c.titulo)}</b>
+      <p>${fmt(c.texto)}</p>
+      ${c.frases ? `<p class="names">${fmt(c.frases)}</p>` : ''}
+    </div>`).join('');
+  return caja('speak', 5, 'Speaking cards', d.subtitulo, `<div class="cards">${cards}</div>`);
+}
+
+function myWords(d){
+  return caja('slate', 6, 'My words', d.subtitulo,
+    `<div class="lines">${'<div></div>'.repeat(d.renglones || 8)}</div>`);
+}
+
+// ─── La página entera ───────────────────────────────────────────────
+function render(c){
+  const g = c.grammar, v = c.vocabulary;
+  const ficha = c.ficha.map(f =>
+    `<div><dt>${esc(f.k)}</dt><dd>${esc(f.v)}</dd></div>`).join('');
+
+  document.title = `Clase ${String(c.clase).padStart(2,'0')} · ${c.titulo} — Nivel ${c.nivel} Parte ${c.parte}`;
+
+  document.getElementById('app').innerHTML = `
+    <header class="top">
+      <span class="eyebrow">Nivel ${c.nivel} · Parte ${c.parte} · Clase ${
+        String(c.clase).padStart(2,'0')} — ${esc(c.codigo)}</span>
+      <h1><span class="en">${esc(c.titulo)}</span><span class="es">${esc(c.promesa)}</span></h1>
+      <dl class="plan">${ficha}</dl>
+    </header>
+
+    <div class="bookhead g" id="grammar">
+      <h2>Grammar Book — ${esc(c.codigo)}</h2><span>6 cajas</span>
+    </div>
+    ${inContext(g.inContext)}
+    ${theRule(g.theRule)}
+    ${watchOut(g.watchOut)}
+    ${practice(g.practice)}
+    <a id="speak"></a>
+    ${speaking(g.speaking, 5)}
+    ${iCan(g.iCan)}
+
+    <div class="bookhead v" id="vocabulary">
+      <h2>Vocabulary Book — ${esc(c.codigo)}</h2><span>${esc(v.carga || '')}</span>
+    </div>
+    ${wordBank(v.wordBank)}
+    ${chunks(v.chunks)}
+    ${sayItRight(v.sayItRight)}
+    ${useIt(v.useIt)}
+    ${speakingCards(v.cards)}
+    ${myWords(v.myWords)}
+
+    <footer>
+      <a href="../index.html">← Todas las clases</a>
+      <a href="nivel-1/parte-1/syllabus.html">Syllabus de la Parte 1</a>
+      <span>Clase ${String(c.clase).padStart(2,'0')} · ${esc(c.codigo)} — ${esc(c.titulo)}</span>
+    </footer>`;
+
+  conectarBotones();
+  construirNav(c.id);
+  if (window.TEMA) TEMA.conectar();
+}
+
+// ─── Los botones que solo tienen sentido en pantalla ────────────────
+function conectarBotones(){
+  document.querySelectorAll('button[data-respuestas]').forEach(btn => {
+    const lista = btn.closest('.step').querySelector('[data-answers]');
+    btn.addEventListener('click', () => {
+      const visibles = !lista.querySelector('.gap.hidden');
+      lista.querySelectorAll('.gap').forEach(g => g.classList.toggle('hidden', visibles));
+      btn.textContent = visibles ? 'Mostrar respuestas' : 'Ocultar respuestas';
+    });
+  });
+
+  const t = document.querySelector('button[data-traducciones]');
+  if (t) t.addEventListener('click', () => {
+    const tapar = !document.querySelector('.bank li .t.hidden');
+    document.querySelectorAll('.bank li .t').forEach(x => x.classList.toggle('hidden', tapar));
+    t.textContent = tapar ? 'Mostrar traducciones' : 'Ocultar traducciones';
+  });
+}
+
+function construirNav(id){
+  const todas = CURSO.todas();
+  const i = todas.findIndex(u => u.id === id);
+  const listas = todas.filter(u => u.estado === 'listo');
+  const antes = listas.filter(u => todas.indexOf(u) < i).pop();
+  const despues = listas.find(u => todas.indexOf(u) > i);
+  const nav = document.getElementById('nav');
+  nav.innerHTML =
+    (antes ? `<a class="g" href="clase.html?u=${antes.id}">← ${esc(antes.codigo)}</a>` : '') +
+    `<a class="g" href="#grammar">Grammar</a>` +
+    `<a class="v" href="#vocabulary">Vocabulary</a>` +
+    `<a class="s" href="#speak">Speaking</a>` +
+    (despues ? `<a class="g" href="clase.html?u=${despues.id}">${esc(despues.codigo)} →</a>` : '');
+}
+
+function error(titulo, detalle){
+  document.getElementById('app').innerHTML =
+    `<div class="oops"><h2>${esc(titulo)}</h2><p>${detalle}</p></div>`;
+}
+
+// ─── Arranque ───────────────────────────────────────────────────────
+// La clase se carga con un <script> inyectado y no con fetch(): así el
+// archivo también anda abierto con doble clic (file://), sin servidor.
+(function arrancar(){
+  const id = (new URLSearchParams(location.search).get('u') || '').trim()
+             || CURSO.todas().filter(u => u.estado === 'listo')[0]?.id;
+
+  if (!id) return error('Todavía no hay ninguna clase armada',
+    'Agregá una unidad con <code>estado: \'listo\'</code> en <code>curso/data/indice.js</code>.');
+
+  const ficha = CURSO.buscar(id);
+  if (!ficha) return error('Esa clase no está en el índice',
+    `No hay ninguna unidad con id <code>${esc(id)}</code> en <code>curso/data/indice.js</code>.`);
+
+  const s = document.createElement('script');
+  s.src = 'data/' + id + '.js';
+  s.onload = () => {
+    const c = CLASES[id];
+    if (!c) return error('El archivo cargó pero no declaró la clase',
+      `<code>curso/data/${esc(id)}.js</code> tiene que hacer <code>CLASES['${esc(id)}'] = { … }</code>.`);
+    try { render(c); }
+    catch (e){ error('No se pudo dibujar la clase', `<code>${esc(e.message)}</code>`); }
+  };
+  s.onerror = () => error('Esta clase todavía no está armada',
+    `Falta el archivo <code>curso/data/${esc(id)}.js</code>. En el índice figura como <b>${esc(ficha.titulo)}</b>.`);
+  document.head.appendChild(s);
+})();
+</script>

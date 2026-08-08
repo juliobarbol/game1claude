@@ -1,0 +1,273 @@
+/* ══════════════════════════════════════════════════════════════════
+   SISTEMA VISUAL DEL CURSO — una sola fuente de verdad.
+
+   Acá viven los tokens (colores, tipografías) y el LENGUAJE DE CAJAS de
+   los dos libros. Todas las páginas del curso lo enlazan; ninguna redefine
+   un color por su cuenta.
+
+   Los cinco colores tienen significado fijo y no se negocia:
+     --grammar  azul marino     estructura (reglas, cuadros, tablas)
+     --vocab    verde profundo  léxico (word banks, chunks, pronunciación)
+     --speak    ámbar           hablar (si es ámbar, se habla)
+     --alert    granate         cuidado (errores típicos, falsos amigos)
+     --slate    gris pizarra    referencia (contexto, autoevaluación, glosario)
+   ══════════════════════════════════════════════════════════════════ */
+
+*,*::before,*::after{box-sizing:border-box;}
+body,h1,h2,h3,h4,p,ul,ol,dl,dd,table,figure{margin:0;padding:0;}
+
+:root{
+  --paper:#FCFCFD; --surface:#FFFFFF; --ink:#141922; --ink-2:#4B5563; --ink-3:#6B7480;
+  --line:#E1E5EC; --line-strong:#C9CFD9;
+  --grammar:#1E3A63; --grammar-bg:#EDF1F8; --grammar-line:#C4D2E7;
+  --vocab:#0E6355;   --vocab-bg:#E6F0ED;   --vocab-line:#B7D6CD;
+  --speak:#94520F;   --speak-bg:#F8EFE2;   --speak-line:#E4CDAD;
+  --alert:#8C2E3D;   --alert-bg:#F7E9EC;   --alert-line:#E3C4CA;
+  --slate:#57616F;   --slate-bg:#F0F2F6;   --slate-line:#D5DAE2;
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+  --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+}
+/* El curso abre SIEMPRE en claro: no se mira `prefers-color-scheme`.
+   El oscuro es una elección explícita (ver curso/tema.js), pensada para
+   trabajar de noche, y queda recordada en el aparato. */
+:root[data-theme="dark"]{
+  --paper:#0E1218; --surface:#151A22; --ink:#E7EBF1; --ink-2:#A5AFBC; --ink-3:#87909C;
+  --line:#28303B; --line-strong:#3A4552;
+  --grammar:#93B6E9; --grammar-bg:#15223A; --grammar-line:#2B4066;
+  --vocab:#6ECCB6;   --vocab-bg:#0D2621;   --vocab-line:#1E4A41;
+  --speak:#DFA55F;   --speak-bg:#2B1F10;   --speak-line:#553F1F;
+  --alert:#E793A0;   --alert-bg:#2B1519;   --alert-line:#532933;
+  --slate:#9AA4B2;   --slate-bg:#191F28;   --slate-line:#2D3541;
+}
+
+/* ─── base ─── */
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+h1,h2,h3,h4{font-family:var(--serif);font-weight:600;line-height:1.15;text-wrap:balance;}
+a{color:var(--grammar);}
+strong,b{font-weight:650;}
+em{font-style:italic;}
+.en{font-style:italic;}
+.eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-3);}
+.note{font-size:.88rem;color:var(--ink-2);}
+:focus-visible{outline:2px solid var(--grammar);outline-offset:2px;}
+.wrap{max-width:60rem;margin:0 auto;padding:0 clamp(1rem,4vw,2rem) 5rem;}
+
+/* ─── barra pegajosa ─── */
+nav.bar{position:sticky;top:0;z-index:20;background:var(--surface);
+  border-bottom:1px solid var(--line);}
+.bar-in{max-width:60rem;margin:0 auto;padding:.55rem clamp(1rem,4vw,2rem);
+  display:flex;align-items:center;gap:.5rem;flex-wrap:wrap;}
+.bar a.home{font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--ink-3);text-decoration:none;}
+.bar a.home:hover{color:var(--ink);}
+.bar .spacer{flex:1;}
+.jump{display:flex;gap:.35rem;flex-wrap:wrap;}
+.jump a,.jump button{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;
+  text-transform:uppercase;text-decoration:none;padding:.32rem .6rem;
+  border:1px solid var(--line);color:var(--ink-2);background:var(--paper);cursor:pointer;}
+.jump a.g:hover,.jump a.g:focus-visible{border-color:var(--grammar-line);background:var(--grammar-bg);color:var(--grammar);}
+.jump a.v:hover,.jump a.v:focus-visible{border-color:var(--vocab-line);background:var(--vocab-bg);color:var(--vocab);}
+.jump a.s:hover,.jump a.s:focus-visible{border-color:var(--speak-line);background:var(--speak-bg);color:var(--speak);}
+
+/* ─── interruptor de tema ─── */
+button.tema{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;
+  padding:.32rem .6rem;border:1px solid var(--line);
+  color:var(--ink-2);background:var(--paper);cursor:pointer;white-space:nowrap;
+}
+button.tema:hover{border-color:var(--line-strong);color:var(--ink);}
+
+/* ─── cabecera de clase ─── */
+header.top{padding:clamp(2rem,6vw,3.5rem) 0 1.5rem;display:flex;flex-direction:column;gap:.9rem;}
+header.top h1{font-size:clamp(2rem,5.5vw,3.1rem);letter-spacing:-.015em;}
+header.top h1 .es{display:block;font-family:var(--sans);font-size:1rem;font-weight:500;
+  font-style:normal;color:var(--ink-2);margin-top:.5rem;letter-spacing:0;}
+.plan{display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));
+  border:1px solid var(--line);background:var(--surface);}
+.plan div{padding:.7rem .9rem;border-right:1px solid var(--line);}
+.plan div:last-child{border-right:0;}
+.plan dt{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--ink-3);}
+.plan dd{font-weight:600;font-size:.92rem;font-variant-numeric:tabular-nums;}
+
+/* ─── encabezado de libro ─── */
+.bookhead{margin-top:clamp(2.5rem,6vw,3.5rem);padding:1rem 1.15rem;
+  display:flex;align-items:baseline;justify-content:space-between;gap:.75rem;
+  flex-wrap:wrap;color:var(--surface);}
+.bookhead h2{font-family:var(--sans);font-size:1.1rem;font-weight:600;letter-spacing:.02em;}
+.bookhead span{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;
+  text-transform:uppercase;opacity:.85;}
+.bookhead.g{background:var(--grammar);}
+.bookhead.v{background:var(--vocab);}
+
+/* ─── la caja (el ladrillo de los dos libros) ─── */
+.card{border:1px solid var(--line);background:var(--surface);margin-top:1rem;}
+.card > h3{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;
+  padding:.7rem 1.1rem;border-bottom:1px solid var(--line);
+  font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;
+  text-transform:uppercase;font-weight:600;}
+.card > h3 .n{font-variant-numeric:tabular-nums;opacity:.55;}
+.card > h3 .es{font-family:var(--sans);font-size:.78rem;letter-spacing:0;
+  text-transform:none;font-weight:500;color:var(--ink-3);}
+.card .body{padding:1.05rem 1.15rem;display:flex;flex-direction:column;gap:.85rem;}
+.card p{max-width:62ch;}
+.card.grammar{border-color:var(--grammar-line);}
+.card.grammar > h3{background:var(--grammar-bg);border-bottom-color:var(--grammar-line);color:var(--grammar);}
+.card.vocab{border-color:var(--vocab-line);}
+.card.vocab > h3{background:var(--vocab-bg);border-bottom-color:var(--vocab-line);color:var(--vocab);}
+.card.speak{border-color:var(--speak-line);}
+.card.speak > h3{background:var(--speak-bg);border-bottom-color:var(--speak-line);color:var(--speak);}
+.card.alert{border-color:var(--alert-line);}
+.card.alert > h3{background:var(--alert-bg);border-bottom-color:var(--alert-line);color:var(--alert);}
+.card.slate{border-color:var(--slate-line);}
+.card.slate > h3{background:var(--slate-bg);border-bottom-color:var(--slate-line);color:var(--slate);}
+
+/* ─── diálogo (IN CONTEXT) ─── */
+.dialog{display:grid;grid-template-columns:auto 1fr;gap:.45rem 1rem;font-size:1.02rem;}
+.dialog dt{font-weight:650;color:var(--ink-3);font-size:.9rem;padding-top:.15rem;}
+.dialog dd{font-family:var(--serif);font-size:1.08rem;}
+mark{background:var(--grammar-bg);color:var(--grammar);font-weight:650;
+  padding:0 .18em;border-bottom:2px solid var(--grammar);}
+
+/* ─── tabla de la regla (THE RULE) ─── */
+.tablewrap{overflow-x:auto;border:1px solid var(--grammar-line);}
+.tablewrap table{border-collapse:collapse;width:100%;min-width:32rem;font-size:.95rem;}
+.tablewrap th,.tablewrap td{padding:.6rem .8rem;text-align:left;
+  border-bottom:1px solid var(--grammar-line);vertical-align:top;}
+.tablewrap thead th{font-family:var(--mono);font-size:.62rem;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--grammar);background:var(--grammar-bg);font-weight:600;}
+.tablewrap tbody tr:last-child td{border-bottom:0;}
+td.form{font-family:var(--serif);font-size:1.05rem;}
+td.short{font-family:var(--serif);font-size:1.05rem;font-weight:650;color:var(--grammar);}
+td.lbl{font-size:.82rem;color:var(--ink-3);white-space:nowrap;}
+
+/* ─── errores (WATCH OUT) ─── */
+.errs{display:flex;flex-direction:column;gap:.55rem;}
+.err{display:flex;flex-direction:column;gap:.15rem;padding:.6rem .8rem;
+  background:var(--alert-bg);border:1px solid var(--alert-line);}
+.err .bad{font-family:var(--serif);font-size:1.02rem;color:var(--alert);}
+.err .good{font-family:var(--serif);font-size:1.02rem;}
+.err .why{font-size:.85rem;color:var(--ink-2);margin-top:.2rem;}
+.err .x{font-weight:700;}
+
+/* ─── práctica (PRACTICE / USE IT) ─── */
+.step{border-left:3px solid var(--grammar);padding-left:.9rem;
+  display:flex;flex-direction:column;gap:.5rem;}
+.step h4{font-family:var(--mono);font-size:.7rem;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--grammar);}
+.card.vocab .step{border-left-color:var(--vocab);}
+.card.vocab .step h4{color:var(--vocab);}
+.items{display:flex;flex-direction:column;gap:.4rem;counter-reset:it;}
+.items li{list-style:none;counter-increment:it;display:grid;
+  grid-template-columns:1.5rem 1fr;gap:.5rem;
+  font-family:var(--serif);font-size:1.04rem;align-items:baseline;}
+.items li::before{content:counter(it) ".";font-family:var(--mono);
+  font-size:.72rem;color:var(--ink-3);}
+.items li > span{grid-column:2;}
+.gap{display:inline-block;min-width:5.5rem;border-bottom:1.5px solid var(--line-strong);
+  text-align:center;color:var(--grammar);font-weight:650;}
+.gap.hidden{color:transparent;}
+.lines{display:flex;flex-direction:column;gap:.55rem;}
+.lines div{border-bottom:1.5px solid var(--line);height:1.6rem;}
+
+button.toggle{align-self:flex-start;font-family:var(--mono);font-size:.68rem;
+  letter-spacing:.11em;text-transform:uppercase;padding:.42rem .8rem;
+  border:1px solid var(--grammar-line);background:var(--grammar-bg);
+  color:var(--grammar);cursor:pointer;}
+button.toggle:hover{background:var(--surface);}
+button.toggle.v{border-color:var(--vocab-line);background:var(--vocab-bg);color:var(--vocab);}
+button.toggle.v:hover{background:var(--surface);}
+
+/* ─── tarea de speaking (NOW YOU SPEAK) ─── */
+.script{background:var(--speak-bg);border:1px dashed var(--speak-line);
+  padding:.85rem 1rem;display:flex;flex-direction:column;gap:.35rem;
+  font-family:var(--serif);font-size:1.06rem;}
+.script .who{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--speak);margin-top:.35rem;}
+.script .who:first-child{margin-top:0;}
+.rounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:.6rem;}
+.round{border:1px solid var(--speak-line);padding:.6rem .75rem;background:var(--surface);}
+.round b{font-family:var(--mono);font-size:.65rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--speak);display:block;margin-bottom:.2rem;}
+.round span{font-size:.9rem;color:var(--ink-2);}
+.same{font-size:.85rem;color:var(--speak);font-family:var(--mono);
+  border-top:1px dashed var(--speak-line);padding-top:.55rem;}
+
+/* ─── word bank ─── */
+.banks{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.75rem;}
+.bank{border:1px solid var(--vocab-line);background:var(--vocab-bg);padding:.7rem .85rem;}
+.bank h4{font-family:var(--mono);font-size:.66rem;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--vocab);margin-bottom:.45rem;}
+.bank ul{list-style:none;display:flex;flex-direction:column;gap:.22rem;}
+.bank li{display:grid;grid-template-columns:1fr auto;gap:.75rem;
+  font-size:.95rem;align-items:baseline;}
+.bank li .w{font-family:var(--serif);font-size:1.02rem;}
+.bank li .t{font-size:.82rem;color:var(--ink-3);text-align:right;}
+.bank li .t.hidden{visibility:hidden;}
+
+.abc{display:flex;flex-wrap:wrap;gap:.4rem;}
+.abc div{border:1px solid var(--vocab-line);background:var(--surface);
+  padding:.35rem .55rem;text-align:center;min-width:4.4rem;}
+.abc b{display:block;font-family:var(--serif);font-size:1.15rem;color:var(--vocab);}
+.abc span{font-family:var(--mono);font-size:.68rem;color:var(--ink-2);}
+
+.nums{display:flex;flex-wrap:wrap;gap:.3rem;}
+.nums span{border:1px solid var(--vocab-line);background:var(--surface);
+  padding:.28rem .5rem;font-size:.86rem;}
+.nums span b{font-family:var(--mono);color:var(--vocab);margin-right:.3rem;
+  font-variant-numeric:tabular-nums;}
+
+/* ─── chunks ─── */
+.chunklist{display:flex;flex-direction:column;gap:.4rem;}
+.chunklist li{list-style:none;display:grid;grid-template-columns:1fr auto;
+  gap:.6rem;align-items:baseline;border-bottom:1px dotted var(--vocab-line);
+  padding-bottom:.3rem;}
+.chunklist .c{font-family:var(--serif);font-size:1.08rem;color:var(--ink);}
+.chunklist .m{font-size:.85rem;color:var(--ink-3);text-align:right;}
+
+/* ─── pronunciación (SAY IT RIGHT) ─── */
+.say{display:flex;flex-direction:column;gap:.5rem;}
+.say .row{display:grid;grid-template-columns:auto 1fr;gap:.7rem;
+  align-items:baseline;font-size:.95rem;}
+.say .row b{font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--vocab);white-space:nowrap;}
+.stress{font-family:var(--serif);font-size:1.06rem;}
+.stress b,.stress em{font-style:normal;font-weight:700;color:var(--vocab);}
+
+/* ─── speaking cards ─── */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.75rem;}
+.scard{border:1px solid var(--speak-line);background:var(--speak-bg);
+  padding:.75rem .85rem;display:flex;flex-direction:column;gap:.35rem;}
+.scard b{font-family:var(--mono);font-size:.65rem;letter-spacing:.12em;
+  text-transform:uppercase;color:var(--speak);}
+.scard p{font-size:.92rem;margin:0;}
+.scard .names{font-family:var(--serif);font-size:1rem;color:var(--ink);}
+
+/* ─── checklist (I CAN) ─── */
+ul.plain{list-style:none;display:flex;flex-direction:column;gap:.4rem;}
+ul.plain li{display:grid;grid-template-columns:1rem 1fr;gap:.55rem;font-size:.95rem;}
+ul.plain li::before{content:"□";color:var(--slate);font-family:var(--mono);}
+ul.plain li > span{grid-column:2;}
+
+footer{padding-top:3rem;font-family:var(--mono);font-size:.72rem;
+  color:var(--ink-3);display:flex;gap:1rem;flex-wrap:wrap;}
+footer a{color:var(--ink-3);}
+
+/* ─── aviso de error del renderizador ─── */
+.oops{border:1px solid var(--alert-line);background:var(--alert-bg);
+  color:var(--alert);padding:1rem 1.15rem;margin-top:2rem;}
+.oops h2{font-size:1.2rem;margin-bottom:.4rem;}
+.oops code{font-family:var(--mono);font-size:.85rem;}
+
+@media (max-width:560px){
+  .dialog{grid-template-columns:1fr;gap:.1rem;}
+  .dialog dt{padding-top:.5rem;}
+  .bank li{grid-template-columns:1fr;}
+  .bank li .t{text-align:left;}
+  .chunklist li{grid-template-columns:1fr;}
+  .chunklist .m{text-align:left;}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
