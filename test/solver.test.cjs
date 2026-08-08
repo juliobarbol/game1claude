@@ -1,8 +1,8 @@
-// test/solver.test.cjs — un bot juega los 15 niveles.
+// test/solver.test.cjs — un bot juega todos los niveles.
 //
 // POR QUÉ EXISTE: en un juego de precisión el peor error posible es publicar
 // un nivel IMPOSIBLE (o uno que se rompe porque moviste una constante de la
-// física). Un humano no puede probar 15 niveles a mano en cada cambio; un bot
+// física). Un humano no puede probar 21 niveles a mano en cada cambio; un bot
 // sí. Este test hace una búsqueda en anchura sobre las entradas del mando
 // (las MISMAS que usa una persona: ← → ↑ ↓, SALTO, DASH) y exige que cada
 // nivel se pueda terminar sin morir.
@@ -25,7 +25,32 @@
 const { loadGame } = require('./_load.cjs');
 const G = loadGame();
 
-const { K, solve, replay } = require('./_bot.cjs');
+// --espejo corre el juego dado vuelta en horizontal (el modo espejo del
+// juego). La física es simétrica salvo la corrección de esquina, que prueba
+// primero hacia la derecha; alcanza para que un nivel espejado NO sea
+// automáticamente terminable, así que hay que pasarle el bot igual.
+if (process.argv.includes('--espejo')){
+  G.OPTS.mirror = 1;
+  console.log('· modo ESPEJO ·');
+}
+
+const { K, ANCHO, solve, replay } = require('./_bot.cjs');
+
+// El bot busca con un HAZ (ver test/_bot.cjs): rápido, pero incompleto. Un
+// "no encontré" con el haz puesto NO prueba que el nivel sea imposible, así
+// que antes de dar por roto un nivel se reintenta abriéndolo — y al final,
+// con anchura pura. Si un nivel necesita el segundo o el tercer intento,
+// conviene saberlo: es señal de que el camino es muy fino.
+const ANCHOS = [ANCHO, ANCHO*4, Infinity];
+function buscar(G, i, budget, opts){
+  let last;
+  for (let n = 0; n < ANCHOS.length; n++){
+    last = solve(G, i, budget, Object.assign({ ancho:ANCHOS[n] }, opts));
+    if (last.ok){ last.intento = n; return last; }
+    if (last.why === 'sin estados nuevos (nivel cerrado)') return last;
+  }
+  return last;
+}
 
 // ── Revisión de estructura ──────────────────────────────────────────
 // Barata y ANTES que el bot: agarra las metidas de pata que no se ven
@@ -38,7 +63,7 @@ function revisarEstructura(G){
     if (L.rows.length !== 15) mal(i, `tiene ${L.rows.length} filas (tienen que ser 15)`);
     L.rows.forEach((r, y) => {
       if (r.length !== 28) mal(i, `la fila y${y+1} mide ${r.length} (tienen que ser 28)`);
-      const raro = r.replace(/[ #^v<>=sco*PG]/g, '');
+      const raro = r.replace(/[ #^v<>=scoud*PG]/g, '');
       if (raro) mal(i, `la fila y${y+1} usa símbolos desconocidos: "${raro}"`);
     });
     const txt = L.rows.join('');
@@ -54,7 +79,7 @@ function revisarEstructura(G){
     if (enSolido(P.spawn.x + 5, P.spawn.y + 7)) mal(i, 'el inicio está dentro de una pared');
     if (enSolido(P.goal.x + 8, P.goal.y + 8)) mal(i, 'la meta está dentro de una pared');
   });
-  console.log(ok ? 'PASS  estructura de los 15 niveles' : '');
+  console.log(ok ? `PASS  estructura de los ${G.LEVELS.length} niveles` : '');
   return ok;
 }
 
@@ -68,7 +93,7 @@ const list = only ? [ +only - 1 ] : G.LEVELS.map((_, i) => i);
 for (const i of list){
   const L = G.LEVELS[i];
   const t0 = Date.now();
-  const r = solve(G, i, 900000);
+  const r = buscar(G, i, 2500000);
   let line = `${String(i+1).padStart(2)}. ${L.n.padEnd(13)}`;
   if (!r.ok){
     allOk = false;
@@ -88,12 +113,13 @@ for (const i of list){
   rows.push({ i, bot, par });
   console.log(`${okPar ? 'PASS' : 'FAIL'}  ${line} bot ${bot.toFixed(2)}s  ` +
     `medallas ${par.map(p => p.toFixed(1)).join('/')}  ` +
-    `(${r.expanded} estados, ${((Date.now()-t0)/1000).toFixed(1)}s)`);
+    `(${r.expanded} estados, ${((Date.now()-t0)/1000).toFixed(1)}s` +
+    `${r.intento ? `, haz x${ANCHOS[r.intento] === Infinity ? '∞' : ANCHOS[r.intento]/ANCHO}` : ''})`);
 
   // ── Segunda pasada: la estrella ──
   if (rapido || !L.rows.join('').includes('*')) continue;
   const t1 = Date.now();
-  const e = solve(G, i, 3000000, { estrella:true });
+  const e = buscar(G, i, 6000000, { estrella:true });
   if (!e.ok){
     allOk = false;
     console.log(`FAIL  ${' '.repeat(line.length)} ★ LA ESTRELLA NO SE PUEDE JUNTAR ` +

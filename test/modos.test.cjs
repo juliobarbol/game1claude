@@ -1,0 +1,400 @@
+// test/modos.test.cjs — maratón, espejo y tabla, en un navegador de verdad.
+//
+// POR QUÉ EXISTE: el maratón y el espejo tocan cosas que el solver no ve
+// (estado de la partida, claves de guardado, pantallas) y que el test de PWA
+// tampoco mira. Lo que más importa acá:
+//
+//   1. el maratón encadena los niveles SOLO, sin pantalla intermedia;
+//   2. su cronómetro NO se reinicia al morir (el de nivel sí);
+//   3. el récord del recorrido se guarda con sus parciales;
+//   4. el espejo es de verdad el espejo, y sus récords van a otro casillero
+//      (si se mezclaran, el récord de un lado borraría el del otro);
+//   5. la tabla de récords no rompe nada cuando no hay internet.
+//
+// Uso:  NODE_PATH=/opt/node22/lib/node_modules node test/modos.test.cjs
+
+const fs = require('node:fs');
+const path = require('node:path');
+const http = require('node:http');
+
+const ROOT = path.resolve(__dirname, '..', 'juego');
+const PORT = 8300 + (process.pid % 300);
+
+let chromium;
+for (const p of ['playwright', 'playwright-core', '/opt/node22/lib/node_modules/playwright']){
+  try { chromium = require(p).chromium; break; } catch (_){}
+}
+if (!chromium){
+  console.error('No se encontró playwright. Probá:  NODE_PATH=/opt/node22/lib/node_modules node test/modos.test.cjs');
+  process.exit(2);
+}
+
+const MIME = { '.html':'text/html', '.js':'text/javascript', '.png':'image/png',
+  '.webmanifest':'application/manifest+json', '.json':'application/json' };
+
+let ok = true;
+const check = (name, pass, extra) => {
+  if (!pass) ok = false;
+  console.log(`${pass ? 'PASS' : 'FAIL'}  ${name}${extra != null ? '  — ' + extra : ''}`);
+};
+
+(async () => {
+  const srv = http.createServer((req, res) => {
+    const rel = decodeURIComponent(req.url.split('?')[0]).replace(/^\/+/, '') || 'index.html';
+    const f = path.join(ROOT, rel);
+    if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()){
+      res.writeHead(404); res.end('no'); return;
+    }
+    res.writeHead(200, { 'Content-Type': MIME[path.extname(f)] || 'application/octet-stream' });
+    res.end(fs.readFileSync(f));
+  }).listen(PORT);
+
+  const browser = await chromium.launch();
+  const page = await browser.newPage();
+  const errores = [];
+  page.on('pageerror', e => errores.push(String(e)));
+  page.on('console', m => {
+    if (m.type() !== 'error') return;
+    // El pedido a Supabase lo corta este mismo test; que el navegador lo
+    // anote en la consola es lo esperado, no un error del juego. Lo que NO
+    // puede pasar es que ese corte tire una excepción (eso lo agarra
+    // 'pageerror', que no se filtra).
+    const u = (m.location() && m.location().url) || '';
+    if (/supabase\.co/.test(u)) return;
+    errores.push(m.text() + (u ? ' @ ' + u : ''));
+  });
+  // Que no salga a internet: así se prueba justo el caso "sin conexión".
+  await page.route('**://*.supabase.co/**', r => r.abort());
+  await page.goto(`http://127.0.0.1:${PORT}/index.html`, { waitUntil:'load' });
+  await page.waitForFunction(() => typeof window.startRun === 'function');
+
+  // ── El espejo es el espejo ──
+  const esp = await page.evaluate(() => {
+    OPTS.mirror = 0; const a = parseLevel(LEVELS[0]);
+    OPTS.mirror = 1; const b = parseLevel(LEVELS[0]);
+    OPTS.mirror = 0;
+    const W = a.w, H = a.h;
+    let igual = true;
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++)
+      if (a.tiles[y*W + x] !== b.tiles[y*W + (W-1-x)]) igual = false;
+    return { igual, ax:a.spawn.x, bx:b.spawn.x, W, TS };
+  });
+  check('el espejo refleja la sala tile por tile', esp.igual);
+  check('el inicio también se refleja', esp.ax !== esp.bx,
+    `normal x=${esp.ax} · espejo x=${esp.bx}`);
+
+  // Los pinchos laterales tienen que cambiar de lado, si no el nivel espejado
+  // tendría púas mirando hacia adentro de la pared.
+  const puas = await page.evaluate(() => {
+    const i = LEVELS.findIndex(L => L.rows.join('').includes('>'));
+    if (i < 0) return { salteado:true };
+    OPTS.mirror = 0; const a = parseLevel(LEVELS[i]);
+    OPTS.mirror = 1; const b = parseLevel(LEVELS[i]);
+    OPTS.mirror = 0;
+    const W = a.w;
+    let cuentaA = 0, cuentaB = 0;
+    for (let k = 0; k < a.tiles.length; k++){
+      if (a.tiles[k] === T_SP_R) cuentaA++;
+      if (b.tiles[k] === T_SP_L) cuentaB++;
+    }
+    return { i, cuentaA, cuentaB };
+  });
+  check('los pinchos laterales cambian de lado', puas.salteado || puas.cuentaA === puas.cuentaB,
+    puas.salteado ? 'ningún nivel usa ">"' : `${puas.cuentaA} ">" → ${puas.cuentaB} "<"`);
+
+  // ── Récords en casilleros distintos ──
+  const casilleros = await page.evaluate(() => {
+    try { localStorage.clear(); } catch(_){}
+    loadSave();
+    OPTS.mirror = 0; lvRec(3).best = 100;
+    OPTS.mirror = 1; lvRec(3).best = 200;
+    const normal = lvRec(3, '').best, espejo = lvRec(3, 'm').best;
+    const gk = { normal:(OPTS.mirror = 0, ghostKey(3)), espejo:(OPTS.mirror = 1, ghostKey(3)) };
+    OPTS.mirror = 0;
+    return { normal, espejo, gk };
+  });
+  check('el récord del espejo no pisa al normal',
+    casilleros.normal === 100 && casilleros.espejo === 200,
+    `normal ${casilleros.normal} · espejo ${casilleros.espejo}`);
+  check('el fantasma también va aparte', casilleros.gk.normal !== casilleros.gk.espejo,
+    `${casilleros.gk.normal} vs ${casilleros.gk.espejo}`);
+
+  // El desbloqueo se mira SIEMPRE contra el juego normal: si no, el espejo
+  // arrancaría con todo trabado y sería un castigo en vez de un modo.
+  const desbloqueo = await page.evaluate(() => {
+    try { localStorage.clear(); } catch(_){}
+    loadSave();
+    OPTS.mirror = 0; lvRec(0).best = 120;      // terminaste el 1 en el juego normal
+    OPTS.mirror = 1;
+    const abierto = unlocked(1);
+    OPTS.mirror = 0;
+    return abierto;
+  });
+  check('el espejo hereda los niveles desbloqueados', desbloqueo === true);
+
+  // ── Maratón ──
+  const maraton = await page.evaluate(async () => {
+    try { localStorage.clear(); } catch(_){}
+    loadSave();
+    OPTS.mirror = 0;
+    const def = runDefs()[0];                  // el mundo 1
+    startRun(def);
+    const pantallas = [];
+    const N = def.b - def.a;
+    for (let k = 0; k < N; k++){
+      pantallas.push(GAME.idx);
+      GAME.run.on = true;
+      GAME.run.frames += 60 * (k + 1);         // "tardaste" k+1 segundos
+      GAME.w.timer = 60 * (k + 1);
+      onWin();
+      // Entre nivel y nivel NO tiene que aparecer ninguna pantalla.
+      const visible = [...document.querySelectorAll('.screen')].some(s => !s.classList.contains('hidden'));
+      if (visible && k < N - 1) return { error:'apareció una pantalla en el medio del maratón' };
+      if (GAME.run) runAdvance();
+    }
+    const r = SAVE.run[def.k];
+    return { pantallas, N, guardado:r, fin:GAME.lastRun, corriendo:!!GAME.run,
+             pantallaFinal:!document.getElementById('scr-runend').classList.contains('hidden') };
+  });
+  check('el maratón encadena los niveles solo',
+    !maraton.error && String(maraton.pantallas) === String([0,1,2,3,4].slice(0, maraton.N)),
+    maraton.error || ('niveles ' + maraton.pantallas));
+  check('el maratón termina y muestra el resultado',
+    !maraton.corriendo && maraton.pantallaFinal === true);
+  check('guarda el récord del recorrido con sus parciales',
+    !!maraton.guardado && maraton.guardado.splits.length === maraton.N,
+    maraton.guardado ? `${maraton.guardado.best} frames · ${maraton.guardado.splits.length} parciales` : 'no guardó');
+  check('los parciales son acumulados y crecientes',
+    !!maraton.guardado && maraton.guardado.splits.every((v, k, a) => k === 0 || v > a[k-1]),
+    maraton.guardado ? String(maraton.guardado.splits) : '');
+
+  // El reloj del recorrido no se reinicia al morir: es lo que lo hace un
+  // maratón y no una suma de vueltas sueltas.
+  const alMorir = await page.evaluate(() => {
+    try { localStorage.clear(); } catch(_){}
+    loadSave();
+    startRun(runDefs()[0]);
+    GAME.run.on = true; GAME.run.frames = 900;
+    GAME.w.timer = 400;
+    retryLevel();
+    const r = { run:GAME.run.frames, nivel:GAME.w.timer, muertes:GAME.run.deaths };
+    GAME.run = null; GAME.mode = 'menu'; GAME.w = null;
+    return r;
+  });
+  check('al morir el reloj del maratón sigue y el del nivel se reinicia',
+    alMorir.run === 900 && alMorir.nivel === 0 && alMorir.muertes === 1,
+    `maratón ${alMorir.run} · nivel ${alMorir.nivel} · ☠ ${alMorir.muertes}`);
+
+  // ── Maratón EXTREMO ──
+  // El reloj de pared cuenta lo que el normal no cuenta: el rato que te
+  // tomás para leer la sala antes de moverte, el respiro entre nivel y
+  // nivel, y la pausa. Y para EXACTO en la última bandera.
+  const extremo = await page.evaluate(async () => {
+    try { localStorage.clear(); } catch(_){}
+    loadSave();
+    OPTS.extremo = 1;
+    const def = runDefs()[0];
+    startRun(def);
+    const arrancoSolo = GAME.run.t0 > 0 && GAME.run.extremo === true;
+    // Sin tocar una tecla, el reloj tiene que correr igual.
+    await new Promise(r => setTimeout(r, 250));
+    runTick(GAME.run);
+    const quieto = GAME.run.frames;
+    // Terminar todos los niveles menos el último.
+    const N = def.b - def.a;
+    for (let k = 0; k < N - 1; k++){ onWin(); runAdvance(); }
+    onWin();                                   // última bandera
+    const congelado = GAME.run ? GAME.run.frames : 0;
+    await new Promise(r => setTimeout(r, 200));
+    runTick(GAME.run);
+    const despues = GAME.run ? GAME.run.frames : congelado;
+    if (GAME.run) runAdvance();
+    const clave = Object.keys(SAVE.run)[0];
+    OPTS.extremo = 0;
+    return { arrancoSolo, quieto, congelado, despues, clave, guardado:SAVE.run[clave] };
+  });
+  check('el extremo arranca al aparecer la sala, sin esperar tu movimiento',
+    extremo.arrancoSolo && extremo.quieto > 0, `${extremo.quieto} frames quieto`);
+  check('el extremo para en la última bandera y no sigue corriendo',
+    extremo.congelado === extremo.despues,
+    `${extremo.congelado} → ${extremo.despues}`);
+  check('el récord extremo va a su propio casillero', extremo.clave === 'w0x',
+    extremo.clave);
+
+  // Normal y extremo no se pisan entre sí.
+  const casillerosRun = await page.evaluate(() => {
+    try { localStorage.clear(); } catch(_){}
+    loadSave();
+    OPTS.extremo = 0; OPTS.mirror = 0;
+    const a = runKey('w0');
+    OPTS.extremo = 1;         const b = runKey('w0');
+    OPTS.mirror = 1;          const c = runKey('w0');
+    OPTS.extremo = 0;         const d = runKey('w0');
+    OPTS.mirror = 0;
+    return [a, b, c, d];
+  });
+  check('los cuatro casilleros de recorrido son distintos',
+    new Set(casillerosRun).size === 4, casillerosRun.join(' '));
+
+  // ── Fantasma del récord de la tabla ──
+  // La red real ya se probó aparte contra Supabase (sube, un tiempo peor no
+  // lo pisa, la lista no lo arrastra y uno gigante se rechaza). Acá se prueba
+  // lo que hace el JUEGO: qué manda, qué entiende de lo que le devuelven y
+  // qué hace cuando la respuesta es basura.
+  const fantasma = await page.evaluate(async () => {
+    const rec = [];
+    for (let i = 0; i < 300; i++) rec.push(100 + i, 200 - (i % 40), i % 4);
+    const enviados = [];
+    const real = window.fetch;
+    window.fetch = async (url, opt) => {
+      enviados.push({ url:String(url), body: opt && opt.body ? JSON.parse(opt.body) : null });
+      if (String(url).includes('/rpc/')) return { ok:true, json:async () => null };
+      return { ok:true, json:async () => [{ jugador:'otro', frames:777,
+        fantasma:JSON.stringify(rec) }] };
+    };
+    NET.name = 'yo'; NET.aparato = '44444444-4444-4444-8444-444444444444';
+    OPTS.mirror = 0; OPTS.rival = 1;
+
+    subirRecord('n0', 999, 2, rec);
+    await new Promise(r => setTimeout(r, 30));
+    const mandado = enviados.find(e => e.url.includes('/rpc/'));
+
+    const g = await traerFantasmaRecord(0);
+
+    // Un fantasma más largo que el tope no se manda (el servidor lo rechaza).
+    enviados.length = 0;
+    const largo = [];
+    for (let i = 0; i < 90*60; i++) largo.push(1, 2, 3);
+    subirRecord('n1', 500, 0, largo);
+    await new Promise(r => setTimeout(r, 30));
+    const recortado = enviados.find(e => e.url.includes('/rpc/'));
+
+    // Respuesta rota: no puede tirar una excepción ni devolver algo a medias.
+    window.fetch = async () => ({ ok:true, json:async () => [{ jugador:'x', frames:1, fantasma:'no-es-json' }] });
+    const roto = await traerFantasmaRecord(0);
+    window.fetch = real;
+    return {
+      mandoFantasma: !!(mandado && mandado.body.p_fantasma),
+      cuadrosMandados: mandado ? JSON.parse(mandado.body.p_fantasma).length / 3 : 0,
+      clave: mandado ? mandado.body.p_clave : null,
+      bajado: g ? { n:g.n, quien:g.quien, frames:g.frames, primeros:g.d.slice(0, 6) } : null,
+      recorte: recortado ? JSON.parse(recortado.body.p_fantasma).length / 3 : -1,
+      roto,
+    };
+  });
+  check('el récord de nivel viaja con su fantasma',
+    fantasma.mandoFantasma && fantasma.cuadrosMandados === 300 && fantasma.clave === 'n0',
+    `${fantasma.cuadrosMandados} cuadros en ${fantasma.clave}`);
+  check('el fantasma que baja se entiende entero',
+    !!fantasma.bajado && fantasma.bajado.n === 300 && fantasma.bajado.quien === 'otro' &&
+    String(fantasma.bajado.primeros) === String([100,200,0,101,199,1]),
+    fantasma.bajado ? `${fantasma.bajado.n} cuadros de ${fantasma.bajado.quien}` : 'null');
+  check('una vuelta larguísima se recorta antes de mandarla',
+    fantasma.recorte === 60*60, fantasma.recorte + ' cuadros');
+  check('un fantasma roto no rompe el juego', fantasma.roto === null);
+
+  // Con la opción apagada no se pide nada.
+  const apagado = await page.evaluate(async () => {
+    const real = window.fetch;
+    let pedidos = 0;
+    window.fetch = async () => { pedidos++; return { ok:true, json:async () => [] }; };
+    OPTS.rival = 0;
+    pedirFantasmaRecord(0);
+    await new Promise(r => setTimeout(r, 30));
+    OPTS.rival = 1;
+    window.fetch = real;
+    return { pedidos, rival:GAME.rival };
+  });
+  check('con el fantasma del récord apagado no se pide nada',
+    apagado.pedidos === 0 && apagado.rival === null, apagado.pedidos + ' pedidos');
+
+  // ── Mapa de muertes ──
+  const mapa = await page.evaluate(() => {
+    try { localStorage.clear(); } catch(_){}
+    loadSave();
+    OPTS.mirror = 0;
+    anotarMuerte(3, 5, 7); anotarMuerte(3, 5, 7); anotarMuerte(3, 9, 2);
+    anotarMuerte(3, -1, 0); anotarMuerte(3, 999, 0);   // fuera de la sala: se ignora
+    const normal = Object.assign({}, muertesDe(3));
+    OPTS.mirror = 1; const espejo = Object.assign({}, muertesDe(3)); OPTS.mirror = 0;
+    saveSave(); loadSave();                            // ida y vuelta por localStorage
+    const tras = Object.assign({}, muertesDe(3));
+    return { normal, espejo, tras, celda:7*ROOM_W + 5 };
+  });
+  check('cuenta las muertes por casilla',
+    mapa.normal[mapa.celda] === 2 && Object.keys(mapa.normal).length === 2,
+    JSON.stringify(mapa.normal));
+  check('lo que cae fuera de la sala no se anota', Object.keys(mapa.normal).length === 2);
+  check('el mapa del espejo va aparte', Object.keys(mapa.espejo).length === 0);
+  check('el mapa sobrevive a guardar y cargar',
+    mapa.tras[mapa.celda] === 2, JSON.stringify(mapa.tras));
+
+  // ── Rediseñar una sala borra su récord ──
+  // Un tiempo hecho en la versión anterior de un nivel es de OTRO nivel:
+  // dejarlo puesto sería mostrar un récord que quizá no se pueda igualar, y
+  // en la tabla compartida sería comparar cosas distintas.
+  const purga = await page.evaluate(() => {
+    try { localStorage.clear(); } catch(_){}
+    loadSave();
+    OPTS.mirror = 0;
+    const cambiado = LEVELS.findIndex(L => (L.v || 1) > 1);
+    const igual = LEVELS.findIndex(L => (L.v || 1) === 1);
+    if (cambiado < 0) return { salteado:true };
+    // Simular un guardado viejo: récord puesto y `lvv` de la versión anterior.
+    for (const i of [cambiado, igual]){
+      const r = lvRec(i); r.best = 500; r.star = true; r.deaths = 3; r.lvv = 1;
+      anotarMuerte(i, 4, 4);
+    }
+    lsSet(LS.GHOST + cambiado, JSON.stringify({ v:1, d:[1,2,3] }));
+    lsSet(LS.GHOST + igual,    JSON.stringify({ v:1, d:[1,2,3] }));
+    SAVE.run['w0'] = { best:3000, splits:[1], deaths:0 };
+    saveSave();
+    loadSave();                                   // acá corre la purga
+    return {
+      cambiado, igual,
+      recordCambiado: lvRec(cambiado).best,
+      recordIgual:    lvRec(igual).best,
+      fantasmaCambiado: lsGet(LS.GHOST + cambiado),
+      fantasmaIgual:    lsGet(LS.GHOST + igual),
+      mapaCambiado: Object.keys(muertesDe(cambiado)).length,
+      mapaIgual:    Object.keys(muertesDe(igual)).length,
+      maraton: SAVE.run['w0'] || null,
+    };
+  });
+  check('el récord de una sala rediseñada se borra',
+    purga.salteado || purga.recordCambiado === 0, 'nivel ' + (purga.cambiado+1));
+  check('el de una sala que no cambió se conserva',
+    purga.salteado || purga.recordIgual === 500, 'nivel ' + (purga.igual+1));
+  check('también se van su fantasma y su mapa de muertes',
+    purga.salteado || (!purga.fantasmaCambiado && purga.mapaCambiado === 0));
+  check('el fantasma de la sala intacta sigue ahí',
+    purga.salteado || (!!purga.fantasmaIgual && purga.mapaIgual === 1));
+  check('el maratón que incluye la sala rediseñada también se borra',
+    purga.salteado || purga.maraton === null, JSON.stringify(purga.maraton));
+
+  // ── La tabla sin internet ──
+  const tabla = await page.evaluate(async () => {
+    abrirTabla(null);
+    await new Promise(r => setTimeout(r, 500));
+    return { visible:!document.getElementById('scr-tabla').classList.contains('hidden'),
+             texto:document.getElementById('tbList').textContent };
+  });
+  check('la tabla avisa que no hay conexión en vez de romperse',
+    tabla.visible && /sin conexi/i.test(tabla.texto), tabla.texto.slice(0, 60));
+
+  // Sin nombre puesto, no se manda nada (ni se rompe).
+  const sinNombre = await page.evaluate(() => {
+    NET.name = '';
+    subirRecord('n0', 123, 0);
+    return true;
+  });
+  check('sin nombre no intenta subir nada', sinNombre === true);
+
+  check('ningún error de consola en todo el recorrido', errores.length === 0,
+    errores.slice(0, 3).join(' | ') || 'limpio');
+
+  await browser.close();
+  srv.close();
+  console.log(ok ? '\nOK — los modos nuevos andan.' : '\nHAY MODOS ROTOS.');
+  process.exit(ok ? 0 : 1);
+})().catch(e => { console.error(e); process.exit(1); });

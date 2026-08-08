@@ -14,7 +14,20 @@
 //       (nivel 8, candidatas en tile x,y)
 
 const { loadGame } = require('../test/_load.cjs');
-const { solve } = require('../test/_bot.cjs');
+const { ANCHO, solve } = require('../test/_bot.cjs');
+
+// El bot busca con un haz, así que un "no encontré" puede ser del haz y no de
+// la sala. Antes de decir IMPOSIBLE se reintenta abriéndolo, igual que hace
+// test/solver.test.cjs — acá importa más que en ningún lado, porque el
+// veredicto se usa para descartar una posición.
+function buscar(G, i, budget, opts){
+  let r;
+  for (const ancho of [ANCHO, ANCHO*4, Infinity]){
+    r = solve(G, i, budget, Object.assign({ ancho }, opts));
+    if (r.ok || r.why === 'sin estados nuevos (nivel cerrado)') return r;
+  }
+  return r;
+}
 const G = loadGame();
 
 const args = process.argv.slice(2);
@@ -35,7 +48,7 @@ function ponerEstrella(tx, ty){
 
 console.log(`Nivel ${idx+1} · ${L.n}`);
 L.rows = filas.map(r => r.replace(/\*/g, ' '));
-const base = solve(G, idx, 900000);
+const base = buscar(G, idx, 2500000);
 if (!base.ok){ console.error('el nivel no se puede terminar ni sin estrella:', base.why); process.exit(1); }
 console.log(`vuelta directa: ${(base.frames/60).toFixed(2)}s\n`);
 
@@ -44,7 +57,7 @@ for (const a of args){
   const err = ponerEstrella(tx, ty);
   if (err){ console.log(`  (${tx},${ty})  —  ${err}`); continue; }
   const t0 = Date.now();
-  const r = solve(G, idx, 3000000, { estrella:true });
+  const r = buscar(G, idx, 6000000, { estrella:true });
   const seg = ((Date.now()-t0)/1000).toFixed(0);
   if (!r.ok){ console.log(`  (${tx},${ty})  ✗ IMPOSIBLE (${r.why}, ${seg}s)`); continue; }
   const extra = (r.frames - base.frames)/60;

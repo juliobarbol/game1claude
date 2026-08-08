@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════════
 // SERVICE WORKER — FILO (PWA)
 //
-// El juego vive en /juego/ y tiene que abrir SIN internet: se juega en el colectivo, en el
+// El juego tiene que abrir SIN internet: se juega en el colectivo, en el
 // subte y con el celular en modo avión. Todo el shell (un solo index.html
 // + manifest + iconos) se precachea al instalar.
 //
@@ -10,7 +10,7 @@
 // los aparatos que ya tienen la app siguen con la versión vieja.
 // ════════════════════════════════════════════════════════════════════
 
-const CACHE = 'filo-v3';
+const CACHE = 'filo-v13';
 
 const PRECACHE = [
   './',
