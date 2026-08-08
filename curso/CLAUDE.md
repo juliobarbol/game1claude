@@ -153,6 +153,25 @@ Es el mismo del juego (`filo`), en la misma cuenta. La clave que está en
 `curso/nube.js` es la **publicable**, la que va en el HTML a propósito. **La
 clave de servicio no entra al repo jamás.**
 
+## Descartar
+
+Descartar un borrador **no borra: mueve a la papelera**, que guarda los
+últimos 10 y sobrevive a recargar. Se puede volver atrás de dos maneras: la
+barra de **Deshacer** que aparece pegada al pie apenas descarta, y la lista de
+descartados en la zona de riesgo.
+
+El botón vive **al final del formulario**, después de las doce cajas, en un
+recuadro rojo aparte. Antes estaba en la barra de arriba, al lado de botones
+que se usan todo el tiempo: demasiado a mano para algo que tira trabajo.
+
+Dos detalles que importan y se rompen fácil:
+
+- La barra de Deshacer va **pegada al pie de la pantalla** (`position:fixed`),
+  no arriba del documento. El botón que la dispara está abajo de todo; una
+  barra arriba no se vería nunca.
+- Descartar **no recarga la página**, porque recargar se llevaría puesta la
+  barra de Deshacer. Se vuelve a la versión publicada rearmando el modelo.
+
 ## Impresión
 
 El PDF sale del navegador: `imprimir.html` → Imprimir → destino **Guardar

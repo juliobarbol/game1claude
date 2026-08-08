@@ -138,6 +138,58 @@
     }
   }
 
+  // ─── La papelera ──────────────────────────────────────────────────
+  // Descartar NO borra: mueve. Lo descartado queda acá, y de acá se puede
+  // recuperar. Guarda los últimos 10; con eso alcanza para arrepentirse, y
+  // no crece sin control.
+  const PAPELERA = 'curso-papelera';
+  const CUANTOS = 10;
+
+  function papelera(){
+    try { return JSON.parse(localStorage.getItem(PAPELERA) || '[]'); }
+    catch (e){ return []; }
+  }
+
+  function guardarPapelera(lista){
+    try { localStorage.setItem(PAPELERA, JSON.stringify(lista.slice(0, CUANTOS))); return true; }
+    catch (e){ return false; }
+  }
+
+  // Devuelve la ficha de lo descartado (con su `sello`, que es como se
+  // recupera después), o null si no había nada que descartar.
+  function descartar(id){
+    const clase = leer(id);
+    if (!clase) return null;
+    const ficha = {
+      sello: id + '-' + Date.now(),
+      id: id,
+      titulo: clase.titulo || '(sin título)',
+      editado: cuando(id),
+      descartado: new Date().toISOString(),
+      sincronizado: sincronizado(id),
+      clase: clase,
+    };
+    guardarPapelera([ficha].concat(papelera()));
+    borrar(id);
+    return ficha;
+  }
+
+  // Vuelve a poner en su lugar lo que estaba en la papelera.
+  function recuperar(sello){
+    const lista = papelera();
+    const i = lista.findIndex(x => x.sello === sello);
+    if (i < 0) return null;
+    const ficha = lista[i];
+    guardar(ficha.id, ficha.clase, ficha.sincronizado);
+    lista.splice(i, 1);
+    guardarPapelera(lista);
+    return ficha;
+  }
+
+  function vaciarPapelera(){
+    try { localStorage.removeItem(PAPELERA); return true; } catch (e){ return false; }
+  }
+
   // ─── ¿Quién cambió desde la última vez que estuvieron iguales? ─────
   // Devuelve qué hay que hacer, sin decidir nada por su cuenta:
   //   'nada'        los dos están igual
@@ -161,6 +213,7 @@
   raiz.BORRADORES = {
     leer, guardar, borrar, hay, listar, cuando,
     sincronizado, marcarSincronizado, comparar,
+    descartar, papelera, recuperar, vaciarPapelera,
     comoArchivo, descargar, desdeTexto,
   };
 

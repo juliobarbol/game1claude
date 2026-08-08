@@ -566,3 +566,38 @@ ul.problemas li b{color:var(--ink);}
    otra pregunta porque hubo cambios de los dos lados (y se queda). */
 .banda-nube.al-dia{background:var(--vocab-bg);border-bottom-color:var(--vocab-line);color:var(--vocab);}
 .banda-nube.conflicto{background:var(--speak-bg);border-bottom-color:var(--speak-line);color:var(--ink);}
+
+/* ─── zona de riesgo: descartar y papelera ───
+   Va al final del formulario, después de las doce cajas. Para llegar hasta
+   acá hay que querer llegar — que es exactamente la idea. */
+.zona-riesgo{margin-top:3rem;border:1px solid var(--alert-line);
+  border-left:4px solid var(--alert);background:var(--surface);
+  padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.6rem;}
+.zona-riesgo h3{font-size:1.05rem;color:var(--alert);}
+.riesgo-acciones{display:flex;gap:.5rem;flex-wrap:wrap;}
+.zona-riesgo .btn.peligro:disabled{opacity:.4;cursor:not-allowed;}
+.zona-riesgo .btn.peligro:disabled:hover{background:var(--alert-bg);color:var(--alert);
+  border-color:var(--alert-line);}
+
+.papelera{border-top:1px solid var(--line);padding-top:.8rem;
+  display:flex;flex-direction:column;gap:.4rem;}
+.papelera h4{font-family:var(--mono);font-size:.66rem;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-2);}
+.papelera ul{list-style:none;display:flex;flex-direction:column;gap:.35rem;}
+.papelera li{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;
+  border:1px solid var(--line);background:var(--paper);padding:.4rem .6rem;}
+.papelera .quer{font-family:var(--serif);font-size:1rem;flex:1 1 12rem;}
+.papelera .cuando{font-size:.78rem;color:var(--ink-3);}
+
+/* Va PEGADA AL PIE de la pantalla, no arriba del documento: el botón de
+   descartar está abajo de todo, así que una barra arriba no se vería nunca. */
+.banda-deshacer{position:fixed;left:50%;transform:translateX(-50%);bottom:1.2rem;
+  z-index:70;width:min(38rem,calc(100% - 2rem));
+  background:var(--alert-bg);border:1px solid var(--alert);
+  box-shadow:0 6px 24px rgba(10,14,20,.22);
+  color:var(--ink);font-size:.9rem;padding:.7rem .9rem;
+  display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;}
+.banda-deshacer .spacer{flex:1;}
+.banda-deshacer #deshacer{border-color:var(--alert);background:var(--alert);
+  color:var(--surface);font-weight:700;}
+@media print{ .zona-riesgo,.banda-deshacer{display:none !important;} }

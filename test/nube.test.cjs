@@ -237,6 +237,58 @@ function armarDoble(){
     (await a3.p.$eval('header.top h1 .en', e => e.textContent)) === "Hi, I'm…");
   check('y su navegador nunca habla con la nube', pedidos.length === 0, pedidos.join(' '));
 
+  // ─── Descartar se puede deshacer ────────────────────────────────────
+  const a4 = await nuevoAparato();
+  a4.p.on('pageerror', e => errs.push(e.message));
+  await a4.p.goto(`${base}/curso/editor.html?u=${id}`, { waitUntil: 'load' });
+  await a4.p.waitForSelector('details.caja');
+
+  check('el botón de descartar NO está en la barra de arriba',
+    !(await a4.p.$('nav.bar #descartar')));
+  check('está abajo de todo, en su propia zona',
+    !!(await a4.p.$('.col-form .zona-riesgo #descartar')));
+  check('y arranca apagado si no hay nada que descartar',
+    await a4.p.$eval('#descartar', e => e.disabled));
+
+  await a4.p.fill('input[data-ruta=\'["titulo"]\']', 'Algo que no quiero perder');
+  await a4.p.waitForTimeout(800);
+  check('se enciende cuando hay un borrador', !(await a4.p.$eval('#descartar', e => e.disabled)));
+
+  a4.p.on('dialog', d => d.accept());
+  await a4.p.click('#descartar');
+  await a4.p.waitForTimeout(600);
+
+  check('descartar vuelve a la versión publicada',
+    (await a4.p.$eval('input[data-ruta=\'["titulo"]\']', e => e.value)) === "Hi, I'm…");
+  const bd = await a4.p.$eval('#bandaDeshacer', e => e.hidden ? '' : e.textContent).catch(() => '');
+  check('y ofrece deshacer', /Deshacer/.test(bd), bd.trim().slice(0, 70));
+
+  await a4.p.click('#deshacer');
+  await a4.p.waitForTimeout(600);
+  check('deshacer devuelve todo como estaba',
+    (await a4.p.$eval('input[data-ruta=\'["titulo"]\']', e => e.value)) === 'Algo que no quiero perder');
+
+  // Y si cierra el aviso y se arrepiente después, la papelera lo tiene.
+  await a4.p.click('#descartar');
+  await a4.p.waitForTimeout(600);
+  await a4.p.click('#cerrarDeshacer');
+  await a4.p.reload({ waitUntil: 'load' });
+  await a4.p.waitForSelector('details.caja');
+
+  const pap = await a4.p.$eval('#papelera', e => e.hidden ? '' : e.textContent).catch(() => '');
+  check('lo descartado queda en la papelera', /Algo que no quiero perder/.test(pap),
+    pap.trim().slice(0, 80));
+  check('la papelera sobrevive a recargar la página', !!(await a4.p.$('[data-recuperar]')));
+
+  await a4.p.click('[data-recuperar]');
+  await a4.p.waitForTimeout(600);
+  check('se recupera desde la papelera',
+    (await a4.p.$eval('input[data-ruta=\'["titulo"]\']', e => e.value)) === 'Algo que no quiero perder');
+  check('y sale de la papelera al recuperarlo',
+    await a4.p.$eval('#papelera', e => e.hidden || !e.querySelector('[data-recuperar]')));
+
+  await a4.p.evaluate(() => { BORRADORES.borrar('n1p1u01'); BORRADORES.vaciarPapelera(); });
+
   // ─── Desconectar ────────────────────────────────────────────────────
   await a1.p.click('#nube');
   await a1.p.click('#nubeSalir');

@@ -14,7 +14,6 @@
     <button type="button" id="exportar" class="cta-print">Exportar archivo</button>
     <button type="button" id="importar" class="btn">Importar</button>
     <button type="button" id="nube" class="btn nube-btn">☁ Conectar</button>
-    <button type="button" id="descartar" class="btn peligro">Descartar borrador</button>
     <a class="imprimir" id="ver" href="#">Ver la clase</a>
     <button data-tema-boton type="button" class="tema"></button>
     <input type="file" id="archivo" accept=".js,.json" hidden>
@@ -24,6 +23,7 @@
 <!-- Aviso de que hay una versión más nueva del otro lado. La nube NUNCA
      pisa lo local sin preguntar. -->
 <div class="banda-nube" id="bandaNube" hidden></div>
+<div class="banda-deshacer" id="bandaDeshacer" hidden></div>
 
 <!-- Entrar a la nube -->
 <div class="nube-fondo" id="nubeFondo" hidden>
@@ -63,6 +63,18 @@
     </details>
 
     <div id="form"></div>
+
+    <!-- Abajo de todo, después de las doce cajas: para llegar acá hay que
+         querer llegar. Antes esto estaba en la barra de arriba, al lado de
+         botones que se usan todo el tiempo. -->
+    <section class="zona-riesgo" id="zonaRiesgo">
+      <h3>Descartar este borrador</h3>
+      <p class="note" id="riesgoTexto"></p>
+      <div class="riesgo-acciones">
+        <button type="button" id="descartar" class="btn peligro">Descartar borrador</button>
+      </div>
+      <div class="papelera" id="papelera" hidden></div>
+    </section>
   </div>
 
   <!-- ─── columna derecha: control y vista previa ─── -->
@@ -275,7 +287,7 @@
       const e = document.getElementById('estado');
       e.textContent = bien ? 'borrador guardado' : '¡NO se pudo guardar!';
       e.className = 'estado ' + (bien ? 'guardado' : 'error');
-      if (bien) subirANube();
+      if (bien){ subirANube(); pintarZonaRiesgo(); }
     }, 400);
     refrescar();
   }
@@ -360,16 +372,96 @@
     ev.target.value = '';
   });
 
-  document.getElementById('descartar').addEventListener('click', () => {
-    if (!BORRADORES.hay(idActual)){
-      alert('Esta clase no tiene borrador: lo que ves es la versión publicada.');
+  // ─── Descartar, con vuelta atrás ──────────────────────────────────
+  // Descartar no borra: manda a la papelera. Se puede deshacer al toque con
+  // la barra de arriba, y más adelante desde la lista de descartados.
+  function pintarZonaRiesgo(){
+    const hay = BORRADORES.hay(idActual);
+    document.getElementById('descartar').disabled = !hay;
+    document.getElementById('riesgoTexto').innerHTML = hay
+      ? 'Vuelve a la <b>última versión publicada</b> de esta clase y tira tus cambios. ' +
+        'No es para siempre: queda guardado acá abajo por si te arrepentís.'
+      : 'Esta clase no tiene cambios sin publicar, así que no hay nada que descartar.';
+    pintarPapelera();
+  }
+
+  function pintarPapelera(){
+    const caja = document.getElementById('papelera');
+    const lista = BORRADORES.papelera();
+    if (!lista.length){ caja.hidden = true; caja.innerHTML = ''; return; }
+    caja.hidden = false;
+    caja.innerHTML =
+      '<h4>Descartados hace poco</h4>' +
+      '<p class="note">Se guardan los últimos ' + 10 + '. Recuperar uno reemplaza lo que ' +
+      'tengas ahora en esa clase.</p>' +
+      '<ul>' + lista.map(f => {
+        const u = CURSO.buscar(f.id);
+        return '<li><span class="quer">' +
+          (u ? 'Clase ' + String(u.clase).padStart(2,'0') + ' — ' : '') +
+          esc(f.titulo) + '</span>' +
+          '<span class="cuando">descartado el ' + esc(cuandoLindo(f.descartado)) + '</span>' +
+          '<button type="button" class="mini-btn" data-recuperar="' + esc(f.sello) + '">Recuperar</button>' +
+          '</li>';
+      }).join('') + '</ul>';
+  }
+
+  document.getElementById('papelera').addEventListener('click', ev => {
+    const b = ev.target.closest('button[data-recuperar]');
+    if (!b) return;
+    const ficha = BORRADORES.recuperar(b.dataset.recuperar);
+    if (!ficha){ alert('Eso ya no está en la papelera.'); return; }
+    if (ficha.id !== idActual){
+      location.search = '?u=' + ficha.id;
       return;
     }
-    if (!confirm('Se borra el borrador de esta clase y vuelve a la versión publicada.\n\n' +
-                 'Esto no se puede deshacer. ¿Seguimos?')) return;
-    BORRADORES.borrar(idActual);
+    modelo = ESQUEMA.molde(idActual, ficha.clase);
+    dibujarFormulario();
+    refrescar();
+    pintarZonaRiesgo();
+    subirANube();
+    avisar('✓ Recuperado: <b>' + esc(ficha.titulo) + '</b>.');
+  });
+
+  document.getElementById('descartar').addEventListener('click', () => {
+    if (!BORRADORES.hay(idActual)) return;
+    if (!confirm('Se descartan tus cambios en esta clase y vuelve a la versión ' +
+                 'publicada.\n\nSe puede deshacer: queda en la papelera, abajo de todo.' +
+                 '\n\n¿Seguimos?')) return;
+
+    const ficha = BORRADORES.descartar(idActual);
     if (NUBE.conectada()) NUBE.borrar(idActual);
-    location.reload();
+
+    // Se vuelve a la versión publicada sin recargar la página, para no perder
+    // la barra de deshacer.
+    modelo = ESQUEMA.molde(idActual, CLASES[idActual] || {
+      id: idActual, nivel: enIndice.nivel, parte: enIndice.parte,
+      unidad: enIndice.clase, clase: enIndice.clase,
+      codigo: enIndice.codigo || '', titulo: enIndice.titulo || '',
+    });
+    dibujarFormulario();
+    refrescar();
+    pintarZonaRiesgo();
+
+    const banda = document.getElementById('bandaDeshacer');
+    banda.innerHTML =
+      'Descartaste tus cambios en <b>' + esc(ficha.titulo) + '</b>. ' +
+      '<button type="button" class="btn" id="deshacer">Deshacer</button>' +
+      '<span class="spacer"></span>' +
+      '<button type="button" class="mini-btn" id="cerrarDeshacer">Cerrar</button>';
+    banda.hidden = false;
+
+    document.getElementById('cerrarDeshacer').addEventListener('click', () => { banda.hidden = true; });
+    document.getElementById('deshacer').addEventListener('click', () => {
+      const v = BORRADORES.recuperar(ficha.sello);
+      if (!v){ alert('No se pudo deshacer.'); return; }
+      modelo = ESQUEMA.molde(idActual, v.clase);
+      dibujarFormulario();
+      refrescar();
+      pintarZonaRiesgo();
+      subirANube();
+      banda.hidden = true;
+      avisar('✓ Listo, volvió todo como estaba.');
+    });
   });
 
   document.getElementById('cual').addEventListener('change', ev => {
@@ -570,6 +662,7 @@
     dibujarFormulario();
     refrescar();
     pintarNube();
+    pintarZonaRiesgo();
     mirarLaNube();
   }
 
