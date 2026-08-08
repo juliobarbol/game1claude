@@ -1,0 +1,817 @@
+<title>Nivel 1 · Parte 1 — First Contact · Syllabus</title>
+
+<style>
+  /* reset mínimo — para que el archivo se vea igual abierto solo o publicado */
+  *,*::before,*::after{box-sizing:border-box;}
+  body,h1,h2,h3,h4,p,ul,ol,dl,dd,table,figure{margin:0;padding:0;}
+
+  :root{
+    --paper:#FCFCFD;
+    --surface:#FFFFFF;
+    --ink:#141922;
+    --ink-2:#4B5563;
+    --ink-3:#6B7480;
+    --line:#E1E5EC;
+    --line-strong:#C9CFD9;
+
+    --grammar:#1E3A63;   --grammar-bg:#EDF1F8; --grammar-line:#C4D2E7;
+    --vocab:#0E6355;     --vocab-bg:#E6F0ED;   --vocab-line:#B7D6CD;
+    --speak:#94520F;     --speak-bg:#F8EFE2;   --speak-line:#E4CDAD;
+    --alert:#8C2E3D;     --alert-bg:#F7E9EC;   --alert-line:#E3C4CA;
+    --slate:#57616F;     --slate-bg:#F0F2F6;   --slate-line:#D5DAE2;
+
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+
+    --wide:66rem;
+  }
+
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0E1218;
+      --surface:#151A22;
+      --ink:#E7EBF1;
+      --ink-2:#A5AFBC;
+      --ink-3:#87909C;
+      --line:#28303B;
+      --line-strong:#3A4552;
+
+      --grammar:#93B6E9;   --grammar-bg:#15223A; --grammar-line:#2B4066;
+      --vocab:#6ECCB6;     --vocab-bg:#0D2621;   --vocab-line:#1E4A41;
+      --speak:#DFA55F;     --speak-bg:#2B1F10;   --speak-line:#553F1F;
+      --alert:#E793A0;     --alert-bg:#2B1519;   --alert-line:#532933;
+      --slate:#9AA4B2;     --slate-bg:#191F28;   --slate-line:#2D3541;
+    }
+  }
+
+  :root[data-theme="dark"]{
+    --paper:#0E1218;
+    --surface:#151A22;
+    --ink:#E7EBF1;
+    --ink-2:#A5AFBC;
+    --ink-3:#87909C;
+    --line:#28303B;
+    --line-strong:#3A4552;
+
+    --grammar:#93B6E9;   --grammar-bg:#15223A; --grammar-line:#2B4066;
+    --vocab:#6ECCB6;     --vocab-bg:#0D2621;   --vocab-line:#1E4A41;
+    --speak:#DFA55F;     --speak-bg:#2B1F10;   --speak-line:#553F1F;
+    --alert:#E793A0;     --alert-bg:#2B1519;   --alert-line:#532933;
+    --slate:#9AA4B2;     --slate-bg:#191F28;   --slate-line:#2D3541;
+  }
+
+  body{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  .wrap{
+    max-width:var(--wide);
+    margin:0 auto;
+    padding:0 clamp(1rem,4vw,2.5rem) 6rem;
+  }
+
+  /* ---------- tipografía ---------- */
+  h1,h2,h3,h4{font-family:var(--serif);font-weight:600;text-wrap:balance;line-height:1.15;}
+  h1{font-size:clamp(2.1rem,5.5vw,3.4rem);letter-spacing:-.015em;}
+  h2{font-size:clamp(1.45rem,3vw,2rem);letter-spacing:-.01em;}
+  h3{font-size:1.15rem;}
+  p{max-width:64ch;}
+  a{color:var(--grammar);}
+
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:.7rem;
+    letter-spacing:.16em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+  }
+  .lead{font-size:1.075rem;color:var(--ink-2);}
+  .small{font-size:.9rem;color:var(--ink-2);}
+  strong{font-weight:650;color:var(--ink);}
+  em{font-style:italic;}
+  .en{font-style:italic;}
+
+  /* ---------- portada ---------- */
+  header.cover{
+    border-bottom:2px solid var(--ink);
+    padding:clamp(2.5rem,7vw,4.5rem) 0 1.75rem;
+    display:flex;
+    flex-direction:column;
+    gap:1.1rem;
+  }
+  .cover-top{
+    display:flex;
+    flex-wrap:wrap;
+    gap:.6rem 1.25rem;
+    align-items:baseline;
+    justify-content:space-between;
+  }
+  .cover h1 .sub{
+    display:block;
+    font-style:italic;
+    color:var(--grammar);
+  }
+  .metastrip{
+    display:flex;
+    flex-wrap:wrap;
+    gap:0;
+    border:1px solid var(--line);
+    background:var(--surface);
+  }
+  .metastrip div{
+    flex:1 1 8.5rem;
+    padding:.7rem .95rem;
+    border-right:1px solid var(--line);
+  }
+  .metastrip div:last-child{border-right:0;}
+  .metastrip dt{
+    font-family:var(--mono);
+    font-size:.63rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    margin-bottom:.15rem;
+  }
+  .metastrip dd{font-weight:600;font-size:.95rem;font-variant-numeric:tabular-nums;}
+
+  /* ---------- secciones ---------- */
+  section{
+    padding-top:clamp(2.75rem,6vw,4rem);
+    display:flex;
+    flex-direction:column;
+    gap:1.25rem;
+  }
+  .sec-head{display:flex;flex-direction:column;gap:.35rem;}
+  .rule{height:1px;background:var(--line);}
+
+  /* ---------- promesa ---------- */
+  .promise{
+    border:1px solid var(--grammar-line);
+    background:var(--grammar-bg);
+    padding:clamp(1.25rem,3vw,2rem);
+    display:flex;
+    flex-direction:column;
+    gap:1rem;
+  }
+  .promise h3{color:var(--grammar);font-size:1.35rem;}
+  .cando{
+    list-style:none;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));
+    gap:.55rem 1.75rem;
+    counter-reset:cd;
+  }
+  .cando li{
+    counter-increment:cd;
+    display:grid;
+    grid-template-columns:1.6rem 1fr;
+    gap:.4rem;
+    font-size:.95rem;
+    color:var(--ink);
+  }
+  .cando li::before{
+    content:counter(cd,decimal-leading-zero);
+    font-family:var(--mono);
+    font-size:.72rem;
+    color:var(--grammar);
+    padding-top:.28rem;
+    font-variant-numeric:tabular-nums;
+  }
+
+  /* ---------- cajas de color genéricas ---------- */
+  .box{
+    border:1px solid var(--line);
+    background:var(--surface);
+    padding:1rem 1.15rem;
+    display:flex;
+    flex-direction:column;
+    gap:.5rem;
+  }
+  .box .tag{
+    font-family:var(--mono);
+    font-size:.66rem;
+    letter-spacing:.15em;
+    text-transform:uppercase;
+    font-weight:600;
+  }
+  .box.grammar{border-color:var(--grammar-line);background:var(--grammar-bg);}
+  .box.grammar .tag{color:var(--grammar);}
+  .box.vocab{border-color:var(--vocab-line);background:var(--vocab-bg);}
+  .box.vocab .tag{color:var(--vocab);}
+  .box.speak{border-color:var(--speak-line);background:var(--speak-bg);}
+  .box.speak .tag{color:var(--speak);}
+  .box.alert{border-color:var(--alert-line);background:var(--alert-bg);}
+  .box.alert .tag{color:var(--alert);}
+  .box.slate{border-color:var(--slate-line);background:var(--slate-bg);}
+  .box.slate .tag{color:var(--slate);}
+
+  /* ---------- leyenda de color ---------- */
+  .legend{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(11rem,1fr));
+    gap:.75rem;
+  }
+  .legend .box{gap:.35rem;padding:.85rem .95rem;}
+  .legend p{font-size:.85rem;color:var(--ink-2);margin:0;}
+
+  /* ---------- anatomía de los dos libros ---------- */
+  .books{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(19rem,1fr));
+    gap:1.25rem;
+  }
+  .book{
+    border:1px solid var(--line);
+    background:var(--surface);
+    display:flex;
+    flex-direction:column;
+  }
+  .book > h3{
+    padding:.9rem 1.1rem;
+    font-size:1.05rem;
+    color:var(--surface);
+    font-family:var(--sans);
+    font-weight:600;
+    letter-spacing:.02em;
+  }
+  .book.g > h3{background:var(--grammar);}
+  .book.v > h3{background:var(--vocab);}
+  .book ol{
+    list-style:none;
+    counter-reset:st;
+    display:flex;
+    flex-direction:column;
+  }
+  .book li{
+    counter-increment:st;
+    display:grid;
+    grid-template-columns:1.75rem 1fr;
+    gap:.15rem .6rem;
+    padding:.7rem 1.1rem;
+    border-top:1px solid var(--line);
+  }
+  .book li::before{
+    content:counter(st);
+    font-family:var(--mono);
+    font-size:.7rem;
+    color:var(--ink-3);
+    padding-top:.2rem;
+  }
+  .book li b{
+    font-family:var(--mono);
+    font-size:.72rem;
+    letter-spacing:.1em;
+    text-transform:uppercase;
+    font-weight:600;
+  }
+  .book li span{grid-column:2;font-size:.88rem;color:var(--ink-2);}
+  .bridge{
+    border:1px solid var(--speak-line);
+    background:var(--speak-bg);
+    padding:1rem 1.15rem;
+  }
+  .bridge p{margin:0;font-size:.95rem;max-width:none;}
+
+  /* ---------- las unidades ---------- */
+  .units{display:flex;flex-direction:column;gap:1.5rem;}
+  .unit{
+    border:1px solid var(--line);
+    background:var(--surface);
+    display:grid;
+    grid-template-columns:7.5rem 1fr;
+  }
+  .unit-rail{
+    border-right:1px solid var(--line);
+    padding:1.1rem 1rem;
+    display:flex;
+    flex-direction:column;
+    gap:.15rem;
+  }
+  .unit-rail .cls{
+    font-family:var(--mono);
+    font-size:.63rem;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+  }
+  .unit-rail .num{
+    font-family:var(--serif);
+    font-size:2.5rem;
+    line-height:1;
+    font-variant-numeric:tabular-nums;
+    color:var(--ink);
+  }
+  .unit-rail .code{
+    font-family:var(--mono);
+    font-size:.75rem;
+    color:var(--grammar);
+    margin-top:.35rem;
+    font-weight:600;
+  }
+  .unit-body{padding:1.1rem 1.25rem;display:flex;flex-direction:column;gap:.85rem;}
+  .unit-body > h3{font-size:1.35rem;}
+  .unit-body > h3 .en{color:var(--ink);}
+  .rows{display:flex;flex-direction:column;gap:.6rem;}
+  .row{
+    display:grid;
+    grid-template-columns:8.5rem 1fr;
+    gap:.15rem .9rem;
+    padding:.6rem .8rem;
+    border:1px solid var(--line);
+    background:var(--surface);
+  }
+  .row .tag{
+    font-family:var(--mono);
+    font-size:.64rem;
+    letter-spacing:.13em;
+    text-transform:uppercase;
+    font-weight:600;
+    padding-top:.14rem;
+  }
+  .row p{margin:0;font-size:.93rem;max-width:none;color:var(--ink);}
+  .row.grammar{border-color:var(--grammar-line);background:var(--grammar-bg);}
+  .row.grammar .tag{color:var(--grammar);}
+  .row.vocab{border-color:var(--vocab-line);background:var(--vocab-bg);}
+  .row.vocab .tag{color:var(--vocab);}
+  .row.speak{border-color:var(--speak-line);background:var(--speak-bg);}
+  .row.speak .tag{color:var(--speak);}
+  .row.alert{border-color:var(--alert-line);background:var(--alert-bg);}
+  .row.alert .tag{color:var(--alert);}
+  .chunks{
+    font-family:var(--mono);
+    font-size:.8rem;
+    color:var(--vocab);
+    line-height:1.75;
+  }
+  .icando{
+    border-top:1px dashed var(--line-strong);
+    padding-top:.7rem;
+    display:grid;
+    grid-template-columns:auto 1fr;
+    gap:.6rem;
+    align-items:baseline;
+  }
+  .icando b{
+    font-family:var(--mono);
+    font-size:.64rem;
+    letter-spacing:.13em;
+    text-transform:uppercase;
+    color:var(--slate);
+  }
+  .icando span{font-size:.93rem;font-style:italic;color:var(--ink-2);}
+
+  /* checkpoints */
+  .unit.check{border:2px solid var(--slate);}
+  .unit.check .unit-rail{background:var(--slate-bg);border-right-color:var(--slate-line);}
+  .unit.check .unit-rail .code{color:var(--slate);}
+  .checklist{
+    list-style:none;
+    display:flex;
+    flex-direction:column;
+    gap:.45rem;
+  }
+  .checklist li{
+    display:grid;
+    grid-template-columns:1.1rem 1fr;
+    gap:.55rem;
+    font-size:.93rem;
+  }
+  .checklist li::before{
+    content:"—";
+    color:var(--slate);
+    font-family:var(--mono);
+  }
+  .checklist li > span{grid-column:2;}
+
+  /* ---------- tabla del mapa del curso ---------- */
+  .tablewrap{overflow-x:auto;border:1px solid var(--line);background:var(--surface);}
+  table{border-collapse:collapse;width:100%;min-width:44rem;font-size:.9rem;}
+  th,td{padding:.7rem .85rem;text-align:left;border-bottom:1px solid var(--line);vertical-align:top;}
+  thead th{
+    font-family:var(--mono);
+    font-size:.64rem;
+    letter-spacing:.13em;
+    text-transform:uppercase;
+    color:var(--ink-3);
+    font-weight:600;
+    background:var(--slate-bg);
+    border-bottom:1px solid var(--line-strong);
+  }
+  tbody tr:last-child td{border-bottom:0;}
+  td.num{font-variant-numeric:tabular-nums;text-align:right;width:5rem;}
+  tr.now td{background:var(--grammar-bg);}
+  tr.now td:first-child{box-shadow:inset 3px 0 0 var(--grammar);}
+  .lvl{font-weight:650;}
+
+  /* ---------- fuera de alcance ---------- */
+  .two{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(18rem,1fr));
+    gap:1.25rem;
+    align-items:start;
+  }
+  .pillset{display:flex;flex-wrap:wrap;gap:.4rem;}
+  .pill{
+    font-family:var(--mono);
+    font-size:.75rem;
+    padding:.28rem .6rem;
+    border:1px solid var(--alert-line);
+    color:var(--alert);
+    background:var(--alert-bg);
+  }
+
+  /* ---------- notas ---------- */
+  .notes{list-style:none;display:flex;flex-direction:column;gap:.6rem;}
+  .notes li{
+    display:grid;
+    grid-template-columns:1rem 1fr;
+    gap:.7rem;
+    font-size:.93rem;
+    color:var(--ink-2);
+  }
+  .notes li::before{content:"◆";color:var(--ink-3);font-size:.7rem;padding-top:.35rem;}
+  .notes li > span{grid-column:2;}
+  .notes b{color:var(--ink);}
+
+  footer{
+    padding-top:3rem;
+    color:var(--ink-3);
+    font-size:.82rem;
+    font-family:var(--mono);
+  }
+
+  @media (max-width:640px){
+    .unit{grid-template-columns:1fr;}
+    .unit-rail{
+      border-right:0;
+      border-bottom:1px solid var(--line);
+      flex-direction:row;
+      align-items:baseline;
+      gap:.7rem;
+    }
+    .unit-rail .num{font-size:1.6rem;}
+    .unit-rail .code{margin-top:0;}
+    .row{grid-template-columns:1fr;}
+  }
+
+  @media (prefers-reduced-motion:reduce){
+    *{animation:none !important;transition:none !important;}
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="cover">
+    <div class="cover-top">
+      <span class="eyebrow">Diseño curricular · documento maestro</span>
+      <span class="eyebrow">10 unidades · 2 checkpoints</span>
+    </div>
+    <h1>Nivel&nbsp;1 · Parte&nbsp;1<span class="sub">First Contact</span></h1>
+    <p class="lead">El syllabus de las primeras 12 clases del curso: qué gramática, qué vocabulario y — sobre todo — <strong>qué situación se habla</strong> en cada clase. Los dos libros, Grammar y Vocabulary, comparten numeración y comparten la tarea de speaking.</p>
+    <dl class="metastrip">
+      <div><dt>Nivel</dt><dd>1 — Foundations</dd></div>
+      <div><dt>Equivale a</dt><dd>A1.1</dd></div>
+      <div><dt>Clases</dt><dd>12 × 60 min</dd></div>
+      <div><dt>Duración</dt><dd>6 a 12 semanas</dd></div>
+      <div><dt>Léxico activo</dt><dd>~220 + 60 chunks</dd></div>
+      <div><dt>Requisito</dt><dd>Ninguno</dd></div>
+    </dl>
+  </header>
+
+  <section id="promesa">
+    <div class="sec-head">
+      <span class="eyebrow">01 — Lo que se le promete al alumno</span>
+      <h2>En 12 clases sostenés tu primera conversación</h2>
+    </div>
+    <div class="promise">
+      <h3>Al terminar la Parte 1 vas a poder…</h3>
+      <ol class="cando">
+        <li>Presentarte, deletrear tu nombre y pedir que te repitan algo.</li>
+        <li>Decir de dónde sos, a qué te dedicás y dar tus datos.</li>
+        <li>Hablar de tu familia y de tus cosas.</li>
+        <li>Describir tu ciudad y tu casa, y decir qué hay cerca.</li>
+        <li>Decir qué sabés hacer y pedir ayuda.</li>
+        <li>Decir la hora y la fecha, y coordinar un encuentro.</li>
+      </ol>
+      <p class="small"><strong>Hablás desde la clase 1.</strong> No hay una etapa previa de “primero la teoría”: cada unidad termina en una situación de uso real.</p>
+    </div>
+  </section>
+
+  <section id="sistema">
+    <div class="sec-head">
+      <span class="eyebrow">02 — El sistema visual</span>
+      <h2>Cinco colores, un significado cada uno</h2>
+    </div>
+    <p>El color no decora: <strong>clasifica</strong>. En los dos libros, el mismo color significa siempre lo mismo, así el alumno sabe qué está mirando antes de leer una palabra. Sin ilustraciones — la jerarquía la hacen el cuadro, el color y la tipografía.</p>
+    <div class="legend">
+      <div class="box grammar"><span class="tag">Azul marino</span><p><b>Estructura.</b> Reglas, cuadros, tablas de forma.</p></div>
+      <div class="box vocab"><span class="tag">Verde profundo</span><p><b>Léxico.</b> Word banks, chunks, pronunciación.</p></div>
+      <div class="box speak"><span class="tag">Ámbar</span><p><b>Hablar.</b> Si es ámbar, se habla. Siempre.</p></div>
+      <div class="box alert"><span class="tag">Granate</span><p><b>Cuidado.</b> Errores típicos y falsos amigos.</p></div>
+      <div class="box slate"><span class="tag">Gris pizarra</span><p><b>Referencia.</b> Contexto, autoevaluación, glosario.</p></div>
+    </div>
+  </section>
+
+  <section id="libros">
+    <div class="sec-head">
+      <span class="eyebrow">03 — Cómo se hablan los dos libros</span>
+      <h2>Anatomía de una unidad</h2>
+    </div>
+    <p>Los dos libros usan <strong>el mismo número de unidad</strong>. La regla de oro: en el Vocabulary Book nunca aparece una palabra que la gramática de esa unidad no permita usar en una frase completa. Y al revés — la gramática se practica con las palabras de esa unidad, no con ejemplos de otro planeta.</p>
+    <div class="books">
+      <div class="book g">
+        <h3>Grammar Book — 6 cajas</h3>
+        <ol>
+          <li><b>In context</b><span>Mini diálogo de 4–6 líneas en una situación real. La estructura aparece resaltada, todavía sin explicar.</span></li>
+          <li><b>The rule</b><span>El cuadro. Afirmativo / negativo / pregunta / respuesta corta. Forma pura, cero prosa.</span></li>
+          <li><b>Watch out</b><span>El error típico del hispanohablante, con el ✗ y el ✓ enfrentados.</span></li>
+          <li><b>Practice</b><span>Siempre tres pasos en el mismo orden: completar → transformar → personalizar.</span></li>
+          <li><b>Now you speak</b><span>La tarea comunicativa, con el andamiaje de la estructura.</span></li>
+          <li><b>I can…</b><span>Checklist de autoevaluación en primera persona.</span></li>
+        </ol>
+      </div>
+      <div class="book v">
+        <h3>Vocabulary Book — 6 cajas</h3>
+        <ol>
+          <li><b>Word bank</b><span>El léxico agrupado por campo semántico, en cuadros. Traducción solo cuando evita una ambigüedad real.</span></li>
+          <li><b>Chunks</b><span>Frases hechas listas para usar, no palabras sueltas. Es lo que hace que suene natural desde el día 1.</span></li>
+          <li><b>Say it right</b><span>Sílaba tónica marcada y los 2–3 sonidos que al hispanohablante le cuestan.</span></li>
+          <li><b>Use it</b><span>Ejercicios de recuperación: decir la palabra de memoria. Nada de unir con flechas.</span></li>
+          <li><b>Speaking cards</b><span>Tarjetas de roleplay troqueladas. El puente con el Grammar Book.</span></li>
+          <li><b>My words</b><span>Glosario personal: 8 renglones en blanco para lo que salga en clase.</span></li>
+        </ol>
+      </div>
+    </div>
+    <div class="bridge">
+      <p><strong>La bisagra es la tarea de speaking:</strong> es <em>la misma tarea</em> en los dos libros. En Grammar viene con el andamiaje de la estructura (<span class="en">“Usá: I'm… / He's… / Are you…?”</span>); en Vocabulary, con las palabras y los chunks (<span class="en">“Nice to meet you.” “How do you spell that?”</span>). El alumno abre los dos libros en la misma página y habla.</p>
+    </div>
+  </section>
+
+  <section id="clases">
+    <div class="sec-head">
+      <span class="eyebrow">04 — El temario</span>
+      <h2>Las 12 clases, una por una</h2>
+    </div>
+
+    <div class="units">
+
+      <article class="unit">
+        <div class="unit-rail"><span class="cls">Clase</span><span class="num">01</span><span class="code">UNIT 1.1</span></div>
+        <div class="unit-body">
+          <h3><span class="en">Hi, I'm…</span></h3>
+          <div class="rows">
+            <div class="row grammar"><span class="tag">Grammar</span><p>Verbo <span class="en">BE</span> afirmativo con <span class="en">I / you</span> + contracciones (<span class="en">I'm, you're</span>). Pronombres personales.</p></div>
+            <div class="row vocab"><span class="tag">Vocabulary</span><p>Saludos y despedidas · el alfabeto (deletreo) · números 0–20 · lenguaje de clase.<br><span class="chunks">Hi, I'm… · Nice to meet you. · How do you spell that? · Sorry, can you repeat that?</span></p></div>
+            <div class="row speak"><span class="tag">Speaking</span><p><b>Primer día.</b> Te presentás en un curso o en un evento de trabajo: decís tu nombre, lo deletreás y pedís que te repitan.</p></div>
+            <div class="row alert"><span class="tag">Watch out</span><p><span class="en">I am called…</span> ✗ → <span class="en">My name's…</span> ✓</p></div>
+          </div>
+          <div class="icando"><b>I can</b><span>Puedo saludar, decir y deletrear mi nombre, y pedir que me repitan algo.</span></div>
+        </div>
+      </article>
+
+      <article class="unit">
+        <div class="unit-rail"><span class="cls">Clase</span><span class="num">02</span><span class="code">UNIT 1.2</span></div>
+        <div class="unit-body">
+          <h3><span class="en">Where are you from?</span></h3>
+          <div class="rows">
+            <div class="row grammar"><span class="tag">Grammar</span><p><span class="en">BE</span> con <span class="en">he / she / it</span> · preguntas Yes/No con <span class="en">BE</span> · respuestas cortas (<span class="en">Yes, I am. / No, I'm not.</span>).</p></div>
+            <div class="row vocab"><span class="tag">Vocabulary</span><p>Países · nacionalidades · idiomas · ciudades.<br><span class="chunks">Where are you from? · I'm from… · Are you Brazilian? · I speak a little English.</span></p></div>
+            <div class="row speak"><span class="tag">Speaking</span><p><b>Conocer gente en un viaje.</b> En un hostel o una conferencia: de dónde es cada uno y qué idiomas habla. Juego de adivinar la nacionalidad.</p></div>
+            <div class="row alert"><span class="tag">Watch out</span><p><span class="en">I'm from the Argentina</span> ✗ · las nacionalidades van <b>con mayúscula</b> en inglés.</p></div>
+          </div>
+          <div class="icando"><b>I can</b><span>Puedo decir de dónde soy y preguntarle a otra persona de dónde es.</span></div>
+        </div>
+      </article>
+
+      <article class="unit">
+        <div class="unit-rail"><span class="cls">Clase</span><span class="num">03</span><span class="code">UNIT 1.3</span></div>
+        <div class="unit-body">
+          <h3><span class="en">What do you do?</span></h3>
+          <div class="rows">
+            <div class="row grammar"><span class="tag">Grammar</span><p>Artículos <span class="en">a / an</span> · <span class="en">BE</span> negativo (<span class="en">I'm not, he isn't</span>) · wh-questions con <span class="en">BE</span> (<span class="en">What…? Where…? How old…?</span>).</p></div>
+            <div class="row vocab"><span class="tag">Vocabulary</span><p>Profesiones · lugares de trabajo · números 20–100 · edad · datos personales (teléfono, mail, dirección).<br><span class="chunks">What do you do? · I'm a teacher. · I work at… · What's your email?</span></p></div>
+            <div class="row speak"><span class="tag">Speaking</span><p><b>Networking.</b> Intercambiás datos con alguien en un evento y completás su ficha: nombre, profesión, empresa, teléfono, mail.</p></div>
+            <div class="row alert"><span class="tag">Watch out</span><p><span class="en">I have 30 years</span> ✗ → <span class="en">I'm 30</span> ✓ · <span class="en">I'm teacher</span> ✗ → <span class="en">I'm <b>a</b> teacher</span> ✓</p></div>
+          </div>
+          <div class="icando"><b>I can</b><span>Puedo decir a qué me dedico, dar mis datos y pedirle los datos a otra persona.</span></div>
+        </div>
+      </article>
+
+      <article class="unit">
+        <div class="unit-rail"><span class="cls">Clase</span><span class="num">04</span><span class="code">UNIT 1.4</span></div>
+        <div class="unit-body">
+          <h3><span class="en">This is my family</span></h3>
+          <div class="rows">
+            <div class="row grammar"><span class="tag">Grammar</span><p>Adjetivos posesivos (<span class="en">my, your, his, her, our, their</span>) · genitivo <span class="en">'s</span>.</p></div>
+            <div class="row vocab"><span class="tag">Vocabulary</span><p>Familia · estado civil · adjetivos de personalidad básicos.<br><span class="chunks">This is my… · She's my sister's friend. · We're very close. · He looks like my dad.</span></p></div>
+            <div class="row speak"><span class="tag">Speaking</span><p><b>Mostrar fotos.</b> Le presentás tu familia a alguien: quién es quién y cómo es cada uno.</p></div>
+            <div class="row alert"><span class="tag">Watch out</span><p><span class="en">his / her</span> concuerda con <b>el dueño</b>, no con el objeto: <span class="en">Ana and <b>her</b> brother</span>.</p></div>
+          </div>
+          <div class="icando"><b>I can</b><span>Puedo hablar de mi familia y decir de quién es cada cosa o persona.</span></div>
+        </div>
+      </article>
+
+      <article class="unit">
+        <div class="unit-rail"><span class="cls">Clase</span><span class="num">05</span><span class="code">UNIT 1.5</span></div>
+        <div class="unit-body">
+          <h3><span class="en">What's this?</span></h3>
+          <div class="rows">
+            <div class="row grammar"><span class="tag">Grammar</span><p><span class="en">this / that / these / those</span> · plurales regulares e irregulares · pronombres posesivos (<span class="en">mine, yours, hers</span>).</p></div>
+            <div class="row vocab"><span class="tag">Vocabulary</span><p>Objetos personales · cosas de la oficina y de la mochila · colores.<br><span class="chunks">What's this in English? · Is this yours? · It's mine. · Whose is this?</span></p></div>
+            <div class="row speak"><span class="tag">Speaking</span><p><b>Objetos perdidos.</b> En el mostrador de <span class="en">lost &amp; found</span> de un aeropuerto: describís lo que perdiste e identificás lo que es tuyo.</p></div>
+            <div class="row alert"><span class="tag">Watch out</span><p><span class="en">this / these</span>: la vocal larga · <span class="en">people</span> ya es plural (<span class="en">peoples</span> ✗).</p></div>
+          </div>
+          <div class="icando"><b>I can</b><span>Puedo nombrar y señalar cosas, preguntar qué es algo y de quién es.</span></div>
+        </div>
+      </article>
+
+      <article class="unit check">
+        <div class="unit-rail"><span class="cls">Clase</span><span class="num">06</span><span class="code">CHECKPOINT A</span></div>
+        <div class="unit-body">
+          <h3>Your first conversation</h3>
+          <ul class="checklist">
+            <li><span><b>Repaso activo</b> de las unidades 1.1 a 1.5. Sin explicaciones nuevas: todo se recupera hablando.</span></li>
+            <li><span><b>Speaking Lab (35 min):</b> roleplay largo <em>Primer día en la oficina nueva</em> — te presentás, das tus datos, contás de dónde sos y a qué te dedicás, hablás de tu familia en el almuerzo e identificás las cosas de tu escritorio.</span></li>
+            <li><span><b>Mini-test de vocabulario:</b> 20 ítems de recuperación.</span></li>
+            <li><span><b>Devolución:</b> una hoja con los 3 errores más frecuentes del alumno y su plan para las 6 clases que siguen.</span></li>
+          </ul>
+        </div>
+      </article>
+
+      <article class="unit">
+        <div class="unit-rail"><span class="cls">Clase</span><span class="num">07</span><span class="code">UNIT 1.6</span></div>
+        <div class="unit-body">
+          <h3><span class="en">It's a great city</span></h3>
+          <div class="rows">
+            <div class="row grammar"><span class="tag">Grammar</span><p>Adjetivos con <span class="en">BE</span>: van antes del sustantivo y <b>no</b> pluralizan · intensificadores <span class="en">very / really</span> · <span class="en">It's</span> impersonal para el clima.</p></div>
+            <div class="row vocab"><span class="tag">Vocabulary</span><p>Adjetivos para describir lugares (<span class="en">big, crowded, cheap, safe, noisy</span>) · clima y estaciones.<br><span class="chunks">I think it's… · It's a really nice place. · What's the weather like? · It's not very expensive.</span></p></div>
+            <div class="row speak"><span class="tag">Speaking</span><p><b>Tu ciudad.</b> Se la describís a alguien que la va a visitar: qué le va a gustar y qué no.</p></div>
+            <div class="row alert"><span class="tag">Watch out</span><p><span class="en">a house big</span> ✗ → <span class="en">a big house</span> ✓ · los adjetivos no llevan plural (<span class="en">nices</span> ✗).</p></div>
+          </div>
+          <div class="icando"><b>I can</b><span>Puedo describir un lugar y dar una opinión simple.</span></div>
+        </div>
+      </article>
+
+      <article class="unit">
+        <div class="unit-rail"><span class="cls">Clase</span><span class="num">08</span><span class="code">UNIT 1.7</span></div>
+        <div class="unit-body">
+          <h3><span class="en">There's a café near here</span></h3>
+          <div class="rows">
+            <div class="row grammar"><span class="tag">Grammar</span><p><span class="en">there is / there are</span> en afirmativo, negativo y pregunta · <span class="en">a / an / some / any</span>.</p></div>
+            <div class="row vocab"><span class="tag">Vocabulary</span><p>Lugares de la ciudad (<span class="en">bank, pharmacy, bus stop, square, gym, bakery</span>).<br><span class="chunks">Is there a… near here? · There isn't any… · There are a lot of… · Is it far?</span></p></div>
+            <div class="row speak"><span class="tag">Speaking</span><p><b>Un turista te pregunta.</b> Le contás qué hay en el barrio y le recomendás dos lugares.</p></div>
+            <div class="row alert"><span class="tag">Watch out</span><p><span class="en">There are a supermarket</span> ✗ · <span class="en">have</span> ≠ <span class="en">there is</span> (<span class="en">In my city have…</span> ✗).</p></div>
+          </div>
+          <div class="icando"><b>I can</b><span>Puedo decir qué hay y qué no hay en un lugar, y preguntar por lugares cerca.</span></div>
+        </div>
+      </article>
+
+      <article class="unit">
+        <div class="unit-rail"><span class="cls">Clase</span><span class="num">09</span><span class="code">UNIT 1.8</span></div>
+        <div class="unit-body">
+          <h3><span class="en">Where exactly?</span></h3>
+          <div class="rows">
+            <div class="row grammar"><span class="tag">Grammar</span><p>Preposiciones de lugar (<span class="en">in, on, under, next to, between, in front of, behind, opposite</span>) · preguntas con <span class="en">Where</span>.</p></div>
+            <div class="row vocab"><span class="tag">Vocabulary</span><p>Partes de la casa · muebles · referencias de calle.<br><span class="chunks">It's next to the… · It's on the corner. · Where exactly? · Right there.</span></p></div>
+            <div class="row speak"><span class="tag">Speaking</span><p><b>Videollamada mostrando tu casa</b> y, en la segunda parte, buscar algo perdido: <span class="en">“Where are my keys?” “They're on the table, under the newspaper.”</span></p></div>
+            <div class="row alert"><span class="tag">Watch out</span><p><span class="en">in / on / at</span> de lugar: el clásico. Va con cuadro de tres columnas.</p></div>
+          </div>
+          <div class="icando"><b>I can</b><span>Puedo decir dónde están las cosas y dónde queda un lugar.</span></div>
+        </div>
+      </article>
+
+      <article class="unit">
+        <div class="unit-rail"><span class="cls">Clase</span><span class="num">10</span><span class="code">UNIT 1.9</span></div>
+        <div class="unit-body">
+          <h3><span class="en">I can, I can't</span></h3>
+          <div class="rows">
+            <div class="row grammar"><span class="tag">Grammar</span><p><span class="en">can / can't</span> para habilidad · preguntas y respuestas cortas · <span class="en">Can you…?</span> como pedido simple.</p></div>
+            <div class="row vocab"><span class="tag">Vocabulary</span><p>Habilidades y verbos de acción (<span class="en">drive, swim, cook, play the guitar, use Excel</span>) · matizadores (<span class="en">well, a little, not at all</span>).<br><span class="chunks">I can… · I can't… very well. · Can you help me? · Sure, no problem.</span></p></div>
+            <div class="row speak"><span class="tag">Speaking</span><p><b>Armar un equipo.</b> Mini-entrevista: qué sabés hacer, qué no, y le pedís ayuda a alguien con lo que no sabés.</p></div>
+            <div class="row alert"><span class="tag">Watch out</span><p><span class="en">can</span> nunca lleva <span class="en">to</span> (<span class="en">I can to swim</span> ✗) · <span class="en">can</span> débil vs. <span class="en">can't</span> fuerte.</p></div>
+          </div>
+          <div class="icando"><b>I can</b><span>Puedo decir qué sé y qué no sé hacer, y pedir ayuda.</span></div>
+        </div>
+      </article>
+
+      <article class="unit">
+        <div class="unit-rail"><span class="cls">Clase</span><span class="num">11</span><span class="code">UNIT 1.10</span></div>
+        <div class="unit-body">
+          <h3><span class="en">When's your birthday?</span></h3>
+          <div class="rows">
+            <div class="row grammar"><span class="tag">Grammar</span><p>Preposiciones de tiempo <span class="en">in / on / at</span> · preguntas con <span class="en">When</span> y <span class="en">What time</span> · números ordinales.</p></div>
+            <div class="row vocab"><span class="tag">Vocabulary</span><p>Días · meses · estaciones · fechas · la hora · momentos del día.<br><span class="chunks">When's your birthday? · It's on May 3rd. · What time is it? · See you at seven. · Does Friday work for you?</span></p></div>
+            <div class="row speak"><span class="tag">Speaking</span><p><b>Coordinar un encuentro.</b> Proponés día y hora, la otra persona no puede, negocian una alternativa. Después: las fechas importantes de tu año.</p></div>
+            <div class="row alert"><span class="tag">Watch out</span><p>Cómo se <b>leen</b> las fechas vs. cómo se escriben · <span class="en">at</span> la hora, <span class="en">on</span> el día, <span class="en">in</span> el mes.</p></div>
+          </div>
+          <div class="icando"><b>I can</b><span>Puedo decir la hora y la fecha, y ponerme de acuerdo para encontrarme con alguien.</span></div>
+        </div>
+      </article>
+
+      <article class="unit check">
+        <div class="unit-rail"><span class="cls">Clase</span><span class="num">12</span><span class="code">CHECKPOINT B</span></div>
+        <div class="unit-body">
+          <h3>My World — cierre de la Parte 1</h3>
+          <ul class="checklist">
+            <li><span><b>Proyecto final:</b> presentación oral de 2–3 minutos — quién soy, mi familia, mi ciudad, mi casa, qué sé hacer, cuándo estoy libre. Se prepara en la clase 11 y se presenta acá.</span></li>
+            <li><span><b>Roleplay evaluado</b> con rúbrica de cuatro ejes: fluidez · precisión · vocabulario · pronunciación. Cada eje de 1 a 4, con descriptores.</span></li>
+            <li><span><b>Can-do Passport:</b> el alumno firma las 10 casillas que ya domina. Es el certificado interno de la Parte 1.</span></li>
+            <li><span><b>Puente:</b> 10 minutos de presentación de la Parte 2 — <em>Everyday Life</em>.</span></li>
+          </ul>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <section id="alcance">
+    <div class="sec-head">
+      <span class="eyebrow">05 — Control de alcance</span>
+      <h2>Qué <em>no</em> entra en la Parte 1</h2>
+    </div>
+    <div class="two">
+      <div style="display:flex;flex-direction:column;gap:.9rem;">
+        <div class="pillset">
+          <span class="pill">present simple</span>
+          <span class="pill">present continuous</span>
+          <span class="pill">pasado</span>
+          <span class="pill">futuro</span>
+          <span class="pill">comparativos</span>
+          <span class="pill">modales (salvo can)</span>
+        </div>
+        <p class="small">Todo esto está distribuido en las Partes 2 y 3, con su propio contrato de clases.</p>
+      </div>
+      <div class="box slate">
+        <span class="tag">Por qué</span>
+        <p style="margin:0;font-size:.93rem;">Casi todos los cursos meten present simple en la clase 3, y el alumno se atraganta con la <span class="en">-s</span> de tercera persona antes de poder decir una frase suya. Con <b>BE + posesivos + there is/are + can + preposiciones</b> alcanza para describir el mundo entero del alumno — que es exactamente lo que necesita decir en su primer mes. El present simple llega en la Parte 2, cuando ya hay confianza para hablar y la <span class="en">-s</span> es un detalle, no un muro.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="mapa">
+    <div class="sec-head">
+      <span class="eyebrow">06 — El curso completo</span>
+      <h2>Dónde encaja esta parte</h2>
+    </div>
+    <p>Cada Parte se vende suelta y cada Nivel completo son <strong>36 clases</strong>. El alumno siempre sabe cuánto le falta y qué va a poder decir cuando llegue.</p>
+    <div class="tablewrap">
+      <table>
+        <thead>
+          <tr><th>Nivel</th><th>Parte</th><th>Nombre</th><th>Foco gramatical</th><th class="num">Clases</th></tr>
+        </thead>
+        <tbody>
+          <tr class="now">
+            <td class="lvl">1 · Foundations <span class="small">(A1)</span></td>
+            <td>1</td><td><b>First Contact</b></td>
+            <td>BE · posesivos · there is/are · can · preposiciones</td>
+            <td class="num">12</td>
+          </tr>
+          <tr>
+            <td></td><td>2</td><td>Everyday Life</td>
+            <td>Present simple · frecuencia · like + -ing · imperativos · precios</td>
+            <td class="num">12</td>
+          </tr>
+          <tr>
+            <td></td><td>3</td><td>Right Now &amp; Back Then</td>
+            <td>Present continuous · past de BE · past simple · going to</td>
+            <td class="num">12</td>
+          </tr>
+          <tr>
+            <td class="lvl">2 · Connections <span class="small">(A2)</span></td>
+            <td>1–3</td><td>—</td>
+            <td>Comparativos · presente perfecto · futuros · condicional 1</td>
+            <td class="num">36</td>
+          </tr>
+          <tr>
+            <td class="lvl">3 · Fluency <span class="small">(B1)</span></td>
+            <td>1–3</td><td>—</td>
+            <td>Tiempos perfectos · pasiva · reported speech · condicionales 2 y 3</td>
+            <td class="num">36</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="produccion">
+    <div class="sec-head">
+      <span class="eyebrow">07 — Notas de producción</span>
+      <h2>Cómo se imprime esto</h2>
+    </div>
+    <ul class="notes">
+      <li><span><b>Ritmo de página.</b> Una unidad = 4 páginas de Grammar + 2 de Vocabulary. La Parte 1 son 40 + 20 páginas, más checkpoints e índices: ≈ 72 páginas por libro.</span></li>
+      <li><span><b>Nada de ilustraciones.</b> Fotografía limpia solo cuando el objeto <em>es</em> el contenido (los objetos de la 1.5, los muebles de la 1.8). El resto lo resuelven los cuadros.</span></li>
+      <li><span><b>A4 vertical, legible en blanco y negro.</b> El color refuerza la jerarquía pero nunca es la única señal: cada caja lleva además su etiqueta en versalitas.</span></li>
+      <li><span><b>Las Speaking Cards van al final del Vocabulary Book</b>, en hoja troquelable, agrupadas por unidad.</span></li>
+    </ul>
+  </section>
+
+  <footer>Documento maestro · Nivel 1 · Parte 1 — First Contact</footer>
+
+</div>

@@ -1,5 +1,10 @@
 # FILO — Guía del proyecto (para Claude Code)
 
+> ⚠️ **Este repo tiene dos proyectos.** Esta guía es la del juego (`index.html`,
+> `sw.js`, `test/`, `tools/`). El curso de inglés vive en **`curso/`** y tiene
+> su propia guía: `curso/CLAUDE.md`. Si el trabajo es del curso, no hace falta
+> leer nada de acá.
+
 > Juego de **plataformas de precisión** (PWA, se juega en el celu y en la
 > compu). Esta guía es el mapa: leela antes de tocar el `index.html`.
 
