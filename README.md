@@ -1,3 +1,17 @@
+# game1claude — dos proyectos en un repo
+
+Este repo publica **un solo sitio en Cloudflare** con dos cosas adentro:
+
+| URL | Qué es | Dónde vive |
+|---|---|---|
+| `/` | **Curso de inglés** — portada, temario y clases | `index.html` + `curso/` |
+| `/juego/` | **FILO** — el juego de plataformas | `juego/` |
+
+El curso tiene su propia guía en [`curso/CLAUDE.md`](curso/CLAUDE.md). Lo que
+sigue es sobre el juego.
+
+---
+
 # FILO
 
 **Plataformas de precisión.** Un juego chico y difícil: salas de una
@@ -56,15 +70,15 @@ Julio):
 3. Queda en `https://filo.<cuenta>.workers.dev` (o el dominio que se le
    ponga).
 
-Desde ahí, cada merge a `main` despliega. Los que ya tengan el juego
+Desde ahí, cada merge a `main` despliega la raíz (el curso) y `/juego/`. Los que ya tengan el juego
 instalado reciben la versión nueva la próxima vez que lo abran con conexión:
 el Service Worker pide el HTML a la red primero, y el juego entero ES el
-HTML. Igual, al publicar conviene subir `CACHE` en `sw.js` (`filo-v1` →
-`filo-v2`) para que se limpie la cache vieja de iconos y manifest.
+HTML. Igual, al publicar conviene subir `CACHE` en `juego/sw.js` (`filo-v2` →
+`filo-v3`) para que se limpie la cache vieja de iconos y manifest.
 
 ## Para desarrollar
 
-Todo el juego está en `index.html` (sin build, sin dependencias, JS vanilla).
+Todo el juego está en `juego/index.html` (sin build, sin dependencias, JS vanilla).
 Para probarlo alcanza con abrir el archivo en el navegador.
 
 ```bash

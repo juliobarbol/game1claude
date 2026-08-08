@@ -1,0 +1,606 @@
+<meta charset="utf-8">
+<title>Clase 01 · Hi, I'm… — Nivel 1 Parte 1</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#1E3A63">
+
+<style>
+  *,*::before,*::after{box-sizing:border-box;}
+  body,h1,h2,h3,h4,p,ul,ol,dl,dd,table,figure{margin:0;padding:0;}
+
+  :root{
+    --paper:#FCFCFD; --surface:#FFFFFF; --ink:#141922; --ink-2:#4B5563; --ink-3:#6B7480;
+    --line:#E1E5EC; --line-strong:#C9CFD9;
+    --grammar:#1E3A63; --grammar-bg:#EDF1F8; --grammar-line:#C4D2E7;
+    --vocab:#0E6355;   --vocab-bg:#E6F0ED;   --vocab-line:#B7D6CD;
+    --speak:#94520F;   --speak-bg:#F8EFE2;   --speak-line:#E4CDAD;
+    --alert:#8C2E3D;   --alert-bg:#F7E9EC;   --alert-line:#E3C4CA;
+    --slate:#57616F;   --slate-bg:#F0F2F6;   --slate-line:#D5DAE2;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0E1218; --surface:#151A22; --ink:#E7EBF1; --ink-2:#A5AFBC; --ink-3:#87909C;
+      --line:#28303B; --line-strong:#3A4552;
+      --grammar:#93B6E9; --grammar-bg:#15223A; --grammar-line:#2B4066;
+      --vocab:#6ECCB6;   --vocab-bg:#0D2621;   --vocab-line:#1E4A41;
+      --speak:#DFA55F;   --speak-bg:#2B1F10;   --speak-line:#553F1F;
+      --alert:#E793A0;   --alert-bg:#2B1519;   --alert-line:#532933;
+      --slate:#9AA4B2;   --slate-bg:#191F28;   --slate-line:#2D3541;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E1218; --surface:#151A22; --ink:#E7EBF1; --ink-2:#A5AFBC; --ink-3:#87909C;
+    --line:#28303B; --line-strong:#3A4552;
+    --grammar:#93B6E9; --grammar-bg:#15223A; --grammar-line:#2B4066;
+    --vocab:#6ECCB6;   --vocab-bg:#0D2621;   --vocab-line:#1E4A41;
+    --speak:#DFA55F;   --speak-bg:#2B1F10;   --speak-line:#553F1F;
+    --alert:#E793A0;   --alert-bg:#2B1519;   --alert-line:#532933;
+    --slate:#9AA4B2;   --slate-bg:#191F28;   --slate-line:#2D3541;
+  }
+
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+  h1,h2,h3,h4{font-family:var(--serif);font-weight:600;line-height:1.15;text-wrap:balance;}
+  a{color:var(--grammar);}
+  strong,b{font-weight:650;}
+  .en{font-style:italic;}
+  .wrap{max-width:60rem;margin:0 auto;padding:0 clamp(1rem,4vw,2rem) 5rem;}
+
+  /* ─── barra de navegación pegajosa ─── */
+  nav.bar{
+    position:sticky;top:0;z-index:20;
+    background:var(--surface);
+    border-bottom:1px solid var(--line);
+  }
+  .bar-in{
+    max-width:60rem;margin:0 auto;
+    padding:.55rem clamp(1rem,4vw,2rem);
+    display:flex;align-items:center;gap:.75rem;flex-wrap:wrap;
+  }
+  .bar a.home{
+    font-family:var(--mono);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink-3);text-decoration:none;
+  }
+  .bar a.home:hover{color:var(--ink);}
+  .bar .spacer{flex:1;}
+  .jump{display:flex;gap:.35rem;}
+  .jump a{
+    font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+    text-decoration:none;padding:.32rem .6rem;border:1px solid var(--line);
+    color:var(--ink-2);background:var(--paper);
+  }
+  .jump a.g:hover,.jump a.g:focus-visible{border-color:var(--grammar-line);background:var(--grammar-bg);color:var(--grammar);}
+  .jump a.v:hover,.jump a.v:focus-visible{border-color:var(--vocab-line);background:var(--vocab-bg);color:var(--vocab);}
+  .jump a.s:hover,.jump a.s:focus-visible{border-color:var(--speak-line);background:var(--speak-bg);color:var(--speak);}
+  :focus-visible{outline:2px solid var(--grammar);outline-offset:2px;}
+
+  /* ─── cabecera de la clase ─── */
+  header.top{padding:clamp(2rem,6vw,3.5rem) 0 1.5rem;display:flex;flex-direction:column;gap:.9rem;}
+  .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);}
+  header.top h1{font-size:clamp(2rem,5.5vw,3.1rem);letter-spacing:-.015em;}
+  header.top h1 .es{display:block;font-family:var(--sans);font-size:1rem;font-weight:500;font-style:normal;color:var(--ink-2);margin-top:.5rem;letter-spacing:0;}
+  .plan{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(9rem,1fr));
+    border:1px solid var(--line);background:var(--surface);
+  }
+  .plan div{padding:.7rem .9rem;border-right:1px solid var(--line);}
+  .plan div:last-child{border-right:0;}
+  .plan dt{font-family:var(--mono);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);}
+  .plan dd{font-weight:600;font-size:.92rem;font-variant-numeric:tabular-nums;}
+
+  /* ─── libros ─── */
+  .bookhead{
+    margin-top:clamp(2.5rem,6vw,3.5rem);
+    padding:1rem 1.15rem;
+    display:flex;align-items:baseline;justify-content:space-between;gap:.75rem;flex-wrap:wrap;
+    color:var(--surface);
+  }
+  .bookhead h2{font-family:var(--sans);font-size:1.1rem;font-weight:600;letter-spacing:.02em;}
+  .bookhead span{font-family:var(--mono);font-size:.68rem;letter-spacing:.12em;text-transform:uppercase;opacity:.85;}
+  .bookhead.g{background:var(--grammar);}
+  .bookhead.v{background:var(--vocab);}
+
+  .card{
+    border:1px solid var(--line);background:var(--surface);
+    margin-top:1rem;
+  }
+  .card > h3{
+    display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;
+    padding:.7rem 1.1rem;border-bottom:1px solid var(--line);
+    font-family:var(--mono);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+  }
+  .card > h3 .n{font-variant-numeric:tabular-nums;opacity:.55;}
+  .card > h3 .es{font-family:var(--sans);font-size:.78rem;letter-spacing:0;text-transform:none;font-weight:500;color:var(--ink-3);}
+  .card .body{padding:1.05rem 1.15rem;display:flex;flex-direction:column;gap:.85rem;}
+  .card p{max-width:62ch;}
+
+  .card.grammar{border-color:var(--grammar-line);}
+  .card.grammar > h3{background:var(--grammar-bg);border-bottom-color:var(--grammar-line);color:var(--grammar);}
+  .card.vocab{border-color:var(--vocab-line);}
+  .card.vocab > h3{background:var(--vocab-bg);border-bottom-color:var(--vocab-line);color:var(--vocab);}
+  .card.speak{border-color:var(--speak-line);}
+  .card.speak > h3{background:var(--speak-bg);border-bottom-color:var(--speak-line);color:var(--speak);}
+  .card.alert{border-color:var(--alert-line);}
+  .card.alert > h3{background:var(--alert-bg);border-bottom-color:var(--alert-line);color:var(--alert);}
+  .card.slate{border-color:var(--slate-line);}
+  .card.slate > h3{background:var(--slate-bg);border-bottom-color:var(--slate-line);color:var(--slate);}
+
+  /* ─── diálogo ─── */
+  .dialog{display:grid;grid-template-columns:auto 1fr;gap:.45rem 1rem;font-size:1.02rem;}
+  .dialog dt{font-weight:650;color:var(--ink-3);font-size:.9rem;padding-top:.15rem;}
+  .dialog dd{font-family:var(--serif);font-size:1.08rem;}
+  mark{background:var(--grammar-bg);color:var(--grammar);font-weight:650;padding:0 .18em;border-bottom:2px solid var(--grammar);}
+
+  /* ─── tabla de la regla ─── */
+  .tablewrap{overflow-x:auto;border:1px solid var(--grammar-line);}
+  table{border-collapse:collapse;width:100%;min-width:32rem;font-size:.95rem;}
+  th,td{padding:.6rem .8rem;text-align:left;border-bottom:1px solid var(--grammar-line);vertical-align:top;}
+  thead th{
+    font-family:var(--mono);font-size:.62rem;letter-spacing:.13em;text-transform:uppercase;
+    color:var(--grammar);background:var(--grammar-bg);font-weight:600;
+  }
+  tbody tr:last-child td{border-bottom:0;}
+  td.form{font-family:var(--serif);font-size:1.05rem;}
+  td.short{font-family:var(--serif);font-size:1.05rem;font-weight:650;color:var(--grammar);}
+  td.lbl{font-size:.82rem;color:var(--ink-3);white-space:nowrap;}
+
+  /* ─── errores ─── */
+  .errs{display:flex;flex-direction:column;gap:.55rem;}
+  .err{display:grid;grid-template-columns:1fr;gap:.15rem;padding:.6rem .8rem;background:var(--alert-bg);border:1px solid var(--alert-line);}
+  .err .bad{font-family:var(--serif);font-size:1.02rem;color:var(--alert);}
+  .err .good{font-family:var(--serif);font-size:1.02rem;}
+  .err .why{font-size:.85rem;color:var(--ink-2);margin-top:.2rem;}
+  .x{font-weight:700;}
+
+  /* ─── práctica ─── */
+  .step{border-left:3px solid var(--grammar);padding-left:.9rem;display:flex;flex-direction:column;gap:.5rem;}
+  .step h4{font-family:var(--mono);font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;color:var(--grammar);}
+  .items{display:flex;flex-direction:column;gap:.4rem;counter-reset:it;}
+  .items li{
+    list-style:none;counter-increment:it;
+    display:grid;grid-template-columns:1.5rem 1fr;gap:.5rem;
+    font-family:var(--serif);font-size:1.04rem;align-items:baseline;
+  }
+  .items li::before{content:counter(it) ".";font-family:var(--mono);font-size:.72rem;color:var(--ink-3);}
+  .items li > span{grid-column:2;}
+  .gap{
+    display:inline-block;min-width:5.5rem;border-bottom:1.5px solid var(--line-strong);
+    text-align:center;color:var(--grammar);font-weight:650;
+  }
+  .gap.hidden{color:transparent;}
+  .lines{display:flex;flex-direction:column;gap:.55rem;}
+  .lines div{border-bottom:1.5px solid var(--line);height:1.6rem;}
+
+  button.toggle{
+    align-self:flex-start;
+    font-family:var(--mono);font-size:.68rem;letter-spacing:.11em;text-transform:uppercase;
+    padding:.42rem .8rem;border:1px solid var(--grammar-line);background:var(--grammar-bg);
+    color:var(--grammar);cursor:pointer;
+  }
+  button.toggle:hover{background:var(--surface);}
+  button.toggle.v{border-color:var(--vocab-line);background:var(--vocab-bg);color:var(--vocab);}
+  button.toggle.v:hover{background:var(--surface);}
+
+  /* ─── tarea de speaking ─── */
+  .script{
+    background:var(--speak-bg);border:1px dashed var(--speak-line);
+    padding:.85rem 1rem;display:flex;flex-direction:column;gap:.35rem;
+    font-family:var(--serif);font-size:1.06rem;
+  }
+  .script .who{font-family:var(--mono);font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--speak);margin-top:.35rem;}
+  .script .who:first-child{margin-top:0;}
+  .rounds{display:grid;grid-template-columns:repeat(auto-fit,minmax(13rem,1fr));gap:.6rem;}
+  .round{border:1px solid var(--speak-line);padding:.6rem .75rem;background:var(--surface);}
+  .round b{font-family:var(--mono);font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--speak);display:block;margin-bottom:.2rem;}
+  .round span{font-size:.9rem;color:var(--ink-2);}
+  .same{
+    font-size:.85rem;color:var(--speak);font-family:var(--mono);
+    border-top:1px dashed var(--speak-line);padding-top:.55rem;
+  }
+
+  /* ─── word bank ─── */
+  .banks{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.75rem;}
+  .bank{border:1px solid var(--vocab-line);background:var(--vocab-bg);padding:.7rem .85rem;}
+  .bank h4{font-family:var(--mono);font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;color:var(--vocab);margin-bottom:.45rem;}
+  .bank ul{list-style:none;display:flex;flex-direction:column;gap:.22rem;}
+  .bank li{display:grid;grid-template-columns:1fr auto;gap:.75rem;font-size:.95rem;align-items:baseline;}
+  .bank li .w{font-family:var(--serif);font-size:1.02rem;}
+  .bank li .t{font-size:.82rem;color:var(--ink-3);text-align:right;}
+  .bank li .t.hidden{visibility:hidden;}
+
+  .abc{display:flex;flex-wrap:wrap;gap:.4rem;}
+  .abc div{
+    border:1px solid var(--vocab-line);background:var(--surface);
+    padding:.35rem .55rem;text-align:center;min-width:4.4rem;
+  }
+  .abc b{display:block;font-family:var(--serif);font-size:1.15rem;color:var(--vocab);}
+  .abc span{font-family:var(--mono);font-size:.68rem;color:var(--ink-2);}
+
+  .nums{display:flex;flex-wrap:wrap;gap:.3rem;}
+  .nums span{
+    border:1px solid var(--vocab-line);background:var(--surface);padding:.28rem .5rem;
+    font-size:.86rem;
+  }
+  .nums span b{font-family:var(--mono);color:var(--vocab);margin-right:.3rem;font-variant-numeric:tabular-nums;}
+
+  .chunklist{display:flex;flex-direction:column;gap:.4rem;}
+  .chunklist li{
+    list-style:none;display:grid;grid-template-columns:1fr auto;gap:.6rem;align-items:baseline;
+    border-bottom:1px dotted var(--vocab-line);padding-bottom:.3rem;
+  }
+  .chunklist .c{font-family:var(--serif);font-size:1.08rem;color:var(--ink);}
+  .chunklist .m{font-size:.85rem;color:var(--ink-3);text-align:right;}
+
+  .say{display:flex;flex-direction:column;gap:.5rem;}
+  .say .row{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:baseline;font-size:.95rem;}
+  .say .row b{font-family:var(--mono);font-size:.64rem;letter-spacing:.12em;text-transform:uppercase;color:var(--vocab);white-space:nowrap;}
+  .stress{font-family:var(--serif);font-size:1.06rem;}
+  .stress em{font-style:normal;font-weight:700;color:var(--vocab);}
+
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.75rem;}
+  .scard{border:1px solid var(--speak-line);background:var(--speak-bg);padding:.75rem .85rem;display:flex;flex-direction:column;gap:.35rem;}
+  .scard b{font-family:var(--mono);font-size:.65rem;letter-spacing:.12em;text-transform:uppercase;color:var(--speak);}
+  .scard p{font-size:.92rem;margin:0;}
+  .scard .names{font-family:var(--serif);font-size:1rem;color:var(--ink);}
+
+  ul.plain{list-style:none;display:flex;flex-direction:column;gap:.4rem;}
+  ul.plain li{display:grid;grid-template-columns:1rem 1fr;gap:.55rem;font-size:.95rem;}
+  ul.plain li::before{content:"□";color:var(--slate);font-family:var(--mono);}
+  ul.plain li > span{grid-column:2;}
+
+  .note{font-size:.88rem;color:var(--ink-2);}
+  footer{padding-top:3rem;font-family:var(--mono);font-size:.72rem;color:var(--ink-3);display:flex;gap:1rem;flex-wrap:wrap;}
+  footer a{color:var(--ink-3);}
+
+  @media (max-width:560px){
+    .dialog{grid-template-columns:1fr;gap:.1rem;}
+    .dialog dt{padding-top:.5rem;}
+    .bank li{grid-template-columns:1fr;}
+    .bank li .t{text-align:left;}
+    .chunklist li{grid-template-columns:1fr;}
+    .chunklist .m{text-align:left;}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+</style>
+
+<nav class="bar">
+  <div class="bar-in">
+    <a class="home" href="../../../index.html">← Curso</a>
+    <span class="spacer"></span>
+    <div class="jump">
+      <a class="g" href="#grammar">Grammar</a>
+      <a class="v" href="#vocabulary">Vocabulary</a>
+      <a class="s" href="#speak">Speaking</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="top">
+    <span class="eyebrow">Nivel 1 · Parte 1 · Clase 01 — Unit 1.1</span>
+    <h1><span class="en">Hi, I'm…</span><span class="es">Presentarte, deletrear tu nombre y pedir que te repitan.</span></h1>
+    <dl class="plan">
+      <div><dt>Duración</dt><dd>60 minutos</dd></div>
+      <div><dt>Gramática</dt><dd>BE · I / you</dd></div>
+      <div><dt>Palabras nuevas</dt><dd>26 + 8 chunks</dd></div>
+      <div><dt>Hablás en</dt><dd>minuto 12</dd></div>
+    </dl>
+  </header>
+
+  <!-- ══════════════ GRAMMAR BOOK ══════════════ -->
+
+  <div class="bookhead g" id="grammar">
+    <h2>Grammar Book — Unit 1.1</h2>
+    <span>6 cajas</span>
+  </div>
+
+  <section class="card slate">
+    <h3><span class="n">1</span> In context <span class="es">— leelo antes de que te expliquen nada</span></h3>
+    <div class="body">
+      <dl class="dialog">
+        <dt>Marta</dt><dd>Hi! <mark>I'm</mark> Marta.</dd>
+        <dt>Daniel</dt><dd>Hi, Marta. <mark>I'm</mark> Daniel. Nice to meet you.</dd>
+        <dt>Marta</dt><dd>Nice to meet you too. Sorry — how do you spell that?</dd>
+        <dt>Daniel</dt><dd>D–A–N–I–E–L.</dd>
+        <dt>Marta</dt><dd>Thanks. <mark>You're</mark> in my English class!</dd>
+        <dt>Daniel</dt><dd>Yes! See you on Monday.</dd>
+      </dl>
+      <p class="note">Fijate en lo resaltado. Son las tres formas que vas a usar hoy: <span class="en">I'm</span>, <span class="en">you're</span> y el deletreo.</p>
+    </div>
+  </section>
+
+  <section class="card grammar">
+    <h3><span class="n">2</span> The rule <span class="es">— el verbo BE con I y you</span></h3>
+    <div class="body">
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr><th></th><th>Forma larga</th><th>Forma corta — la que se usa al hablar</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="lbl">yo</td><td class="form">I am Marta.</td><td class="short">I'm Marta.</td></tr>
+            <tr><td class="lbl">vos / usted</td><td class="form">You are Daniel.</td><td class="short">You're Daniel.</td></tr>
+            <tr><td class="lbl">yo — negativo</td><td class="form">I am not late.</td><td class="short">I'm not late.</td></tr>
+            <tr><td class="lbl">vos — negativo</td><td class="form">You are not late.</td><td class="short">You're not late. / You aren't late.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><strong>La regla de oro:</strong> en inglés el sujeto <strong>nunca</strong> se cae. En castellano decís “Soy Marta” sin el “yo”; en inglés el <span class="en">I</span> tiene que estar sí o sí.</p>
+    </div>
+  </section>
+
+  <section class="card alert">
+    <h3><span class="n">3</span> Watch out <span class="es">— los tres errores de siempre</span></h3>
+    <div class="body">
+      <div class="errs">
+        <div class="err">
+          <span class="bad"><span class="x">✗</span> <span class="en">Am Marta.</span></span>
+          <span class="good">✓ <span class="en">I'm Marta.</span></span>
+          <span class="why">El sujeto no se omite nunca. Es el error número uno del primer mes.</span>
+        </div>
+        <div class="err">
+          <span class="bad"><span class="x">✗</span> <span class="en">I am called Marta.</span></span>
+          <span class="good">✓ <span class="en">I'm Marta.</span> / <span class="en">My name's Marta.</span></span>
+          <span class="why">Traducción literal de “me llamo”. Suena raro y viejo; nadie se presenta así.</span>
+        </div>
+        <div class="err">
+          <span class="bad"><span class="x">✗</span> <span class="en">Hi, I'm the Marta.</span></span>
+          <span class="good">✓ <span class="en">Hi, I'm Marta.</span></span>
+          <span class="why">Los nombres propios no llevan artículo. Chau “la Marta”.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card grammar">
+    <h3><span class="n">4</span> Practice <span class="es">— completar → transformar → personalizar</span></h3>
+    <div class="body">
+
+      <div class="step">
+        <h4>A · Completar</h4>
+        <ol class="items" data-answers>
+          <li><span>Hi! <span class="gap hidden">I'm</span> Ana.</span></li>
+          <li><span>Hello, Pablo. <span class="gap hidden">You're</span> in my class.</span></li>
+          <li><span><span class="gap hidden">I'm</span> not a teacher — I'm a student.</span></li>
+          <li><span>Good morning! <span class="gap hidden">I'm</span> Laura, and <span class="gap hidden">you're</span> Tom.</span></li>
+          <li><span>Sorry, <span class="gap hidden">you're</span> not Daniel. Daniel is over there.</span></li>
+          <li><span>Nice to meet you. <span class="gap hidden">I'm</span> new here.</span></li>
+        </ol>
+        <button class="toggle" type="button" data-target="A">Mostrar respuestas</button>
+      </div>
+
+      <div class="step">
+        <h4>B · Transformar — pasalo a forma corta</h4>
+        <ol class="items" data-answers>
+          <li><span>I am Sofía. → <span class="gap hidden">I'm Sofía.</span></span></li>
+          <li><span>You are my teacher. → <span class="gap hidden">You're my teacher.</span></span></li>
+          <li><span>I am not from here. → <span class="gap hidden">I'm not from here.</span></span></li>
+          <li><span>You are not late. → <span class="gap hidden">You're not late.</span></span></li>
+        </ol>
+        <button class="toggle" type="button" data-target="B">Mostrar respuestas</button>
+      </div>
+
+      <div class="step">
+        <h4>C · Personalizar — escribí tres frases verdaderas sobre vos</h4>
+        <div class="lines"><div></div><div></div><div></div></div>
+        <p class="note">Arrancá cada una con <span class="en">I'm…</span> o <span class="en">I'm not…</span></p>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="card speak" id="speak">
+    <h3><span class="n">5</span> Now you speak <span class="es">— primer día</span></h3>
+    <div class="body">
+      <p><strong>La situación:</strong> primer día de un curso. Se cruzan dos personas que no se conocen. Se presentan y uno de los dos no entiende bien el nombre del otro.</p>
+      <div class="script">
+        <span class="who">A</span>
+        <span>Hi! I'm ___________ .</span>
+        <span class="who">B</span>
+        <span>Hi, ___________ . I'm ___________ . Nice to meet you.</span>
+        <span class="who">A</span>
+        <span>Nice to meet you too. Sorry — how do you spell that?</span>
+        <span class="who">B</span>
+        <span>___ – ___ – ___ – ___ – ___ .</span>
+        <span class="who">A</span>
+        <span>Thanks! See you on ___________ .</span>
+      </div>
+      <div class="rounds">
+        <div class="round"><b>Ronda 1</b><span>Con el guion a la vista. Solo cambiás los nombres.</span></div>
+        <div class="round"><b>Ronda 2</b><span>Tapás el guion. Vale trabarse: lo importante es no cortar.</span></div>
+        <div class="round"><b>Ronda 3</b><span>Te toca un nombre difícil de la tarjeta 2. Ahora el deletreo es en serio.</span></div>
+      </div>
+      <p class="same">↔ Esta misma tarea está en el Vocabulary Book, con las palabras en vez de la estructura.</p>
+    </div>
+  </section>
+
+  <section class="card slate">
+    <h3><span class="n">6</span> I can… <span class="es">— marcá lo que ya podés hacer</span></h3>
+    <div class="body">
+      <ul class="plain">
+        <li><span>Puedo saludar y despedirme según la hora del día.</span></li>
+        <li><span>Puedo decir mi nombre con <span class="en">I'm</span>, sin comerme el sujeto.</span></li>
+        <li><span>Puedo deletrear mi nombre y mi apellido en inglés.</span></li>
+        <li><span>Puedo pedir que me repitan o me deletreen algo sin cambiar al castellano.</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- ══════════════ VOCABULARY BOOK ══════════════ -->
+
+  <div class="bookhead v" id="vocabulary">
+    <h2>Vocabulary Book — Unit 1.1</h2>
+    <span>26 palabras · 8 chunks</span>
+  </div>
+
+  <section class="card vocab">
+    <h3><span class="n">1</span> Word bank <span class="es">— tapá la columna de la derecha y decilas en voz alta</span></h3>
+    <div class="body">
+      <div class="banks">
+        <div class="bank">
+          <h4>Greetings</h4>
+          <ul>
+            <li><span class="w">Hi</span><span class="t">hola (informal)</span></li>
+            <li><span class="w">Hello</span><span class="t">hola</span></li>
+            <li><span class="w">Good morning</span><span class="t">hasta el mediodía</span></li>
+            <li><span class="w">Good afternoon</span><span class="t">hasta las 6</span></li>
+            <li><span class="w">Good evening</span><span class="t">al llegar, de noche</span></li>
+          </ul>
+        </div>
+        <div class="bank">
+          <h4>Goodbyes</h4>
+          <ul>
+            <li><span class="w">Bye</span><span class="t">chau</span></li>
+            <li><span class="w">See you</span><span class="t">nos vemos</span></li>
+            <li><span class="w">See you later</span><span class="t">hasta luego</span></li>
+            <li><span class="w">Have a nice day</span><span class="t">que tengas buen día</span></li>
+            <li><span class="w">Good night</span><span class="t">al irse, de noche</span></li>
+          </ul>
+        </div>
+        <div class="bank">
+          <h4>Classroom language</h4>
+          <ul>
+            <li><span class="w">Sorry?</span><span class="t">¿perdón?</span></li>
+            <li><span class="w">Again, please.</span><span class="t">otra vez</span></li>
+            <li><span class="w">I don't understand.</span><span class="t">no entiendo</span></li>
+            <li><span class="w">What does it mean?</span><span class="t">¿qué significa?</span></li>
+            <li><span class="w">How do you say…?</span><span class="t">¿cómo se dice…?</span></li>
+          </ul>
+        </div>
+      </div>
+      <button class="toggle v" type="button" data-target="T">Ocultar traducciones</button>
+
+      <div class="bank">
+        <h4>The alphabet — agrupado por cómo suena, no por orden</h4>
+        <div class="abc">
+          <div><b>A H J K</b><span>/eɪ/</span></div>
+          <div><b>B C D E G P T V</b><span>/iː/</span></div>
+          <div><b>F L M N S X Z</b><span>/e/</span></div>
+          <div><b>I Y</b><span>/aɪ/</span></div>
+          <div><b>O</b><span>/əʊ/</span></div>
+          <div><b>Q U W</b><span>/juː/</span></div>
+          <div><b>R</b><span>/ɑː(r)/</span></div>
+        </div>
+      </div>
+
+      <div class="bank">
+        <h4>Numbers 0–20</h4>
+        <div class="nums">
+          <span><b>0</b>zero</span><span><b>1</b>one</span><span><b>2</b>two</span><span><b>3</b>three</span>
+          <span><b>4</b>four</span><span><b>5</b>five</span><span><b>6</b>six</span><span><b>7</b>seven</span>
+          <span><b>8</b>eight</span><span><b>9</b>nine</span><span><b>10</b>ten</span><span><b>11</b>eleven</span>
+          <span><b>12</b>twelve</span><span><b>13</b>thirteen</span><span><b>14</b>fourteen</span><span><b>15</b>fifteen</span>
+          <span><b>16</b>sixteen</span><span><b>17</b>seventeen</span><span><b>18</b>eighteen</span><span><b>19</b>nineteen</span>
+          <span><b>20</b>twenty</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card vocab">
+    <h3><span class="n">2</span> Chunks <span class="es">— bloques enteros, no palabras sueltas</span></h3>
+    <div class="body">
+      <ul class="chunklist">
+        <li><span class="c">Hi, I'm…</span><span class="m">tu presentación de siempre</span></li>
+        <li><span class="c">Nice to meet you.</span><span class="m">solo la primera vez que ves a alguien</span></li>
+        <li><span class="c">Nice to meet you too.</span><span class="m">la respuesta — no te olvides del <span class="en">too</span></span></li>
+        <li><span class="c">How do you spell that?</span><span class="m">la frase que te salva en toda la Parte 1</span></li>
+        <li><span class="c">Sorry, can you repeat that?</span><span class="m">pedir repetición sin volver al castellano</span></li>
+        <li><span class="c">How do you say “___” in English?</span><span class="m">para seguir hablando cuando no sabés la palabra</span></li>
+        <li><span class="c">See you on Monday.</span><span class="m">despedida con día</span></li>
+        <li><span class="c">Have a nice day!</span><span class="m">cierre amable, muy usado</span></li>
+      </ul>
+      <p class="note">Estos ocho se memorizan enteros, como una sola palabra larga. No se analizan todavía.</p>
+    </div>
+  </section>
+
+  <section class="card vocab">
+    <h3><span class="n">3</span> Say it right <span class="es">— la sílaba fuerte va en negrita</span></h3>
+    <div class="body">
+      <div class="say">
+        <div class="row"><b>Acento</b><span class="stress">he<em>LLO</em> · <em>GOOD</em> morning · <em>NICE</em> to <em>MEET</em> you</span></div>
+        <div class="row"><b>Se pegan</b><span class="stress">“meet you” suena <em>/miː-tʃu/</em>, no “mit iu”. La <em>t</em> y la <em>y</em> se funden.</span></div>
+        <div class="row"><b>La H suena</b><span class="stress"><em>H</em>i · <em>H</em>ello · <em>H</em>ave — en inglés la H se sopla. No es muda.</span></div>
+        <div class="row"><b>Cuidado</b><span class="stress"><em>G</em> /dʒiː/ vs <em>J</em> /dʒeɪ/ · <em>E</em> /iː/ vs <em>I</em> /aɪ/ — el 90 % de los deletreos se arruinan acá.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card vocab">
+    <h3><span class="n">4</span> Use it <span class="es">— de memoria, no reconociendo</span></h3>
+    <div class="body">
+      <div class="step" style="border-left-color:var(--vocab);">
+        <h4 style="color:var(--vocab);">1 · Decilo en inglés</h4>
+        <p class="note">Tapá el word bank. En voz alta y sin pensar: <em>buenos días · nos vemos · mucho gusto · ¿cómo se escribe? · ¿podés repetir? · que tengas buen día</em>.</p>
+      </div>
+      <div class="step" style="border-left-color:var(--vocab);">
+        <h4 style="color:var(--vocab);">2 · Deletreá en voz alta</h4>
+        <p class="note">Tu nombre · tu apellido · tu calle · tu ciudad · la palabra <span class="en">ENGLISH</span>. Si dudás en la G o la E, volvé al cuadro del alfabeto.</p>
+      </div>
+      <div class="step" style="border-left-color:var(--vocab);">
+        <h4 style="color:var(--vocab);">3 · 60 segundos</h4>
+        <p class="note">Del 0 al 20 sin parar y sin mirar. Después, al revés: del 20 al 0.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card speak">
+    <h3><span class="n">5</span> Speaking cards <span class="es">— la misma tarea que en Grammar, con las palabras</span></h3>
+    <div class="body">
+      <div class="cards">
+        <div class="scard">
+          <b>Card 1 · Coffee break</b>
+          <p>Se cruzan en la cocina de la oficina. Se presentan, uno deletrea su nombre y se despiden con el día en que se vuelven a ver.</p>
+          <p class="names">Hi, I'm… / Nice to meet you. / How do you spell that? / See you on…</p>
+        </div>
+        <div class="scard">
+          <b>Card 2 · Nombre imposible</b>
+          <p>Cada uno saca un nombre de la lista y se presenta con ése. El otro <em>tiene</em> que pedir el deletreo.</p>
+          <p class="names">Siobhan · Xiomara · Krzysztof · Aoife · Ngozi · Jyoti</p>
+        </div>
+        <div class="scard">
+          <b>Card 3 · La cadena</b>
+          <p>En grupo. Cada uno se presenta y antes repite el nombre del anterior. El último repite todos.</p>
+          <p class="names">This is… , and I'm…</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="card slate">
+    <h3><span class="n">6</span> My words <span class="es">— lo que salió en clase</span></h3>
+    <div class="body">
+      <div class="lines"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+    </div>
+  </section>
+
+  <footer>
+    <a href="../../../index.html">← Todas las clases</a>
+    <a href="syllabus.html">Syllabus de la Parte 1</a>
+    <span>Clase 01 · Unit 1.1 — Hi, I'm…</span>
+  </footer>
+
+</div>
+
+<script>
+  // Mostrar/ocultar las respuestas de los ejercicios.
+  document.querySelectorAll('button.toggle[data-target]').forEach(btn => {
+    if (btn.dataset.target === 'T') return;
+    const list = btn.closest('.step').querySelector('[data-answers]');
+    btn.addEventListener('click', () => {
+      const shown = !list.querySelector('.gap.hidden');
+      list.querySelectorAll('.gap').forEach(g => g.classList.toggle('hidden', shown));
+      btn.textContent = shown ? 'Mostrar respuestas' : 'Ocultar respuestas';
+    });
+  });
+
+  // Tapar las traducciones del word bank (ejercicio de recuperación).
+  const tBtn = document.querySelector('button.toggle[data-target="T"]');
+  if (tBtn) tBtn.addEventListener('click', () => {
+    const hide = !document.querySelector('.bank li .t.hidden');
+    document.querySelectorAll('.bank li .t').forEach(t => t.classList.toggle('hidden', hide));
+    tBtn.textContent = hide ? 'Mostrar traducciones' : 'Ocultar traducciones';
+  });
+</script>

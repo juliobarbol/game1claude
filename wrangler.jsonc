@@ -1,12 +1,15 @@
 {
-  // FILO se publica como ASSETS ESTÁTICOS: no hay backend, no hay build.
-  // Cloudflare toma el repo tal cual y sirve index.html. Cada push a `main`
-  // dispara el deploy solo (hay que conectar el repo una vez desde el panel,
-  // ver "Publicar" en el README).
+  // El sitio se publica como ASSETS ESTÁTICOS: no hay backend, no hay build.
+  // Cloudflare toma el repo tal cual. Cada push a `main` dispara el deploy solo
+  // (hay que conectar el repo una vez desde el panel, ver "Publicar" en el README).
   //
-  // `not_found_handling` manda cualquier ruta desconocida al index: si alguien
-  // entra a /juego o el Service Worker pide una URL vieja, igual abre el juego
-  // en vez de un 404.
+  // Qué queda en qué URL:
+  //   /                         → el curso de inglés (index.html de la raíz)
+  //   /curso/nivel-1/parte-1/…  → el syllabus y las clases
+  //   /juego/                   → FILO, el juego (su propio index.html + sw.js)
+  //
+  // `not_found_handling` manda cualquier ruta desconocida al index de la raíz:
+  // si alguien escribe mal una URL, cae en la portada del curso en vez de un 404.
   "name": "filo",
   "compatibility_date": "2026-07-27",
   "assets": {

@@ -1,6 +1,6 @@
 // test/_load.cjs — carga el JS del juego en node, sin navegador.
 //
-// El juego vive todo en index.html. Acá se extrae el <script> inline y se
+// El juego vive todo en juego/index.html. Acá se extrae el <script> inline y se
 // evalúa en un contexto con lo mínimo del DOM stubbeado, para poder correr
 // la FÍSICA en node (que es pura a propósito: sin DOM, sin random, paso fijo).
 //
@@ -12,7 +12,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 function loadGame(){
-  const html = fs.readFileSync(path.resolve(__dirname, '..', 'index.html'), 'utf8');
+  const html = fs.readFileSync(path.resolve(__dirname, '..', 'juego', 'index.html'), 'utf8');
   const parts = [...html.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m => m[1]);
   // `const`/`let` de nivel superior no quedan en el objeto global del vm:
   // se exportan a mano al final (esta lista es el "contrato" con los tests).

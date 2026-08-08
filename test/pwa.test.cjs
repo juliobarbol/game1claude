@@ -20,7 +20,7 @@ const http = require('node:http');
 const { loadGame } = require('./_load.cjs');
 const { K, solve, actionsFor } = require('./_bot.cjs');
 
-const ROOT = path.resolve(__dirname, '..');
+const ROOT = path.resolve(__dirname, '..', 'juego');
 const PORT = 8700 + (process.pid % 300);
 
 let chromium;

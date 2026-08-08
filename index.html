@@ -1,1945 +1,284 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
+<title>Curso de inglés — Nivel 1</title>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no, maximum-scale=1">
-<meta name="theme-color" content="#0a0d16">
-<meta name="description" content="FILO — plataformas de precisión. Saltá, rebotá en las paredes y dasheá. Cronómetro, fantasma de tu mejor vuelta y medallas.">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
-<title>FILO — plataformas de precisión</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Curso de inglés para adultos. Nivel 1, Parte 1: 12 clases para sostener tu primera conversación.">
+<meta name="theme-color" content="#1E3A63">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%231E3A63'/%3E%3Ctext x='16' y='23' font-size='20' font-family='Georgia,serif' fill='%23fff' text-anchor='middle'%3EE%3C/text%3E%3C/svg%3E">
+
 <style>
-/* ══════════════════════════════════════════════════════════════════
-   FILO — estilos. Todo el look de la app: la partida se dibuja en el
-   <canvas>; acá viven el HUD, los controles táctiles y las pantallas.
-   ══════════════════════════════════════════════════════════════════ */
-:root{
-  --bg:#0a0d16; --bg2:#111726; --panel:#151d31; --line:#26304d;
-  --txt:#e7ecf7; --dim:#8d9ab8; --acc:#ffd166; --acc2:#5ec8ff;
-  --ok:#4ade80; --bad:#ff4757; --gold:#ffd166; --silver:#c7d2e4; --bronze:#d08b52;
-  --ctrl:180px; --safe-b:env(safe-area-inset-bottom,0px);
-}
-*{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
-html,body{height:100%; margin:0; overflow:hidden; overscroll-behavior:none; touch-action:none}
-body{
-  background:var(--bg); color:var(--txt);
-  font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
-  font-size:15px; line-height:1.4; user-select:none; -webkit-user-select:none;
-}
-button{font:inherit; color:inherit; background:none; border:none; cursor:pointer}
-.hidden{display:none !important}
+  *,*::before,*::after{box-sizing:border-box;}
+  body,h1,h2,h3,h4,p,ul,ol,dl,dd,figure{margin:0;padding:0;}
 
-/* ── Escenario y canvas ─────────────────────────────────────────── */
-#stage{position:fixed; left:0; right:0; top:0; bottom:0; overflow:hidden}
-body.touch.portrait #stage{top:var(--hud-h); bottom:calc(var(--ctrl) + var(--safe-b))}
-body.touch.portrait .tz{align-items:flex-end; padding-bottom:26px}
-#cv{display:block; width:100%; height:100%; image-rendering:auto}
+  :root{
+    --paper:#FCFCFD; --surface:#FFFFFF; --ink:#141922; --ink-2:#4B5563; --ink-3:#6B7480;
+    --line:#E1E5EC; --line-strong:#C9CFD9;
+    --grammar:#1E3A63; --grammar-bg:#EDF1F8; --grammar-line:#C4D2E7;
+    --vocab:#0E6355;   --vocab-bg:#E6F0ED;   --vocab-line:#B7D6CD;
+    --speak:#94520F;   --speak-bg:#F8EFE2;   --speak-line:#E4CDAD;
+    --slate:#57616F;   --slate-bg:#F0F2F6;   --slate-line:#D5DAE2;
+    --serif:"Iowan Old Style","Palatino Linotype",Palatino,"Book Antiqua",Georgia,serif;
+    --sans:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#0E1218; --surface:#151A22; --ink:#E7EBF1; --ink-2:#A5AFBC; --ink-3:#87909C;
+      --line:#28303B; --line-strong:#3A4552;
+      --grammar:#93B6E9; --grammar-bg:#15223A; --grammar-line:#2B4066;
+      --vocab:#6ECCB6;   --vocab-bg:#0D2621;   --vocab-line:#1E4A41;
+      --speak:#DFA55F;   --speak-bg:#2B1F10;   --speak-line:#553F1F;
+      --slate:#9AA4B2;   --slate-bg:#191F28;   --slate-line:#2D3541;
+    }
+  }
+  :root[data-theme="dark"]{
+    --paper:#0E1218; --surface:#151A22; --ink:#E7EBF1; --ink-2:#A5AFBC; --ink-3:#87909C;
+    --line:#28303B; --line-strong:#3A4552;
+    --grammar:#93B6E9; --grammar-bg:#15223A; --grammar-line:#2B4066;
+    --vocab:#6ECCB6;   --vocab-bg:#0D2621;   --vocab-line:#1E4A41;
+    --speak:#DFA55F;   --speak-bg:#2B1F10;   --speak-line:#553F1F;
+    --slate:#9AA4B2;   --slate-bg:#191F28;   --slate-line:#2D3541;
+  }
 
-/* Franja de objetivos: en vertical sobra pantalla debajo de la sala, y ese
-   hueco es el mejor lugar para recordarte contra qué estás corriendo. */
-#goals{position:fixed; left:0; right:0; top:calc(var(--hud-h) + var(--sala-h));
-  display:none; padding:16px; text-align:center; color:var(--dim); font-size:12px;
-  line-height:2; letter-spacing:1px; pointer-events:none; z-index:4}
-body.touch.portrait #goals{display:block}
-#goals .g-lv{color:var(--txt); font-size:14px; letter-spacing:2px; margin-bottom:6px}
-#goals b{color:var(--acc); font-weight:700}
+  body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;}
+  h1,h2,h3{font-family:var(--serif);font-weight:600;line-height:1.14;text-wrap:balance;}
+  p{max-width:60ch;}
+  .wrap{max-width:58rem;margin:0 auto;padding:0 clamp(1rem,4vw,2rem) 5rem;}
+  .eyebrow{font-family:var(--mono);font-size:.7rem;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);}
+  :focus-visible{outline:2px solid var(--grammar);outline-offset:3px;}
 
-/* ── HUD ────────────────────────────────────────────────────────── */
-#hud{
-  position:fixed; left:0; right:0; top:0; display:flex; align-items:center; gap:10px;
-  padding:calc(6px + env(safe-area-inset-top,0px)) 10px 6px; pointer-events:none;
-  font-size:13px; letter-spacing:.5px; z-index:5;
-}
-#hud.hidden{display:none !important}
-#hud .grow{flex:1; min-width:0}
-#hud .lv{color:var(--dim); white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
-#hud .time{font-size:22px; font-weight:700; font-variant-numeric:tabular-nums; letter-spacing:0}
-#hud .sub{color:var(--dim); font-size:12px; font-variant-numeric:tabular-nums}
-#hud .rec{color:var(--acc)}
-#hud .hbtn{pointer-events:auto; width:38px; height:38px; border-radius:11px; background:#ffffff12;
-  display:grid; place-items:center; font-size:15px; color:var(--txt)}
-#hud .hbtn:active{background:#ffffff24}
-#hud .center{text-align:center}
-#hud .right{text-align:right}
+  /* ─── portada ─── */
+  header.hero{
+    padding:clamp(3rem,9vw,6rem) 0 clamp(2rem,5vw,3rem);
+    display:flex;flex-direction:column;gap:1.4rem;
+    border-bottom:2px solid var(--ink);
+  }
+  header.hero h1{font-size:clamp(2.4rem,7vw,4.2rem);letter-spacing:-.02em;}
+  header.hero h1 em{display:block;font-style:italic;color:var(--grammar);}
+  .promise{font-size:clamp(1.05rem,2.2vw,1.25rem);color:var(--ink-2);}
+  .promise b{color:var(--ink);font-weight:650;}
 
-/* ── Controles táctiles ─────────────────────────────────────────── */
-#touch{position:fixed; inset:auto 0 0 0; height:calc(var(--ctrl) + var(--safe-b));
-  padding:0 0 var(--safe-b); display:none; z-index:6; touch-action:none; pointer-events:none}
-body.touch #touch{display:block}
-body.touch.portrait #touch{background:linear-gradient(180deg,transparent 0%,transparent 45%,#0c111d 100%)}
-body.touch.landscape #touch{background:none; height:100%; padding-bottom:0}
-.tz{position:absolute; bottom:0; height:100%; display:flex; align-items:center;
-  touch-action:none; pointer-events:auto}
-/* El joystick vive PEGADO al borde del teléfono: en apaisado los controles
-   se dibujan encima del juego, así que cuanto más al costado, menos tapan. */
-#tstick{left:0; width:46%}
-#tbtns{right:0; width:54%; justify-content:flex-end; gap:14px;
-  padding-right:calc(10px + env(safe-area-inset-right,0px))}
-body.swap #tstick{left:auto; right:0}
-body.swap #tbtns{right:auto; left:0; justify-content:flex-start; padding-right:0;
-  padding-left:calc(10px + env(safe-area-inset-left,0px)); flex-direction:row-reverse}
-body.touch.landscape .tz{height:58%; bottom:calc(6px + var(--safe-b))}
-body.touch.landscape #tstick{width:38%}
-body.touch.landscape #tbtns{width:44%}
+  .actions{display:flex;flex-wrap:wrap;gap:.65rem;margin-top:.4rem;}
+  a.cta{
+    display:inline-flex;align-items:center;gap:.5rem;
+    padding:.7rem 1.1rem;text-decoration:none;
+    font-weight:600;font-size:.95rem;
+    border:1px solid var(--grammar);
+  }
+  a.cta.primary{background:var(--grammar);color:var(--surface);}
+  a.cta.primary:hover{background:var(--ink);border-color:var(--ink);}
+  a.cta.ghost{background:transparent;color:var(--grammar);}
+  a.cta.ghost:hover{background:var(--grammar-bg);}
+  a.cta .k{font-family:var(--mono);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;opacity:.75;}
 
-.stickbase{position:absolute; width:126px; height:126px; margin:-63px 0 0 -63px; border-radius:50%;
-  background:#ffffff0a; border:2px solid #ffffff1a; transition:left .18s, top .18s, opacity .18s;
-  opacity:.55}
-.stickbase.on{transition:none; opacity:1}
-body.touch.landscape .stickbase{background:#ffffff08; border-color:#ffffff14; opacity:.4}
-body.touch.landscape .stickbase.on{opacity:.9}
-.stickknob{position:absolute; left:50%; top:50%; width:58px; height:58px; margin:-29px 0 0 -29px;
-  border-radius:50%; background:#ffffff26; border:2px solid #ffffff33;
-  transition:background .08s}
-.stickbase.on .stickknob{background:var(--acc2); border-color:#fff6}
-.tbtn{width:86px; height:86px; border-radius:50%; background:#ffffff14; border:2px solid #ffffff26;
-  font-size:12px; font-weight:700; letter-spacing:1px; color:#dbe4f7; display:grid; place-items:center}
-.tbtn.big{width:104px; height:104px; font-size:13px}
-.tbtn.on{background:var(--acc2); color:#04121c; border-color:#fff8}
-#btnDash.on{background:#e879f9; color:#1a0620}
-#btnDash.dim{opacity:.38}
-body.touch.landscape .tbtn{background:#ffffff10}
+  section{padding-top:clamp(2.75rem,6vw,4rem);display:flex;flex-direction:column;gap:1.2rem;}
+  .sec-head{display:flex;flex-direction:column;gap:.3rem;}
+  h2{font-size:clamp(1.4rem,3vw,1.95rem);}
 
-/* ── Pantallas (menú, niveles, opciones, pausa, resultado) ──────── */
-#screens{position:fixed; inset:0; z-index:10; display:none}
-#screens.on{display:block}
-.screen{position:absolute; inset:0; display:flex; flex-direction:column; align-items:center;
-  justify-content:center; gap:14px; padding:calc(18px + env(safe-area-inset-top,0px)) 18px
-  calc(18px + var(--safe-b)); background:rgba(6,9,16,.9); backdrop-filter:blur(6px);
-  overflow-y:auto; overscroll-behavior:contain; text-align:center}
-.screen.hidden{display:none}
-.title{font-size:clamp(38px,12vw,84px); font-weight:800; letter-spacing:10px; margin:0 0 -6px;
-  color:var(--acc); text-shadow:0 0 26px #ffd16655}
-.tagline{color:var(--dim); font-size:13px; letter-spacing:2px; margin-bottom:10px}
-h2{font-size:20px; letter-spacing:3px; margin:0 0 4px; font-weight:700}
-.menu{display:flex; flex-direction:column; gap:10px; width:min(320px,86vw)}
-.btn{padding:13px 16px; border-radius:13px; background:var(--panel); border:1px solid var(--line);
-  font-weight:700; letter-spacing:2px; font-size:14px; transition:transform .06s, background .12s}
-.btn:active{transform:scale(.97)}
-.btn.pri{background:var(--acc); color:#20180a; border-color:#ffe1a0}
-.btn.ghost{background:#ffffff0d}
-.btn.row{display:flex; justify-content:space-between; align-items:center; gap:10px; letter-spacing:1px}
-.btn small{color:var(--dim); font-weight:400; letter-spacing:0}
-.hintline{color:var(--dim); font-size:12px; max-width:520px; line-height:1.7}
-kbd{background:#ffffff14; border:1px solid var(--line); border-radius:5px; padding:1px 6px; font-size:12px}
+  /* ─── qué vas a poder decir ─── */
+  .cando{
+    list-style:none;display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));
+    gap:.5rem 1.6rem;counter-reset:cd;
+  }
+  .cando li{
+    counter-increment:cd;display:grid;grid-template-columns:1.5rem 1fr;gap:.4rem;
+    font-size:.95rem;
+  }
+  .cando li::before{
+    content:counter(cd,decimal-leading-zero);
+    font-family:var(--mono);font-size:.7rem;color:var(--grammar);padding-top:.3rem;
+  }
 
-/* Selector de niveles */
-.worlds{width:min(680px,94vw); display:flex; flex-direction:column; gap:16px}
-.world h3{margin:0 0 8px; font-size:13px; letter-spacing:3px; color:var(--dim); text-align:left}
-.grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(96px,1fr)); gap:9px}
-.cell{position:relative; aspect-ratio:1/.86; border-radius:12px; background:var(--panel);
-  border:1px solid var(--line); display:flex; flex-direction:column; align-items:center;
-  justify-content:center; gap:2px; padding:4px}
-.cell:active{transform:scale(.96)}
-.cell .n{font-size:19px; font-weight:800}
-.cell .t{font-size:11px; color:var(--dim); font-variant-numeric:tabular-nums}
-.cell .m{position:absolute; top:5px; right:7px; font-size:12px}
-.cell .st{position:absolute; top:5px; left:7px; font-size:11px; opacity:.85}
-.cell.done{border-color:#2f7d52}
-.cell.gold{border-color:var(--gold); box-shadow:0 0 0 1px #ffd16644 inset}
-.cell.lock{opacity:.4}
-.cell.cur{outline:2px solid var(--acc2); outline-offset:1px}
+  /* ─── las 12 clases ─── */
+  .classes{display:flex;flex-direction:column;border:1px solid var(--line);background:var(--surface);}
+  .cls{
+    display:grid;grid-template-columns:3.4rem 1fr auto;gap:.2rem 1rem;
+    align-items:center;
+    padding:.75rem 1rem;border-bottom:1px solid var(--line);
+    text-decoration:none;color:inherit;
+  }
+  .cls:last-child{border-bottom:0;}
+  .cls .n{
+    font-family:var(--mono);font-size:.85rem;color:var(--ink-3);
+    font-variant-numeric:tabular-nums;
+  }
+  .cls .t{display:flex;flex-direction:column;gap:.05rem;min-width:0;}
+  .cls .t b{font-family:var(--serif);font-size:1.1rem;font-weight:600;font-style:italic;}
+  .cls .t span{font-size:.85rem;color:var(--ink-2);}
+  .state{
+    font-family:var(--mono);font-size:.63rem;letter-spacing:.12em;text-transform:uppercase;
+    padding:.25rem .5rem;border:1px solid var(--line-strong);color:var(--ink-3);white-space:nowrap;
+  }
+  .cls.live{background:var(--grammar-bg);}
+  .cls.live .n{color:var(--grammar);}
+  .cls.live .state{border-color:var(--grammar);color:var(--surface);background:var(--grammar);}
+  .cls.live:hover,.cls.live:focus-visible{background:var(--surface);}
+  .cls.check{background:var(--slate-bg);}
+  .cls.check .t b{font-style:normal;font-family:var(--sans);font-size:.98rem;}
+  .cls.soon{color:var(--ink-2);}
 
-/* Resultado */
-.bigtime{font-size:clamp(44px,14vw,72px); font-weight:800; font-variant-numeric:tabular-nums;
-  letter-spacing:-1px; margin:0}
-.delta{font-size:16px; font-weight:700}
-.delta.good{color:var(--ok)} .delta.bad{color:var(--dim)}
-.medals{display:flex; gap:14px; justify-content:center; color:var(--dim); font-size:12px; flex-wrap:wrap}
-.medals b{color:var(--txt); font-weight:600}
-.statgrid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:10px;
-  width:min(560px,92vw)}
-.stat{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:12px}
-.stat .k{color:var(--dim); font-size:11px; letter-spacing:2px}
-.stat .v{font-size:24px; font-weight:800; font-variant-numeric:tabular-nums}
-.opt{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:11px 14px;
-  border-radius:12px; background:var(--panel); border:1px solid var(--line); width:min(420px,90vw)}
-.opt .val{font-weight:700; color:var(--acc)}
-.toast{position:fixed; left:50%; top:14%; transform:translateX(-50%); background:#000a; z-index:20;
-  border:1px solid var(--line); border-radius:10px; padding:9px 15px; font-size:13px;
-  pointer-events:none; opacity:0; transition:opacity .2s}
-.toast.on{opacity:1}
+  /* ─── cómo funciona ─── */
+  .grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(15rem,1fr));gap:.9rem;}
+  .tile{border:1px solid var(--line);background:var(--surface);padding:1rem 1.1rem;display:flex;flex-direction:column;gap:.4rem;}
+  .tile b{font-family:var(--mono);font-size:.66rem;letter-spacing:.13em;text-transform:uppercase;}
+  .tile p{font-size:.92rem;color:var(--ink-2);margin:0;max-width:none;}
+  .tile.g{border-color:var(--grammar-line);background:var(--grammar-bg);}
+  .tile.g b{color:var(--grammar);}
+  .tile.v{border-color:var(--vocab-line);background:var(--vocab-bg);}
+  .tile.v b{color:var(--vocab);}
+  .tile.s{border-color:var(--speak-line);background:var(--speak-bg);}
+  .tile.s b{color:var(--speak);}
+
+  footer{
+    margin-top:clamp(3rem,7vw,4.5rem);padding-top:1.25rem;border-top:1px solid var(--line);
+    display:flex;flex-wrap:wrap;gap:.5rem 1.5rem;align-items:baseline;
+    font-family:var(--mono);font-size:.72rem;color:var(--ink-3);
+  }
+  footer a{color:var(--ink-3);}
+  footer .spacer{flex:1;}
+
+  @media (max-width:560px){
+    .cls{grid-template-columns:2.6rem 1fr;}
+    .cls .state{grid-column:2;justify-self:start;margin-top:.3rem;}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
 </style>
-</head>
-<body>
 
-<div id="stage"><canvas id="cv"></canvas></div>
-<div id="goals"></div>
+<div class="wrap">
 
-<div id="hud" class="hidden">
-  <div class="grow lv" id="hudLv">—</div>
-  <div class="center">
-    <div class="time" id="hudTime">0.00</div>
-    <div class="sub" id="hudBest">—</div>
-  </div>
-  <div class="grow right">
-    <div class="sub" id="hudDeaths">☠ 0</div>
-  </div>
-  <button class="hbtn" id="btnRetry" title="Reintentar (R)">↺</button>
-  <button class="hbtn" id="btnPause" title="Pausa (Esc)">❚❚</button>
+  <header class="hero">
+    <span class="eyebrow">Curso de inglés para adultos · Nivel 1 · Parte 1</span>
+    <h1>First Contact<em>12 clases</em></h1>
+    <p class="promise">En doce clases vas a <b>sostener tu primera conversación en inglés</b>. No hay etapa de “primero la teoría”: hablás desde la clase&nbsp;1.</p>
+    <div class="actions">
+      <a class="cta primary" href="curso/nivel-1/parte-1/clase-01.html"><span class="k">Clase 01</span> Hi, I'm… →</a>
+      <a class="cta ghost" href="curso/nivel-1/parte-1/syllabus.html">Ver el temario completo</a>
+    </div>
+  </header>
+
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Al terminar la Parte 1</span>
+      <h2>Qué vas a poder decir</h2>
+    </div>
+    <ol class="cando">
+      <li>Presentarte, deletrear tu nombre y pedir que te repitan algo.</li>
+      <li>Decir de dónde sos, a qué te dedicás y dar tus datos.</li>
+      <li>Hablar de tu familia y de tus cosas.</li>
+      <li>Describir tu ciudad y tu casa, y decir qué hay cerca.</li>
+      <li>Decir qué sabés hacer y pedir ayuda.</li>
+      <li>Decir la hora y la fecha, y coordinar un encuentro.</li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">El temario</span>
+      <h2>Las 12 clases</h2>
+    </div>
+    <div class="classes">
+
+      <a class="cls live" href="curso/nivel-1/parte-1/clase-01.html">
+        <span class="n">01</span>
+        <span class="t"><b>Hi, I'm…</b><span>El verbo BE · saludos y alfabeto · presentarte el primer día</span></span>
+        <span class="state">Entrar</span>
+      </a>
+
+      <div class="cls soon">
+        <span class="n">02</span>
+        <span class="t"><b>Where are you from?</b><span>BE en preguntas · países y nacionalidades · conocer gente en un viaje</span></span>
+        <span class="state">En preparación</span>
+      </div>
+
+      <div class="cls soon">
+        <span class="n">03</span>
+        <span class="t"><b>What do you do?</b><span>a / an y wh-questions · profesiones y números · networking</span></span>
+        <span class="state">En preparación</span>
+      </div>
+
+      <div class="cls soon">
+        <span class="n">04</span>
+        <span class="t"><b>This is my family</b><span>Posesivos y genitivo 's · familia · mostrar fotos</span></span>
+        <span class="state">En preparación</span>
+      </div>
+
+      <div class="cls soon">
+        <span class="n">05</span>
+        <span class="t"><b>What's this?</b><span>this / that / these / those · objetos y colores · objetos perdidos</span></span>
+        <span class="state">En preparación</span>
+      </div>
+
+      <div class="cls check soon">
+        <span class="n">06</span>
+        <span class="t"><b>Checkpoint A — Your first conversation</b><span>Repaso hablando · Speaking Lab de 35 min · devolución</span></span>
+        <span class="state">En preparación</span>
+      </div>
+
+      <div class="cls soon">
+        <span class="n">07</span>
+        <span class="t"><b>It's a great city</b><span>Adjetivos con BE · describir lugares y clima · tu ciudad</span></span>
+        <span class="state">En preparación</span>
+      </div>
+
+      <div class="cls soon">
+        <span class="n">08</span>
+        <span class="t"><b>There's a café near here</b><span>there is / are · lugares de la ciudad · un turista te pregunta</span></span>
+        <span class="state">En preparación</span>
+      </div>
+
+      <div class="cls soon">
+        <span class="n">09</span>
+        <span class="t"><b>Where exactly?</b><span>Preposiciones de lugar · la casa y los muebles · videollamada</span></span>
+        <span class="state">En preparación</span>
+      </div>
+
+      <div class="cls soon">
+        <span class="n">10</span>
+        <span class="t"><b>I can, I can't</b><span>can / can't · habilidades · armar un equipo</span></span>
+        <span class="state">En preparación</span>
+      </div>
+
+      <div class="cls soon">
+        <span class="n">11</span>
+        <span class="t"><b>When's your birthday?</b><span>in / on / at · días, meses y la hora · coordinar un encuentro</span></span>
+        <span class="state">En preparación</span>
+      </div>
+
+      <div class="cls check soon">
+        <span class="n">12</span>
+        <span class="t"><b>Checkpoint B — My World</b><span>Proyecto oral de 3 min · roleplay evaluado · Can-do Passport</span></span>
+        <span class="state">En preparación</span>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="sec-head">
+      <span class="eyebrow">Cómo es cada clase</span>
+      <h2>Dos libros que se hablan</h2>
+    </div>
+    <div class="grid3">
+      <div class="tile g">
+        <b>Grammar</b>
+        <p>La estructura en cuadros: el diálogo primero, después la regla, el error típico y la práctica en tres pasos.</p>
+      </div>
+      <div class="tile v">
+        <b>Vocabulary</b>
+        <p>Las palabras de esa misma unidad, con los <em>chunks</em> listos para usar y la pronunciación marcada.</p>
+      </div>
+      <div class="tile s">
+        <b>Speaking</b>
+        <p>La misma tarea aparece en los dos libros. Ahí es donde se juntan — y donde termina cada clase.</p>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Nivel 1 · Parte 1 — First Contact</span>
+    <a href="curso/nivel-1/parte-1/syllabus.html">Temario</a>
+    <span class="spacer"></span>
+    <a href="juego/">FILO (el juego) →</a>
+  </footer>
+
 </div>
-
-<div id="touch">
-  <div class="tz" id="tstick"><div class="stickbase" id="stickBase"><div class="stickknob" id="stickKnob"></div></div></div>
-  <div class="tz" id="tbtns">
-    <button class="tbtn" id="btnDash">DASH</button>
-    <button class="tbtn big" id="btnJump">SALTO</button>
-  </div>
-</div>
-
-<div id="screens" class="on">
-
-  <section class="screen" id="scr-menu">
-    <h1 class="title">FILO</h1>
-    <div class="tagline">PLATAFORMAS DE PRECISIÓN</div>
-    <div class="menu">
-      <button class="btn pri" id="mPlay">JUGAR</button>
-      <button class="btn" id="mLevels">NIVELES</button>
-      <button class="btn" id="mStats">ESTADÍSTICAS</button>
-      <button class="btn" id="mOpts">OPCIONES</button>
-    </div>
-    <div class="hintline" id="menuHint"></div>
-  </section>
-
-  <section class="screen hidden" id="scr-levels">
-    <h2>NIVELES</h2>
-    <div class="worlds" id="lvWorlds"></div>
-    <button class="btn ghost" id="lvBack" style="width:min(320px,86vw)">VOLVER</button>
-  </section>
-
-  <section class="screen hidden" id="scr-win">
-    <div class="tagline" id="winLv">NIVEL</div>
-    <p class="bigtime" id="winTime">0.00</p>
-    <div class="delta" id="winDelta"></div>
-    <div class="medals" id="winMedals"></div>
-    <div class="menu">
-      <button class="btn pri" id="winNext">SIGUIENTE →</button>
-      <button class="btn" id="winRetry">REINTENTAR</button>
-      <button class="btn ghost" id="winMenu">NIVELES</button>
-    </div>
-  </section>
-
-  <section class="screen hidden" id="scr-abil">
-    <div class="tagline">NUEVA HABILIDAD</div>
-    <h1 class="title" id="abTitle" style="font-size:clamp(26px,8vw,52px); letter-spacing:6px">DASH</h1>
-    <div class="hintline" id="abDesc"></div>
-    <div class="menu"><button class="btn pri" id="abGo">A PROBARLA</button></div>
-  </section>
-
-  <section class="screen hidden" id="scr-pause">
-    <h2>PAUSA</h2>
-    <div class="menu">
-      <button class="btn pri" id="pResume">SEGUIR</button>
-      <button class="btn" id="pRetry">REINTENTAR</button>
-      <button class="btn" id="pOpts">OPCIONES</button>
-      <button class="btn ghost" id="pMenu">SALIR AL MENÚ</button>
-    </div>
-    <div class="hintline" id="pauseHint"></div>
-  </section>
-
-  <section class="screen hidden" id="scr-opts">
-    <h2>OPCIONES</h2>
-    <div class="opt"><span>Fantasma del récord</span><button class="val" id="oGhost">SÍ</button></div>
-    <div class="opt"><span>Sonido</span><button class="val" id="oSound">SÍ</button></div>
-    <div class="opt"><span>Vibración</span><button class="val" id="oVibe">SÍ</button></div>
-    <div class="opt"><span>Sacudida de pantalla</span><button class="val" id="oShake">SÍ</button></div>
-    <div class="opt"><span>Controles zurdo/diestro</span><button class="val" id="oSwap">DIESTRO</button></div>
-    <div class="opt"><span>Ayudas en pantalla</span><button class="val" id="oHints">SÍ</button></div>
-    <div class="menu" style="margin-top:6px">
-      <button class="btn ghost" id="oBack">VOLVER</button>
-      <button class="btn ghost" id="oReset" style="color:var(--bad)">BORRAR PROGRESO</button>
-    </div>
-  </section>
-
-  <section class="screen hidden" id="scr-stats">
-    <h2>ESTADÍSTICAS</h2>
-    <div class="statgrid" id="statGrid"></div>
-    <div class="hintline" id="statHint"></div>
-    <button class="btn ghost" id="sBack" style="width:min(320px,86vw)">VOLVER</button>
-  </section>
-
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-// ═══════════════════════════════════════════════════════════════════
-// FILO — plataformas de precisión.
-//
-// Todo el juego vive en este archivo (igual que las otras apps del
-// dueño: sin build, sin frameworks, JS vanilla en ámbito global).
-// El código está partido en secciones marcadas con  // ===== js/x.js =====
-// Buscá esos marcadores en vez de fiarte de los números de línea.
-//
-// La sección js/physics.js NO toca el DOM a propósito: se puede correr
-// en node (lo hace test/solver.test.cjs, que verifica que cada nivel sea
-// realmente terminable y de dónde salen los tiempos de las medallas).
-// ═══════════════════════════════════════════════════════════════════
-
-// ===== js/const.js =====
-// Unidades: píxeles lógicos. 1 tile = 16. El paso de simulación es FIJO
-// (1/60 s) — es lo que hace que el juego sea determinista y que un truco
-// que te salió una vez te vuelva a salir siempre. NO pasar a delta-time.
-const TS   = 16;              // lado del tile
-const ROOM_W = 30, ROOM_H = 17;               // tamaño de sala, en tiles
-const VIEW_W = ROOM_W * TS, VIEW_H = ROOM_H * TS;  // 480 x 272
-const DT   = 1 / 60;
-
-const PW = 11, PH = 15;       // hitbox del jugador (más angosta que un tile)
-
-const PHY = {
-  RUN:        170,   // velocidad máxima al correr (px/s)
-  ACC_G:     1500,   // aceleración en piso
-  DEC_G:     1900,   // frenado en piso
-  ACC_A:     1150,   // aceleración en aire
-  DEC_A:      900,   // frenado en aire
-  GRAV:      1250,
-  GRAV_APEX:  820,   // gravedad reducida cerca del pico del salto (control fino)
-  APEX:        45,   // |vy| por debajo del cual estás "en el pico"
-  MAX_FALL:   430,
-  JUMP:       350,   // impulso de salto
-  JUMP_CUT:  .42,    // al soltar, se recorta la subida → salto de altura variable
-  COYOTE:       6,   // frames de gracia para saltar tras dejar el piso
-  BUFFER:       8,   // frames de gracia para que un salto apretado antes valga
-  WALL_SLIDE:  92,   // caída máxima pegado a la pared
-  WALL_COYOTE:  6,
-  WJ_X:       205,   // patada horizontal del salto de pared
-  WJ_Y:       335,
-  WJ_LOCK:      9,   // frames en que el input horizontal no manda (salto comprometido)
-  DASH:       335,
-  DASH_F:      10,   // duración del dash, en frames
-  DASH_FREEZE:  3,   // hitstop al arrancar el dash (se siente el golpe)
-  DASH_END:   .52,   // cuánta velocidad queda al terminar
-  SPRING:     500,
-  CORNER:       4,   // corrección de esquina contra el techo (px)
-  DEATH_F:     20,   // frames de la animación de muerte
-  CRUMB_F:     26,   // lo que aguanta un bloque frágil pisado
-  CRUMB_BACK: 110,   // lo que tarda en volver
-  CRYSTAL_BACK: 90,
-};
-
-// Códigos de tile (grilla estática)
-const T_EMPTY=0, T_SOLID=1, T_SP_U=2, T_SP_D=3, T_SP_L=4, T_SP_R=5, T_ONEWAY=6,
-      T_SPRING=7, T_CRUMB=8;
-
-const COL = {
-  bg:'#0a0d16', bg2:'#131b30', grid:'#1b2540', out:'#05070c',
-  solid:'#222d4b', solidTop:'#5878b0', solidEdge:'#141b2d',
-  spike:'#ff4757', oneway:'#6b7ba8',
-  player:'#ffd166', playerNo:'#7cc3ff',
-  goal:'#4ade80', crystal:'#c084fc', spring:'#fb923c',
-  crumb:'#8a6b45', mover:'#38bdf8', saw:'#ff4757', star:'#ffe066',
-  ghost:'#ffffff',
-};
-
-const LS = {
-  SAVE:'filo_save_v1',
-  OPTS:'filo_opts_v1',
-  GHOST:'filo_ghost_',   // + índice de nivel
-};
-
-// ===== js/save.js =====
-// Progreso y opciones en localStorage. Nada de backend: el récord es tuyo
-// y vive en el aparato. Todo lo que entra se valida (un JSON tocado a mano
-// no puede romper el juego).
-const OPTS_DEF = { ghost:1, sound:1, vibe:1, shake:1, swap:0, hints:1 };
-let SAVE = { v:1, lv:{}, deaths:0, frames:0, wins:0 };
-let OPTS = Object.assign({}, OPTS_DEF);
-
-function lsGet(k){ try { return localStorage.getItem(k); } catch(_){ return null; } }
-function lsSet(k,v){ try { localStorage.setItem(k,v); return true; } catch(_){ return false; } }
-
-function loadSave(){
-  try {
-    const raw = JSON.parse(lsGet(LS.SAVE) || '{}');
-    const lv = {};
-    const src = (raw && typeof raw.lv === 'object' && raw.lv) ? raw.lv : {};
-    for (const k of Object.keys(src)){
-      const e = src[k]; if (!e || typeof e !== 'object') continue;
-      lv[k] = {
-        best:    Number.isFinite(+e.best) && +e.best > 0 ? Math.floor(+e.best) : 0,
-        deaths:  Math.max(0, Math.floor(+e.deaths || 0)),
-        star:    !!e.star,
-        noDeath: !!e.noDeath,
-      };
-    }
-    SAVE = {
-      v:1, lv,
-      deaths: Math.max(0, Math.floor(+raw.deaths || 0)),
-      frames: Math.max(0, Math.floor(+raw.frames || 0)),
-      wins:   Math.max(0, Math.floor(+raw.wins   || 0)),
-    };
-  } catch(_){ SAVE = { v:1, lv:{}, deaths:0, frames:0, wins:0 }; }
-  try {
-    const o = JSON.parse(lsGet(LS.OPTS) || '{}');
-    for (const k of Object.keys(OPTS_DEF)) OPTS[k] = (o && k in o) ? (o[k] ? 1 : 0) : OPTS_DEF[k];
-  } catch(_){ OPTS = Object.assign({}, OPTS_DEF); }
-}
-function saveSave(){ lsSet(LS.SAVE, JSON.stringify(SAVE)); }
-function saveOpts(){ lsSet(LS.OPTS, JSON.stringify(OPTS)); }
-function lvRec(i){
-  const k = String(i);
-  if (!SAVE.lv[k]) SAVE.lv[k] = { best:0, deaths:0, star:false, noDeath:false };
-  return SAVE.lv[k];
-}
-function wipeSave(){
-  SAVE = { v:1, lv:{}, deaths:0, frames:0, wins:0 };
-  saveSave();
-  for (let i = 0; i < LEVELS.length; i++) { try { localStorage.removeItem(LS.GHOST + i); } catch(_){} }
-}
-
-// ===== js/audio.js =====
-// Sonido sintetizado con WebAudio: cero archivos, cero descargas, funciona
-// offline. Se despierta con el primer toque/tecla (política de autoplay).
-const SND = { ctx:null, master:null };
-function audioInit(){
-  if (SND.ctx || !OPTS.sound) return;
-  const AC = window.AudioContext || window.webkitAudioContext;
-  if (!AC) return;
-  try {
-    SND.ctx = new AC();
-    SND.master = SND.ctx.createGain();
-    SND.master.gain.value = .22;
-    SND.master.connect(SND.ctx.destination);
-  } catch(_){ SND.ctx = null; }
-}
-function audioResume(){ if (SND.ctx && SND.ctx.state === 'suspended') SND.ctx.resume().catch(()=>{}); }
-function blip(f0, f1, dur, type, vol){
-  if (!OPTS.sound) return;
-  audioInit(); if (!SND.ctx) return;
-  const t = SND.ctx.currentTime, o = SND.ctx.createOscillator(), g = SND.ctx.createGain();
-  o.type = type || 'square';
-  o.frequency.setValueAtTime(f0, t);
-  o.frequency.exponentialRampToValueAtTime(Math.max(30, f1), t + dur);
-  g.gain.setValueAtTime(0, t);
-  g.gain.linearRampToValueAtTime(vol == null ? .5 : vol, t + .008);
-  g.gain.exponentialRampToValueAtTime(.001, t + dur);
-  o.connect(g); g.connect(SND.master); o.start(t); o.stop(t + dur + .02);
-}
-function noise(dur, vol, hp){
-  if (!OPTS.sound) return;
-  audioInit(); if (!SND.ctx) return;
-  const ctx = SND.ctx, n = Math.floor(ctx.sampleRate * dur);
-  const buf = ctx.createBuffer(1, n, ctx.sampleRate), d = buf.getChannelData(0);
-  for (let i = 0; i < n; i++) d[i] = (Math.random()*2 - 1) * (1 - i/n);
-  const src = ctx.createBufferSource(); src.buffer = buf;
-  const f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = hp || 700;
-  const g = ctx.createGain(); g.gain.value = vol == null ? .35 : vol;
-  src.connect(f); f.connect(g); g.connect(SND.master); src.start();
-}
-const SFX = {
-  jump:   () => blip(430, 700, .10, 'square', .28),
-  wall:   () => blip(330, 560, .10, 'square', .26),
-  dash:   () => { noise(.16, .30, 900); blip(720, 240, .14, 'sawtooth', .16); },
-  land:   () => blip(150, 90,  .06, 'sine',   .30),
-  die:    () => { noise(.28, .34, 400); blip(300, 60, .3, 'sawtooth', .22); },
-  crystal:() => blip(880, 1320, .10, 'triangle', .3),
-  spring: () => blip(300, 900, .14, 'triangle', .32),
-  star:   () => { blip(990, 990, .08, 'triangle', .3); setTimeout(()=>blip(1480,1480,.12,'triangle',.3), 80); },
-  goal:   () => { [660, 880, 1320].forEach((f,i) => setTimeout(()=>blip(f, f, .14, 'triangle', .3), i*90)); },
-  ui:     () => blip(520, 520, .05, 'square', .16),
-};
-function vibrate(ms){
-  if (!OPTS.vibe) return;
-  try { navigator.vibrate && navigator.vibrate(ms); } catch(_){}
-}
-
-// ===== js/input.js =====
-// Un solo "mando virtual" para las tres entradas (teclado, gamepad, táctil).
-// El juego lee SIEMPRE estados sostenidos (held); los flancos (recién
-// apretado) los calcula la física comparando con el frame anterior — así el
-// bot del test puede jugar con la misma interfaz que una persona.
-const IN = { x:0, y:0, jump:false, dash:false };
-const KEY = { left:false, right:false, up:false, down:false, jump:false, dash:false };
-const TOUCH = { x:0, y:0, jump:false, dash:false };
-
-const K_LEFT = ['ArrowLeft','KeyA'], K_RIGHT = ['ArrowRight','KeyD'];
-const K_UP = ['ArrowUp','KeyW'], K_DOWN = ['ArrowDown','KeyS'];
-const K_JUMP = ['Space','KeyZ','KeyK','KeyJ'], K_DASH = ['KeyX','KeyL','ShiftLeft','ShiftRight','KeyC'];
-
-function keyHandler(e, down){
-  const c = e.code;
-  let hit = true;
-  if (K_LEFT.includes(c)) KEY.left = down;
-  else if (K_RIGHT.includes(c)) KEY.right = down;
-  else if (K_UP.includes(c)) KEY.up = down;
-  else if (K_DOWN.includes(c)) KEY.down = down;
-  else if (K_JUMP.includes(c)) KEY.jump = down;
-  else if (K_DASH.includes(c)) KEY.dash = down;
-  else hit = false;
-  if (down && !e.repeat){
-    if (c === 'KeyR') retryLevel();
-    else if (c === 'Escape' || c === 'KeyP') togglePause();
-    else if (c === 'Enter' && GAME.mode !== 'play') uiEnter();
-  }
-  if (hit){ e.preventDefault(); audioResume(); }
-}
-addEventListener('keydown', e => keyHandler(e, true));
-addEventListener('keyup',   e => keyHandler(e, false));
-addEventListener('blur', () => {
-  for (const k in KEY) KEY[k] = false;
-  TOUCH.jump = TOUCH.dash = false; TOUCH.x = TOUCH.y = 0;
-});
-
-// — Gamepad: se lee por polling en cada frame —
-function pollPad(out){
-  let pads = [];
-  try { pads = navigator.getGamepads ? navigator.getGamepads() : []; } catch(_){ return; }
-  for (const p of pads){
-    if (!p || !p.connected) continue;
-    const ax = p.axes[0] || 0, ay = p.axes[1] || 0, b = p.buttons || [];
-    const on = i => !!(b[i] && b[i].pressed);
-    if (ax < -.4 || on(14)) out.x = -1; else if (ax > .4 || on(15)) out.x = 1;
-    if (ay < -.4 || on(12)) out.y = -1; else if (ay > .4 || on(13)) out.y = 1;
-    if (on(0) || on(3)) out.jump = true;
-    if (on(1) || on(2) || on(5) || on(7) || on(4) || on(6)) out.dash = true;
-    if (on(9) && !PAD_START){ PAD_START = true; togglePause(); }
-    if (!on(9)) PAD_START = false;
-  }
-}
-let PAD_START = false;
-
-function pollInput(){
-  let x = 0, y = 0;
-  if (KEY.left)  x -= 1;
-  if (KEY.right) x += 1;
-  if (KEY.up)    y -= 1;
-  if (KEY.down)  y += 1;
-  let jump = KEY.jump, dash = KEY.dash;
-  if (TOUCH.x) x = TOUCH.x;
-  if (TOUCH.y) y = TOUCH.y;
-  if (TOUCH.jump) jump = true;
-  if (TOUCH.dash) dash = true;
-  const pad = { x:0, y:0, jump:false, dash:false };
-  pollPad(pad);
-  if (pad.x) x = pad.x;
-  if (pad.y) y = pad.y;
-  if (pad.jump) jump = true;
-  if (pad.dash) dash = true;
-  IN.x = Math.sign(x); IN.y = Math.sign(y); IN.jump = !!jump; IN.dash = !!dash;
-  return IN;
-}
-
-// — Táctil: joystick flotante + dos botones. El joystick nace donde apoyás
-//   el dedo (no donde está dibujado) y da 8 direcciones digitales: en un
-//   juego de precisión un analógico "a medias" arruina los saltos cortos. —
-const STICK = { id:-1, ox:0, oy:0 };
-const DEAD = 11, DEAD_Y = 16;
-
-// La base del joystick se planta donde apoyaste el dedo y vuelve sola al
-// rincón al soltar: así el dibujo coincide con dónde estás tocando de verdad
-// (el control siempre fue flotante; antes el círculo mentía).
-function stickHome(){
-  const zone = document.getElementById('tstick'), base = document.getElementById('stickBase');
-  if (!zone || !base) return;
-  const r = zone.getBoundingClientRect();
-  const izq = !document.body.classList.contains('swap');
-  base.style.left = (izq ? 74 : r.width - 74) + 'px';
-  base.style.top = (r.height * (document.body.classList.contains('portrait') ? .5 : .62)) + 'px';
-}
-function stickPlant(x, y){
-  const zone = document.getElementById('tstick'), base = document.getElementById('stickBase');
-  const r = zone.getBoundingClientRect();
-  base.style.left = Math.max(66, Math.min(r.width - 66, x - r.left)) + 'px';
-  base.style.top  = Math.max(66, Math.min(r.height - 30, y - r.top)) + 'px';
-}
-function stickSet(dx, dy){
-  TOUCH.x = Math.abs(dx) > DEAD ? Math.sign(dx) : 0;
-  TOUCH.y = Math.abs(dy) > DEAD_Y ? Math.sign(dy) : 0;
-  const base = document.getElementById('stickBase'), knob = document.getElementById('stickKnob');
-  const r = 34, m = Math.hypot(dx, dy) || 1, k = Math.min(1, r / m);
-  knob.style.transform = `translate(${(dx*k).toFixed(1)}px,${(dy*k).toFixed(1)}px)`;
-  base.classList.toggle('on', !!(TOUCH.x || TOUCH.y));
-}
-function stickReset(){
-  STICK.id = -1; TOUCH.x = 0; TOUCH.y = 0;
-  const base = document.getElementById('stickBase'), knob = document.getElementById('stickKnob');
-  knob.style.transform = 'translate(0,0)'; base.classList.remove('on');
-  stickHome();
-}
-function bindTouch(){
-  const zone = document.getElementById('tstick');
-  zone.addEventListener('pointerdown', e => {
-    e.preventDefault(); markTouch(); audioResume();
-    STICK.id = e.pointerId; STICK.ox = e.clientX; STICK.oy = e.clientY;
-    zone.setPointerCapture(e.pointerId);
-    stickPlant(e.clientX, e.clientY); stickSet(0,0);
-  });
-  zone.addEventListener('pointermove', e => {
-    if (e.pointerId !== STICK.id) return;
-    e.preventDefault();
-    let dx = e.clientX - STICK.ox, dy = e.clientY - STICK.oy;
-    // El origen "sigue" al dedo si te alejás mucho: evita que el stick se
-    // trabe cuando el pulgar deriva durante una serie larga de saltos.
-    const max = 52, m = Math.hypot(dx, dy);
-    if (m > max){
-      const f = (m - max) / m; STICK.ox += dx*f; STICK.oy += dy*f;
-      dx = e.clientX - STICK.ox; dy = e.clientY - STICK.oy;
-      stickPlant(STICK.ox, STICK.oy);
-    }
-    stickSet(dx, dy);
-  });
-  const end = e => { if (e.pointerId === STICK.id) stickReset(); };
-  zone.addEventListener('pointerup', end);
-  zone.addEventListener('pointercancel', end);
-  zone.addEventListener('lostpointercapture', end);
-
-  const btn = (id, key) => {
-    const el = document.getElementById(id);
-    el.addEventListener('pointerdown', e => {
-      e.preventDefault(); markTouch(); audioResume();
-      TOUCH[key] = true; el.classList.add('on');
-      try { el.setPointerCapture(e.pointerId); } catch(_){}
-    });
-    const up = e => { TOUCH[key] = false; el.classList.remove('on'); };
-    el.addEventListener('pointerup', up);
-    el.addEventListener('pointercancel', up);
-    el.addEventListener('lostpointercapture', up);
-  };
-  btn('btnJump','jump'); btn('btnDash','dash');
-}
-let TOUCH_SEEN = false;
-function markTouch(){
-  if (TOUCH_SEEN) return;
-  TOUCH_SEEN = true;
-  document.body.classList.add('touch');
-  layout();
-}
-// ===== js/physics.js =====
-// EL NÚCLEO. Paso fijo de 1/60 s, sin lectura del DOM y sin Math.random:
-// mismo estado + mismas teclas = mismo resultado, siempre. De eso depende
-// que un truco difícil sea repetible (y que el bot de test/solver.test.cjs
-// pueda jugar los niveles para demostrar que se pueden terminar).
-//
-// Todo lo que el mundo quiere contarle al resto del juego (sonido, polvo,
-// sacudida) lo deja en w.events; física y presentación no se mezclan.
-
-function parseLevel(def){
-  const rows = def.rows || [];
-  const W = ROOM_W, H = ROOM_H;
-  const tiles = new Uint8Array(W * H);
-  const L = { w:W, h:H, name:def.n, hint:def.hint || '', tiles,
-    spawn:{x:TS, y:TS}, goal:{x:TS, y:TS},
-    crumbs:[], crAt:new Int32Array(W*H).fill(-1),
-    crystals:[], cryAt:new Int32Array(W*H).fill(-1),
-    stars:[], springs:[], movers:[], saws:[], par:def.par || [10,15,25],
-    ab:{ wall:!!def.wall, dash:!!def.dash } };
-  for (let ty = 0; ty < H; ty++){
-    // Marco: la primera y la última fila/columna son siempre pared.
-    const inner = (ty === 0 || ty === H-1) ? '#'.repeat(W-2) : (rows[ty-1] || '');
-    for (let tx = 0; tx < W; tx++){
-      const i = ty*W + tx;
-      if (tx === 0 || tx === W-1){ tiles[i] = T_SOLID; continue; }
-      const ch = inner[tx-1] || ' ';
-      switch (ch){
-        case '#': tiles[i] = T_SOLID; break;
-        case '^': tiles[i] = T_SP_U; break;
-        case 'v': tiles[i] = T_SP_D; break;
-        case '<': tiles[i] = T_SP_L; break;
-        case '>': tiles[i] = T_SP_R; break;
-        case '=': tiles[i] = T_ONEWAY; break;
-        case 's': tiles[i] = T_SPRING; break;
-        case 'c': tiles[i] = T_CRUMB; L.crAt[i] = L.crumbs.length; L.crumbs.push(i); break;
-        case 'o': L.cryAt[i] = L.crystals.length; L.crystals.push({ tx, ty }); break;
-        case '*': L.stars.push({ tx, ty }); break;
-        case 'P': L.spawn = { x: tx*TS + (TS-PW)/2, y: ty*TS + TS - PH }; break;
-        case 'G': L.goal  = { x: tx*TS, y: ty*TS }; break;
-      }
-      if (tiles[i] === T_SPRING) L.springs.push({ tx, ty });
-    }
-  }
-  for (const m of (def.movers || [])) L.movers.push({
-    x:m.x*TS, y:m.y*TS, w:(m.w||2)*TS, h:(m.h||1)*TS,
-    x2:(m.x2 == null ? m.x : m.x2)*TS, y2:(m.y2 == null ? m.y : m.y2)*TS, spd:(m.spd || 2)*TS,
-  });
-  for (const s of (def.saws || [])) L.saws.push({
-    x:s.x*TS + TS/2, y:s.y*TS + TS/2, r:(s.r || .55)*TS,
-    x2:(s.x2 == null ? s.x : s.x2)*TS + TS/2, y2:(s.y2 == null ? s.y : s.y2)*TS + TS/2,
-    spd:(s.spd || 3)*TS,
-  });
-  return L;
-}
-
-function pathPos(a, b, spd, t){
-  // Ida y vuelta a velocidad constante. Es una función del tiempo (no un
-  // estado que se acumula): clonar el mundo para el solver sale gratis y
-  // dos partidas con el mismo cronómetro ven las plataformas en el mismo lugar.
-  const d = Math.hypot(b.x - a.x, b.y - a.y);
-  if (d < .001 || spd <= 0) return { x:a.x, y:a.y };
-  const per = 2*d/spd, u = ((t % per) + per) % per / per, k = u < .5 ? u*2 : 2 - u*2;
-  return { x:a.x + (b.x - a.x)*k, y:a.y + (b.y - a.y)*k };
-}
-function moverRect(m, t){ const p = pathPos({x:m.x,y:m.y}, {x:m.x2,y:m.y2}, m.spd, t); return { x:p.x, y:p.y, w:m.w, h:m.h }; }
-function sawPos(s, t){ return pathPos({x:s.x,y:s.y}, {x:s.x2,y:s.y2}, s.spd, t); }
-
-function newWorld(idx){
-  const L = (typeof idx === 'object') ? idx : parseLevel(LEVELS[idx]);
-  const w = {
-    L, idx: (typeof idx === 'object' ? -1 : idx),
-    t:0, timer:0, deaths:0, freeze:0, shake:0, events:[],
-    prev:{ jump:false, dash:false },
-    crSt:new Uint8Array(L.crumbs.length), crT:new Int16Array(L.crumbs.length),
-    cryT:new Int16Array(L.crystals.length), starGot:new Uint8Array(L.stars.length),
-    p:null,
-  };
-  resetAttempt(w, true);
-  return w;
-}
-function resetAttempt(w, first){
-  const L = w.L;
-  w.p = { x:L.spawn.x, y:L.spawn.y, vx:0, vy:0, face:1, grounded:false, wall:0, wasGround:false,
-    dash:0, dashDx:0, dashDy:0, dashAvail:true, coyote:0, wcoyote:0, wcdir:0, buf:0, lock:0,
-    dead:0, win:0, anim:0, sqx:1, sqy:1 };
-  w.crSt.fill(0); w.crT.fill(0); w.cryT.fill(0); w.starGot.fill(0);
-  w.timer = 0; w.freeze = 0;
-  if (!first) w.events.push('spawn');
-}
-function cloneWorld(w){
-  return {
-    L:w.L, idx:w.idx, t:w.t, timer:w.timer, deaths:w.deaths, freeze:w.freeze, shake:0, events:[],
-    prev:{ jump:w.prev.jump, dash:w.prev.dash },
-    crSt:w.crSt.slice(), crT:w.crT.slice(), cryT:w.cryT.slice(), starGot:w.starGot.slice(),
-    p:Object.assign({}, w.p),
-  };
-}
-
-// — Consulta del terreno —
-function tileAt(L, tx, ty){
-  if (tx < 0 || ty < 0 || tx >= L.w || ty >= L.h) return T_SOLID;
-  return L.tiles[ty*L.w + tx];
-}
-function solidTile(w, tx, ty){
-  const t = tileAt(w.L, tx, ty);
-  if (t === T_SOLID || t === T_SPRING) return true;
-  if (t === T_CRUMB){
-    const i = w.L.crAt[ty*w.L.w + tx];
-    return i < 0 || w.crSt[i] < 2;      // 0 firme · 1 temblando · 2 roto
-  }
-  return false;
-}
-function rectSolid(w, x, y, ww, hh){
-  const x0 = Math.floor(x/TS), x1 = Math.floor((x + ww - .001)/TS);
-  const y0 = Math.floor(y/TS), y1 = Math.floor((y + hh - .001)/TS);
-  for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++)
-    if (solidTile(w, tx, ty)) return true;
-  return false;
-}
-function moverAt(w, x, y, ww, hh, tt){
-  for (const m of w.L.movers){
-    const r = moverRect(m, tt == null ? w.t*DT : tt);
-    if (x < r.x + r.w && x + ww > r.x && y < r.y + r.h && y + hh > r.y) return m;
-  }
-  return null;
-}
-function blocked(w, x, y){
-  return rectSolid(w, x, y, PW, PH) || !!moverAt(w, x, y, PW, PH);
-}
-// Plataformas atravesables ("=" ): solo frenan si venís cayendo y tus pies
-// estaban por encima del borde. Se atraviesan de abajo hacia arriba.
-function onewayHit(w, x, yNew, yOld){
-  if (yNew <= yOld) return -1;
-  const x0 = Math.floor(x/TS), x1 = Math.floor((x + PW - .001)/TS);
-  const oldB = yOld + PH, newB = yNew + PH;
-  const ty0 = Math.floor(oldB/TS), ty1 = Math.floor((newB - .001)/TS);
-  for (let ty = ty0; ty <= ty1; ty++){
-    const top = ty*TS;
-    if (oldB > top + .001) continue;
-    for (let tx = x0; tx <= x1; tx++) if (tileAt(w.L, tx, ty) === T_ONEWAY) return top;
-  }
-  return -1;
-}
-
-function moveX(w, dx){
-  const p = w.p, s = Math.sign(dx);
-  let rem = Math.abs(dx);
-  while (rem > 0){
-    const st = Math.min(1, rem) * s;
-    if (blocked(w, p.x + st, p.y)) return true;
-    p.x += st; rem -= 1;
-  }
-  return false;
-}
-function moveY(w, dy){
-  const p = w.p, s = Math.sign(dy);
-  let rem = Math.abs(dy);
-  while (rem > 0){
-    const st = Math.min(1, rem) * s;
-    const ny = p.y + st;
-    const ow = onewayHit(w, p.x, ny, p.y);
-    if (ow >= 0){ p.y = ow - PH; return 1; }
-    if (blocked(w, p.x, ny)){
-      if (s < 0){
-        // Corrección de esquina: si el techo te pega apenas del borde, el
-        // juego te corre unos píxeles en vez de cortarte el salto. Es la
-        // diferencia entre "me equivoqué" y "el juego me robó".
-        for (let d = 1; d <= PHY.CORNER; d++){
-          for (const sg of [1, -1]){
-            if (!blocked(w, p.x + d*sg, ny) && !blocked(w, p.x + d*sg, p.y)){
-              p.x += d*sg; p.y = ny; return 0;
-            }
-          }
-        }
-      }
-      return s < 0 ? -1 : 1;
-    }
-    p.y = ny; rem -= 1;
-  }
-  return 0;
-}
-
-// — Peligros y objetos —
-function spikeRect(t, tx, ty){
-  const x = tx*TS, y = ty*TS;
-  if (t === T_SP_U) return { x:x+2, y:y+6,  w:TS-4, h:TS-6 };
-  if (t === T_SP_D) return { x:x+2, y:y,    w:TS-4, h:TS-6 };
-  if (t === T_SP_L) return { x:x,   y:y+2,  w:TS-6, h:TS-4 };
-  if (t === T_SP_R) return { x:x+6, y:y+2,  w:TS-6, h:TS-4 };
-  return null;
-}
-function hurt(w){
-  const p = w.p, L = w.L;
-  const bx = p.x + 1, by = p.y + 1, bw = PW - 2, bh = PH - 2;
-  const x0 = Math.floor(bx/TS), x1 = Math.floor((bx+bw)/TS);
-  const y0 = Math.floor(by/TS), y1 = Math.floor((by+bh)/TS);
-  for (let ty = y0; ty <= y1; ty++) for (let tx = x0; tx <= x1; tx++){
-    const t = tileAt(L, tx, ty);
-    if (t < T_SP_U || t > T_SP_R) continue;
-    const r = spikeRect(t, tx, ty);
-    if (bx < r.x + r.w && bx + bw > r.x && by < r.y + r.h && by + bh > r.y) return true;
-  }
-  const tt = w.t*DT;
-  for (const s of L.saws){
-    const q = sawPos(s, tt);
-    const cx = Math.max(bx, Math.min(q.x, bx+bw)), cy = Math.max(by, Math.min(q.y, by+bh));
-    if ((q.x-cx)**2 + (q.y-cy)**2 < s.r*s.r) return true;
-  }
-  return false;
-}
-function killPlayer(w){
-  if (w.p.dead) return;
-  w.p.dead = 1; w.deaths++; w.shake = 9; w.events.push('die');
-}
-
-function stepWorld(w, inp){
-  w.events.length = 0;
-  const p = w.p, L = w.L, tt = w.t*DT;
-  const jumpP = inp.jump && !w.prev.jump, dashP = inp.dash && !w.prev.dash;
-  w.prev.jump = !!inp.jump; w.prev.dash = !!inp.dash;
-  w.t++;
-  if (p.win){ p.win++; return; }
-  if (p.dead){ p.dead++; if (p.dead > PHY.DEATH_F) resetAttempt(w); return; }
-  if (jumpP) p.buf = PHY.BUFFER;
-  if (w.freeze > 0){ w.freeze--; w.timer++; return; }
-  w.timer++; p.anim++;
-
-  // ── Plataformas móviles: primero se mueven ellas y te arrastran ──
-  for (const m of L.movers){
-    const a = moverRect(m, tt), b = moverRect(m, tt + DT);
-    const dx = b.x - a.x, dy = b.y - a.y;
-    const rideX = p.x < a.x + a.w && p.x + PW > a.x;
-    const onTop = rideX && Math.abs((p.y + PH) - a.y) < 2;
-    if (onTop){ moveX(w, dx); moveY(w, dy); }
-    else {
-      // Si te alcanza, te empuja (nunca te incrusta en la pared: si no
-      // hay lugar, morís aplastado — que se vea, no que se trabe).
-      if (p.x < b.x + b.w && p.x + PW > b.x && p.y < b.y + b.h && p.y + PH > b.y){
-        if (dx) { if (moveX(w, dx > 0 ? Math.ceil(dx + (b.x + b.w - p.x)) : Math.floor(dx - (p.x + PW - b.x)))) killPlayer(w); }
-        if (dy) { if (moveY(w, dy > 0 ? Math.ceil(dy + (b.y + b.h - p.y)) : Math.floor(dy - (p.y + PH - b.y)))) killPlayer(w); }
-        if (p.dead) return;
-      }
-    }
-  }
-
-  // ── Temporizadores ──
-  if (p.buf > 0) p.buf--;
-  if (p.lock > 0) p.lock--;
-  if (p.grounded) p.coyote = PHY.COYOTE; else if (p.coyote > 0) p.coyote--;
-  if (p.wall)   { p.wcoyote = PHY.WALL_COYOTE; p.wcdir = p.wall; } else if (p.wcoyote > 0) p.wcoyote--;
-  for (let i = 0; i < w.cryT.length; i++) if (w.cryT[i] > 0) w.cryT[i]--;
-  for (let i = 0; i < w.crSt.length; i++){
-    if (w.crSt[i] === 1 && ++w.crT[i] >= PHY.CRUMB_F){ w.crSt[i] = 2; w.crT[i] = 0; w.events.push('crumble'); }
-    else if (w.crSt[i] === 2 && ++w.crT[i] >= PHY.CRUMB_BACK){
-      // Vuelve solo si no te deja adentro (si no, te incrustaría en el bloque).
-      const idx = L.crumbs[i], tx = idx % L.w, ty = (idx - tx)/L.w;
-      const dentro = p.x < tx*TS+TS && p.x+PW > tx*TS && p.y < ty*TS+TS && p.y+PH > ty*TS;
-      if (!dentro){ w.crSt[i] = 0; w.crT[i] = 0; }
-    }
-  }
-
-  const dashing = p.dash > 0;
-
-  // ── Horizontal ──
-  if (!dashing){
-    const want = p.lock > 0 ? 0 : inp.x * PHY.RUN;
-    const same = Math.sign(inp.x) === Math.sign(p.vx);
-    let a;
-    if (p.lock > 0) a = 0;
-    else if (inp.x === 0) a = (p.grounded ? PHY.DEC_G : PHY.DEC_A);
-    else a = (same || p.vx === 0) ? (p.grounded ? PHY.ACC_G : PHY.ACC_A)
-                                  : (p.grounded ? PHY.DEC_G : PHY.DEC_A) * 1.4;
-    if (a > 0){
-      if (p.vx < want) p.vx = Math.min(want, p.vx + a*DT);
-      else if (p.vx > want) p.vx = Math.max(want, p.vx - a*DT);
-    }
-    if (inp.x) p.face = inp.x;
-  }
-
-  // ── Gravedad (más suave en el pico: control fino sin volverse flotante) ──
-  if (!dashing){
-    const g = Math.abs(p.vy) < PHY.APEX && !p.grounded ? PHY.GRAV_APEX : PHY.GRAV;
-    p.vy = Math.min(PHY.MAX_FALL, p.vy + g*DT);
-    if (p.vy > 0 && p.wall && L.ab.wall && Math.sign(inp.x) === p.wall) p.vy = Math.min(p.vy, PHY.WALL_SLIDE);
-    if (p.vy < 0 && !inp.jump) p.vy *= (1 - (1 - PHY.JUMP_CUT));   // salto de altura variable
-  }
-
-  // ── Salto y salto de pared ──
-  if (p.buf > 0 && !dashing){
-    if (p.coyote > 0){
-      p.vy = -PHY.JUMP; p.buf = 0; p.coyote = 0; p.grounded = false;
-      p.sqx = .78; p.sqy = 1.25; w.events.push('jump');
-    } else if (p.wcoyote > 0 && L.ab.wall){
-      const d = p.wcdir;
-      p.vy = -PHY.WJ_Y; p.vx = -d * PHY.WJ_X; p.face = -d;
-      p.buf = 0; p.wcoyote = 0; p.lock = PHY.WJ_LOCK; p.wall = 0;
-      p.sqx = .8; p.sqy = 1.2; w.events.push('walljump');
-    }
-  }
-
-  // ── Dash ──
-  if (dashP && p.dashAvail && !dashing && L.ab.dash){
-    let dx = inp.x, dy = inp.y;
-    if (!dx && !dy) dx = p.face;
-    const m = Math.hypot(dx, dy);
-    p.dashDx = dx/m; p.dashDy = dy/m;
-    p.vx = p.dashDx * PHY.DASH; p.vy = p.dashDy * PHY.DASH;
-    p.dash = PHY.DASH_F; p.dashAvail = false; p.lock = 0;
-    w.freeze = PHY.DASH_FREEZE; w.shake = 5;
-    w.events.push('dash');
-    return;                       // el hitstop empieza ya: se siente el golpe
-  }
-  if (p.dash > 0){
-    p.vx = p.dashDx * PHY.DASH; p.vy = p.dashDy * PHY.DASH;
-    if (--p.dash === 0){ p.vx *= PHY.DASH_END; p.vy *= (p.dashDy < 0 ? .45 : PHY.DASH_END); }
-  }
-
-  // ── Movimiento y colisión ──
-  const hitX = moveX(w, p.vx*DT);
-  if (hitX) p.vx = 0;
-  const hitY = moveY(w, p.vy*DT);
-  const wasG = p.grounded;
-  if (hitY === 1){
-    if (p.vy > 220) { w.shake = Math.max(w.shake, 3); }
-    if (!wasG && p.vy > 60) w.events.push('land');
-    p.sqy = Math.max(.72, 1 - p.vy/1600); p.sqx = 2 - p.sqy;
-    p.vy = 0; p.grounded = true; p.dash = 0;
-  } else if (hitY === -1){ p.vy = Math.max(p.vy, 0); p.grounded = false; }
-  else p.grounded = false;
-  if (!p.grounded) p.grounded = blocked(w, p.x, p.y + 1) || !!moverAt(w, p.x, p.y + 1) ||
-                                onewayHit(w, p.x, p.y + 1, p.y) >= 0;
-  if (p.grounded){ p.dashAvail = true; p.dash = 0; }
-
-  // ── Pared (solo cuenta si apretás contra ella) ──
-  p.wall = 0;
-  if (!p.grounded && L.ab.wall){
-    if (blocked(w, p.x - 1, p.y) && inp.x < 0) p.wall = -1;
-    else if (blocked(w, p.x + 1, p.y) && inp.x > 0) p.wall = 1;
-  }
-
-  // ── Resortes ──
-  for (const s of L.springs){
-    const rx = s.tx*TS, ry = s.ty*TS;
-    if (p.x < rx + TS && p.x + PW > rx && Math.abs((p.y + PH) - ry) < 3 && p.vy >= 0){
-      p.vy = -PHY.SPRING; p.grounded = false; p.dashAvail = true; p.coyote = 0;
-      p.sqx = .7; p.sqy = 1.35; w.events.push('spring');
-    }
-  }
-  // ── Bloques frágiles: se marcan al pisarlos ──
-  for (let i = 0; i < L.crumbs.length; i++){
-    if (w.crSt[i] !== 0) continue;
-    const idx = L.crumbs[i], tx = idx % L.w, ty = (idx - tx)/L.w;
-    const rx = tx*TS, ry = ty*TS;
-    const touch = p.x < rx + TS && p.x + PW > rx &&
-      ((Math.abs((p.y + PH) - ry) < 2 && p.vy >= 0) || (p.y < ry + TS && p.y + PH > ry && p.wall));
-    if (touch){ w.crSt[i] = 1; w.crT[i] = 0; w.events.push('crack'); }
-  }
-  // ── Cristales de dash ──
-  for (let i = 0; i < L.crystals.length; i++){
-    if (w.cryT[i] > 0) continue;
-    const c = L.crystals[i], rx = c.tx*TS + 1, ry = c.ty*TS + 1;
-    if (p.x < rx + TS-2 && p.x + PW > rx && p.y < ry + TS-2 && p.y + PH > ry){
-      if (!p.dashAvail || p.dash > 0){
-        p.dashAvail = true; w.cryT[i] = PHY.CRYSTAL_BACK; w.events.push('crystal');
-      }
-    }
-  }
-  // ── Estrella ──
-  for (let i = 0; i < L.stars.length; i++){
-    if (w.starGot[i]) continue;
-    const s = L.stars[i], rx = s.tx*TS, ry = s.ty*TS;
-    if (p.x < rx + TS && p.x + PW > rx && p.y < ry + TS && p.y + PH > ry){
-      w.starGot[i] = 1; w.events.push('star');
-    }
-  }
-
-  // ── Muerte / meta ──
-  if (hurt(w)){ killPlayer(w); return; }
-  const g = L.goal;
-  if (p.x < g.x + TS - 1 && p.x + PW > g.x + 1 && p.y < g.y + TS && p.y + PH > g.y + 1){
-    p.win = 1; w.events.push('goal');
-  }
-  if (p.sqx !== 1 || p.sqy !== 1){
-    p.sqx += (1 - p.sqx)*.22; p.sqy += (1 - p.sqy)*.22;
-    if (Math.abs(1 - p.sqx) < .01){ p.sqx = 1; p.sqy = 1; }
-  }
-}
-
-// ===== js/levels.js =====
-// Cada nivel es una sala de 30 x 17 tiles dibujada en ASCII (28 columnas
-// útiles; el marco lo pone parseLevel). Leyenda:
-//   #  pared        ^v<>  pinches (mirando arriba/abajo/izq/der)
-//   =  plataforma atravesable      s  resorte      c  bloque frágil
-//   o  cristal de dash             *  estrella     P  inicio    G  meta
-// `par` = [oro, plata, bronce] en segundos. Los tiempos salen de correr
-// test/solver.test.cjs (el bot marca el piso; las medallas van encima).
-const LEVELS = [
-// ─────────────────────────────── MUNDO 1 · SUELO ───────────────────────────
-{ n:'Primer paso', hint:'← → para moverte, SALTO para saltar. Llegá a la bandera.',
-  par:[6.8, 9.8, 15.5], rows:[
-//  0123456789012345678901234567
-   '                            ',
-   '                            ',
-   '                            ',
-   '      G                     ',
-   '    #####                   ',
-   '                            ',
-   '            #####           ',
-   '                            ',
-   '                   #####    ',
-   '                            ',
-   '            #####           ',
-   '                            ',
-   '     #####                  ',
-   ' P                        * ',
-   '############################',
-]},
-{ n:'Vacío', hint:'Soltá el salto antes para saltar más bajo. El aire también se maneja.',
-  par:[5.9, 8.6, 13.9], rows:[
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '               *            ',
-   '                            ',
-   ' P                        G ',
-   '#####   #####    #####   ###',
-   '                            ',
-   '                            ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Aguja', hint:'Plataformas de un tile. Acá se empieza a ver quién mide el salto.',
-  par:[5.4, 7.9, 12.8], rows:[
-//  0123456789012345678901234567
-   '                            ',
-   '                       G    ',
-   '                     #####  ',
-   '                            ',
-   '                  ##        ',
-   '           *                ',
-   '             ##             ',
-   '                            ',
-   '        ##                  ',
-   '                            ',
-   '   ##                       ',
-   ' P                          ',
-   '##                          ',
-   '                            ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Resorte', hint:'Los resortes te disparan. Elegí bien hacia dónde vas en el aire.',
-  par:[5.3, 7.7, 12.5], rows:[
-   '                            ',
-   '                      G     ',
-   '         *         #####    ',
-   '                            ',
-   '                            ',
-   '            ####            ',
-   '            s               ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   ' P     s                    ',
-   '###                         ',
-   '                            ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Frágil', hint:'Lo que pisás se cae. No frenes.',
-  par:[5.8, 8.5, 13.7], rows:[
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '              *             ',
-   '                            ',
-   ' P                       G  ',
-   '###  c   c   c   c   c  ####',
-   '                            ',
-   '                            ',
-   '                            ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-// ─────────────────────────────── MUNDO 2 · PAREDES ─────────────────────────
-{ n:'Rebote', hint:'Contra la pared: mantené la dirección y saltá. Se sube rebotando.',
-  par:[4.5, 6.5, 11], rows:[
-   '         *                  ',
-   '                            ',
-   '     G                      ',
-   '   #####                    ',
-   '       #    #               ',
-   '       #    #               ',
-   '       #    #               ',
-   '       #    #               ',
-   '       #    #               ',
-   '       #    #               ',
-   '       #    #               ',
-   '       #    #               ',
-   '       #  P #               ',
-   '       ######               ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Chimenea', hint:'Pinchos alternados: el rebote tiene que ser corto y a tiempo.',
-  par:[6, 8.5, 14], rows:[
-   '              *             ',
-   '                            ',
-   '                   G        ',
-   '                 ######     ',
-   '           #     #          ',
-   '           #>    #          ',
-   '           #     #          ',
-   '           #    <#          ',
-   '           #     #          ',
-   '           #>    #          ',
-   '           #     #          ',
-   '           #    <#          ',
-   '           #  P  #          ',
-   '           #######          ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Zigzag', hint:'Pared, salto, pared. Cadena de rebotes sin tocar el piso.',
-  par:[6.2, 9, 14.5], rows:[
-   '                        G   ',
-   '                      ##### ',
-   '                    #       ',
-   '                    #       ',
-   '              #     #       ',
-   '     *        #             ',
-   '        #     #             ',
-   '        #                   ',
-   '  #     #                   ',
-   '  #                         ',
-   '  #                         ',
-   '                            ',
-   ' P                          ',
-   '####                        ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Pozo', hint:'Bajar es fácil. Salir, no.',
-  par:[8.5, 12, 19], rows:[
-   '                     *      ',
-   '                            ',
-   '                          G ',
-   ' P                      ####',
-   '####               #    #   ',
-   '                   #    #   ',
-   '      #####        #    #   ',
-   '                   #    #   ',
-   '            #####  #    #   ',
-   '                   #    #   ',
-   '                   #    #   ',
-   '                        #   ',
-   '  ^^^   ^^^^   ^^^      #   ',
-   '#########################   ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Filo', hint:'Paredes frágiles: el rebote se paga con lo que se cae atrás.',
-  par:[6.5, 9.5, 15], rows:[
-   '                       G    ',
-   '                    ####### ',
-   '                    #       ',
-   '                  c #       ',
-   '                            ',
-   '         *    c             ',
-   '                            ',
-   '          c                 ',
-   '                            ',
-   '      c                     ',
-   '                            ',
-   '   c                        ',
-   ' P                          ',
-   '###                         ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-// ─────────────────────────────── MUNDO 3 · DASH ────────────────────────────
-{ n:'Impulso', hint:'DASH: un envión hacia donde apuntás. Vuelve al tocar piso o un cristal.',
-  par:[4.9, 7.1, 11.7], rows:[
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                     *      ',
-   '                            ',
-   '                            ',
-   '            o               ',
-   '                            ',
-   ' P                       G  ',
-   '########          ##########',
-   '                            ',
-   '                            ',
-   '                            ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Cristales', hint:'Cada cristal te devuelve el dash. Encadenalos sin tocar el suelo.',
-  par:[5.5, 8, 13], rows:[
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '              *             ',
-   '                            ',
-   '            o   o           ',
-   '                            ',
-   '        o           o       ',
-   '                            ',
-   ' P                       G  ',
-   '#####                 ######',
-   '                            ',
-   '                            ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Sierras', hint:'Lo que se mueve, mata. Leé el ritmo antes de largarte.',
-  par:[5.5, 8, 13],
-  saws:[ {x:10, y:10, x2:10, y2:5, spd:2.2}, {x:16, y:5, x2:16, y2:10, spd:2.8},
-         {x:22, y:10, x2:22, y2:5, spd:3.4} ],
-  rows:[
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '            *               ',
-   '                            ',
-   '                            ',
-   ' P      ###   ###   ###   G ',
-   '####                    ####',
-   '                            ',
-   '                            ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Ascensor', hint:'Las plataformas te llevan. Bajate en el momento justo.',
-  par:[8, 11, 17],
-  movers:[ {x:6, y:12, w:3, y2:5, spd:2.4}, {x:11, y:5, w:3, x2:18, spd:3},
-           {x:21, y:8, w:3, y2:3, spd:2.2} ],
-  rows:[
-   '                            ',
-   '                         G  ',
-   '                       #####',
-   '                            ',
-   '                            ',
-   '         *                  ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   '                            ',
-   ' P                          ',
-   '####                        ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-{ n:'Filo final', hint:'Todo junto. Acá se ve cuánto mejoraste.',
-  par:[7, 10, 16], rows:[
-//  0123456789012345678901234567
-   '            *               ',
-   '                        G   ',
-   '                     #######',
-   '                  o         ',
-   '          #    #            ',
-   '          #    #            ',
-   '          #    #            ',
-   '          #    #            ',
-   '          #    #            ',
-   '          #    #            ',
-   '          #    #            ',
-   '               #            ',
-   ' P   c  c      #            ',
-   '####      ######            ',
-   '^^^^^^^^^^^^^^^^^^^^^^^^^^^^',
-]},
-];
-// Las habilidades se abren por mundo y NO antes: el mundo 1 es solo salto, el
-// 2 suma el salto de pared y el 3 el dash. Es lo que hace que se sienta el
-// progreso — y evita que el dash convierta los primeros niveles en un ascensor.
-LEVELS.forEach((L, i) => { L.wall = i >= 5; L.dash = i >= 10; });
-const ABIL = [
-  { at:0,  t:'SALTO',          d:'← → para moverte, SALTO para saltar. Soltá antes para saltar más bajo.' },
-  { at:5,  t:'SALTO DE PARED', d:'Pegate a una pared en el aire: mantené la dirección y saltá.' },
-  { at:10, t:'DASH',           d:'Un envión en la dirección que apuntás. Se recarga al tocar piso o un cristal.' },
-];
-// ===== js/fx.js =====
-// Partículas y sacudida: puro adorno, fuera de la física (usan Math.random,
-// así que NUNCA pueden influir en el juego — si lo hicieran, se rompería la
-// repetibilidad, que es lo único que hace justa a una plataforma de precisión).
-const FX = { p:[], shake:0, flash:0 };
-function fxBurst(x, y, n, col, spd, grav){
-  for (let i = 0; i < n; i++){
-    const a = Math.random()*Math.PI*2, v = spd*(.35 + Math.random()*.9);
-    FX.p.push({ x, y, vx:Math.cos(a)*v, vy:Math.sin(a)*v, g:grav == null ? 420 : grav,
-      life:1, dec:1.6 + Math.random()*1.6, col, s:1.4 + Math.random()*2.2 });
-  }
-}
-function fxDust(x, y, dir){
-  for (let i = 0; i < 6; i++)
-    FX.p.push({ x:x + (Math.random()-.5)*8, y, vx:(dir || (Math.random()-.5))*(20+Math.random()*70),
-      vy:-Math.random()*60, g:260, life:1, dec:3.2, col:'#8fa3c9', s:1.2 + Math.random()*1.6 });
-}
-function fxStep(dt){
-  for (let i = FX.p.length - 1; i >= 0; i--){
-    const q = FX.p[i];
-    q.vy += q.g*dt; q.x += q.vx*dt; q.y += q.vy*dt; q.life -= q.dec*dt;
-    if (q.life <= 0) FX.p.splice(i, 1);
-  }
-  FX.shake = Math.max(0, FX.shake - dt*30);
-  FX.flash = Math.max(0, FX.flash - dt*4);
-}
-
-// ===== js/render.js =====
-const cv = document.getElementById('cv');
-const ctx = cv.getContext('2d');
-const VIEW = { s:1, ox:0, oy:0, dpr:1 };
-
-function layout(){
-  const st = document.getElementById('stage');
-  const dpr = Math.min(2, window.devicePixelRatio || 1);
-  const portrait = window.innerHeight > window.innerWidth * 1.05;
-  document.body.classList.toggle('portrait', portrait);
-  document.body.classList.toggle('landscape', !portrait);
-  // En vertical el juego NO se centra en la pantalla: se apoya bajo el HUD y
-  // todo lo que sobra es para los dedos. Centrarlo dejaba media pantalla negra
-  // arriba y los botones lejos del pulgar.
-  const hudH = 54;
-  const salaH = Math.round(window.innerWidth * VIEW_H / VIEW_W);
-  const ctrl = portrait ? Math.max(150, window.innerHeight - salaH - hudH) : 0;
-  document.documentElement.style.setProperty('--ctrl', ctrl + 'px');
-  document.documentElement.style.setProperty('--hud-h', hudH + 'px');
-  document.documentElement.style.setProperty('--sala-h', (portrait ? salaH : 0) + 'px');
-  if (STICK.id < 0) stickHome();
-  const r = st.getBoundingClientRect();     // medir DESPUÉS de aplicar las variables
-  const w = Math.max(1, Math.round(r.width * dpr)), h = Math.max(1, Math.round(r.height * dpr));
-  if (cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; }
-  VIEW.dpr = dpr;
-  VIEW.s = Math.min(w / VIEW_W, h / VIEW_H);
-  VIEW.ox = (w - VIEW_W*VIEW.s) / 2;
-  VIEW.oy = (h - VIEW_H*VIEW.s) / 2;
-}
-addEventListener('resize', layout);
-addEventListener('orientationchange', () => setTimeout(layout, 120));
-
-function rr(x, y, w, h, r){
-  ctx.beginPath();
-  if (ctx.roundRect) ctx.roundRect(x, y, w, h, r);
-  else ctx.rect(x, y, w, h);
-}
-function drawBG(){
-  const g = ctx.createLinearGradient(0, 0, 0, VIEW_H);
-  g.addColorStop(0, COL.bg2); g.addColorStop(1, COL.bg);
-  ctx.fillStyle = g; ctx.fillRect(0, 0, VIEW_W, VIEW_H);
-  // Textura de puntos: da referencia de distancia sin competir con el terreno
-  // (una grilla de líneas ensucia y hace que las paredes no se lean).
-  ctx.fillStyle = COL.grid;
-  for (let y = TS; y < VIEW_H; y += TS*2) for (let x = TS; x < VIEW_W; x += TS*2)
-    ctx.fillRect(x - 1, y - 1, 2, 2);
-}
-function solidLike(L, tx, ty){
-  const t = tileAt(L, tx, ty);
-  return t === T_SOLID || t === T_SPRING;
-}
-function drawTiles(w){
-  const L = w.L;
-  for (let ty = 0; ty < L.h; ty++) for (let tx = 0; tx < L.w; tx++){
-    const t = L.tiles[ty*L.w + tx], x = tx*TS, y = ty*TS;
-    if (t === T_SOLID){
-      ctx.fillStyle = COL.solid; ctx.fillRect(x, y, TS, TS);
-      // Borde iluminado en las caras expuestas: es lo que hace que se lea
-      // dónde termina el piso y dónde empieza el aire (en un juego de
-      // precisión, dudar del borde ya es haber perdido).
-      const up = solidLike(L, tx, ty-1), dn = solidLike(L, tx, ty+1);
-      const lf = solidLike(L, tx-1, ty), rt = solidLike(L, tx+1, ty);
-      ctx.fillStyle = COL.solidTop;
-      if (!up) ctx.fillRect(x, y, TS, 2);
-      if (!lf) ctx.fillRect(x, y, 2, TS);
-      if (!rt) ctx.fillRect(x + TS - 2, y, 2, TS);
-      if (!dn){ ctx.fillStyle = COL.solidEdge; ctx.fillRect(x, y + TS - 2, TS, 2); }
-      ctx.fillStyle = '#ffffff08';
-      if (!up) ctx.fillRect(x + 2, y + 2, TS - 4, 1);
-    } else if (t >= T_SP_U && t <= T_SP_R){
-      ctx.fillStyle = COL.spike;
-      const n = 3, s = TS/n;
-      for (let i = 0; i < n; i++){
-        ctx.beginPath();
-        if (t === T_SP_U){ ctx.moveTo(x+i*s, y+TS); ctx.lineTo(x+i*s+s/2, y+3); ctx.lineTo(x+i*s+s, y+TS); }
-        if (t === T_SP_D){ ctx.moveTo(x+i*s, y); ctx.lineTo(x+i*s+s/2, y+TS-3); ctx.lineTo(x+i*s+s, y); }
-        if (t === T_SP_L){ ctx.moveTo(x+TS, y+i*s); ctx.lineTo(x+3, y+i*s+s/2); ctx.lineTo(x+TS, y+i*s+s); }
-        if (t === T_SP_R){ ctx.moveTo(x, y+i*s); ctx.lineTo(x+TS-3, y+i*s+s/2); ctx.lineTo(x, y+i*s+s); }
-        ctx.fill();
-      }
-    } else if (t === T_ONEWAY){
-      ctx.fillStyle = COL.oneway; ctx.fillRect(x, y, TS, 3);
-      ctx.fillStyle = COL.oneway + '55'; ctx.fillRect(x + 2, y + 3, TS - 4, 2);
-    } else if (t === T_SPRING){
-      ctx.fillStyle = COL.solid; ctx.fillRect(x, y + 6, TS, TS - 6);
-      ctx.fillStyle = COL.spring; ctx.fillRect(x + 1, y + 2, TS - 2, 5);
-      ctx.fillStyle = '#ffd9a8'; ctx.fillRect(x + 1, y + 2, TS - 2, 2);
-      ctx.strokeStyle = COL.spring + '99'; ctx.lineWidth = 1;
-      ctx.beginPath(); ctx.moveTo(x+3, y+9); ctx.lineTo(x+TS-3, y+12); ctx.stroke();
-    }
-  }
-  // Bloques frágiles
-  for (let i = 0; i < L.crumbs.length; i++){
-    const idx = L.crumbs[i], tx = idx % L.w, ty = (idx - tx)/L.w;
-    const st = w.crSt[i]; if (st === 2) continue;
-    const sh = st === 1 ? (Math.random()-.5)*1.6 : 0;
-    const x = tx*TS + sh, y = ty*TS + sh;
-    ctx.fillStyle = st === 1 ? '#a37b4a' : COL.crumb;
-    ctx.fillRect(x, y, TS, TS);
-    ctx.strokeStyle = '#00000055'; ctx.lineWidth = 1;
-    ctx.beginPath(); ctx.moveTo(x+3, y+2); ctx.lineTo(x+7, y+8); ctx.lineTo(x+4, y+TS-2);
-    ctx.moveTo(x+TS-3, y+4); ctx.lineTo(x+10, y+9); ctx.stroke();
-  }
-  // Cristales de dash
-  for (let i = 0; i < L.crystals.length; i++){
-    const c = L.crystals[i], x = c.tx*TS + TS/2, y = c.ty*TS + TS/2;
-    const on = w.cryT[i] === 0;
-    const p = Math.sin(w.t*.08 + i)*1.5;
-    ctx.save(); ctx.translate(x, y + p); ctx.rotate(w.t*.02);
-    ctx.fillStyle = on ? COL.crystal : '#ffffff18';
-    ctx.beginPath(); ctx.moveTo(0,-7); ctx.lineTo(5,0); ctx.lineTo(0,7); ctx.lineTo(-5,0); ctx.closePath(); ctx.fill();
-    if (on){ ctx.fillStyle = '#ffffffcc'; ctx.beginPath(); ctx.moveTo(0,-3); ctx.lineTo(2,0); ctx.lineTo(0,3); ctx.lineTo(-2,0); ctx.fill(); }
-    ctx.restore();
-  }
-  // Estrellas
-  for (let i = 0; i < L.stars.length; i++){
-    if (w.starGot[i]) continue;
-    const s = L.stars[i], x = s.tx*TS + TS/2, y = s.ty*TS + TS/2 + Math.sin(w.t*.06 + i)*2;
-    ctx.save(); ctx.translate(x, y); ctx.rotate(w.t*.015); ctx.fillStyle = COL.star;
-    ctx.beginPath();
-    for (let k = 0; k < 8; k++){
-      const a = k*Math.PI/4, r = k % 2 ? 2.6 : 7;
-      k ? ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r) : ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
-    }
-    ctx.closePath(); ctx.fill(); ctx.restore();
-  }
-  // Móviles y sierras
-  const tt = w.t*DT;
-  for (const m of L.movers){
-    const r = moverRect(m, tt);
-    ctx.fillStyle = COL.mover; rr(r.x, r.y, r.w, r.h, 3); ctx.fill();
-    ctx.fillStyle = '#ffffff44'; ctx.fillRect(r.x + 2, r.y + 2, r.w - 4, 2);
-  }
-  for (const s of L.saws){
-    const q = sawPos(s, tt);
-    ctx.save(); ctx.translate(q.x, q.y); ctx.rotate(w.t*.25);
-    ctx.fillStyle = COL.saw;
-    ctx.beginPath();
-    for (let k = 0; k < 12; k++){
-      const a = k*Math.PI/6, r = k % 2 ? s.r*.62 : s.r;
-      k ? ctx.lineTo(Math.cos(a)*r, Math.sin(a)*r) : ctx.moveTo(Math.cos(a)*r, Math.sin(a)*r);
-    }
-    ctx.closePath(); ctx.fill();
-    ctx.fillStyle = '#2a0d10'; ctx.beginPath(); ctx.arc(0, 0, s.r*.28, 0, 7); ctx.fill();
-    ctx.restore();
-  }
-  // Meta
-  const g = L.goal, pu = 1 + Math.sin(w.t*.09)*.12;
-  ctx.save(); ctx.translate(g.x + TS/2, g.y + TS/2); ctx.scale(pu, pu);
-  ctx.fillStyle = COL.goal + '33'; ctx.beginPath(); ctx.arc(0, 0, 11, 0, 7); ctx.fill();
-  ctx.fillStyle = COL.goal;
-  ctx.fillRect(-1, -8, 2, 16);
-  ctx.beginPath(); ctx.moveTo(1, -8); ctx.lineTo(9, -4.5); ctx.lineTo(1, -1); ctx.closePath(); ctx.fill();
-  ctx.restore();
-}
-function drawPlayer(p, alpha, col){
-  const cx = p.x + PW/2, cy = p.y + PH/2;
-  ctx.save();
-  ctx.globalAlpha = alpha;
-  ctx.translate(cx, cy); ctx.scale(p.sqx || 1, p.sqy || 1);
-  ctx.fillStyle = col;
-  rr(-PW/2, -PH/2, PW, PH, 3); ctx.fill();
-  ctx.fillStyle = '#00000088';
-  const fx = (p.face || 1) * 2;
-  ctx.fillRect(fx - 3, -3, 2, 3); ctx.fillRect(fx + 1, -3, 2, 3);
-  ctx.restore();
-}
-function drawWorld(w){
-  ctx.save();
-  ctx.setTransform(VIEW.s, 0, 0, VIEW.s, VIEW.ox, VIEW.oy);
-  const sh = OPTS.shake ? FX.shake : 0;
-  if (sh) ctx.translate((Math.random()-.5)*sh, (Math.random()-.5)*sh);
-  ctx.beginPath(); ctx.rect(0, 0, VIEW_W, VIEW_H); ctx.clip();
-  drawBG();
-  drawTiles(w);
-  // Fantasma del récord
-  if (OPTS.ghost && GAME.ghost && GAME.mode === 'play'){
-    const f = GAME.ghost, i = Math.min(w.timer, f.n - 1);
-    if (i >= 0 && f.n){
-      const gx = f.d[i*3]/2, gy = f.d[i*3+1]/2, gf = f.d[i*3+2] & 1 ? 1 : -1;
-      drawPlayer({ x:gx, y:gy, face:gf, sqx:1, sqy:1 }, .22, COL.ghost);
-    }
-  }
-  // Partículas
-  for (const q of FX.p){
-    ctx.globalAlpha = Math.max(0, Math.min(1, q.life));
-    ctx.fillStyle = q.col;
-    ctx.fillRect(q.x - q.s/2, q.y - q.s/2, q.s, q.s);
-  }
-  ctx.globalAlpha = 1;
-  // Jugador
-  const p = w.p;
-  if (!p.dead){
-    if (p.dash > 0){
-      for (let k = 1; k <= 3; k++)
-        drawPlayer({ x:p.x - p.dashDx*k*5, y:p.y - p.dashDy*k*5, face:p.face, sqx:1, sqy:1 },
-          .18*(4-k), COL.crystal);
-    }
-    drawPlayer(p, p.win ? Math.max(0, 1 - p.win/30) : 1, p.dashAvail ? COL.player : COL.playerNo);
-  }
-  // Cartel de ayuda del nivel
-  if (OPTS.hints && GAME.hintT > 0 && GAME.mode === 'play'){
-    ctx.globalAlpha = Math.min(1, GAME.hintT/60);
-    ctx.font = '9px ui-monospace, monospace'; ctx.textAlign = 'center';
-    const tw = ctx.measureText(w.L.hint).width + 12, ty = VIEW_H - 22;
-    ctx.fillStyle = '#050810dd';
-    rr(VIEW_W/2 - tw/2, ty - 8, tw, 14, 4); ctx.fill();
-    ctx.fillStyle = '#e7ecf7';
-    ctx.fillText(w.L.hint, VIEW_W/2, ty + 2);
-    ctx.globalAlpha = 1;
-  }
-  if (FX.flash > 0){
-    ctx.fillStyle = '#ffffff'; ctx.globalAlpha = Math.min(.5, FX.flash*.5);
-    ctx.fillRect(0, 0, VIEW_W, VIEW_H); ctx.globalAlpha = 1;
-  }
-  ctx.restore();
-  // Marco fuera del área jugable
-  ctx.save();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-  ctx.fillStyle = COL.out;
-  if (VIEW.oy > 0){ ctx.fillRect(0, 0, cv.width, VIEW.oy); ctx.fillRect(0, cv.height - VIEW.oy - 1, cv.width, VIEW.oy + 1); }
-  if (VIEW.ox > 0){ ctx.fillRect(0, 0, VIEW.ox, cv.height); ctx.fillRect(cv.width - VIEW.ox - 1, 0, VIEW.ox + 1, cv.height); }
-  ctx.restore();
-}
-
-// ===== js/ghost.js =====
-// El fantasma es la mejor herramienta para SENTIR que mejoraste: corrés
-// contra vos mismo. Se guarda la mejor vuelta cuadro por cuadro (x, y y
-// hacia dónde mirabas), cuantizada a medio píxel para que entre en
-// localStorage sin comerse el espacio.
-function ghostLoad(idx){
-  try {
-    const raw = JSON.parse(lsGet(LS.GHOST + idx) || 'null');
-    if (!raw || !Array.isArray(raw.d) || raw.d.length < 3) return null;
-    return { n: Math.floor(raw.d.length/3), d: raw.d };
-  } catch(_){ return null; }
-}
-function ghostSave(idx, rec){
-  if (!rec || rec.length < 3) return;
-  const cap = 60*90*3;                        // 90 s como máximo
-  const d = rec.length > cap ? rec.slice(0, cap) : rec;
-  lsSet(LS.GHOST + idx, JSON.stringify({ v:1, d }));
-}
-function ghostRecord(rec, p){
-  rec.push(Math.round(p.x*2), Math.round(p.y*2), p.face > 0 ? 1 : 0);
-}
-
-// ===== js/game.js =====
-let optsFrom = 'menu';
-const GAME = { mode:'menu', w:null, idx:0, ghost:null, rec:[], acc:0, last:0, hintT:0,
-  deaths:0, wonAt:0, lastResult:null };
-
-function startLevel(i, keepDeaths){
-  // Momento de desbloqueo: la primera vez que entrás a un mundo nuevo, el
-  // juego se detiene un segundo a decirte qué aprendiste. Es la mitad de la
-  // sensación de progreso; la otra mitad es que el nivel lo pida enseguida.
-  const ab = ABIL.find(a => a.at === i);
-  if (ab && !lvRec(i).best && !GAME._abShown){
-    GAME._abShown = i;
-    $('abTitle').textContent = ab.t;
-    $('abDesc').textContent = ab.d;
-    GAME.idx = i; GAME.mode = 'menu';
-    showScreen('abil');
-    return;
-  }
-  GAME._abShown = 0;
-  GAME.idx = i;
-  GAME.w = newWorld(i);
-  GAME.ghost = OPTS.ghost ? ghostLoad(i) : null;
-  GAME.rec = [];
-  GAME.deaths = keepDeaths ? GAME.deaths : 0;
-  GAME.hintT = LEVELS[i].hint ? 260 : 0;
-  document.getElementById('btnDash').classList.toggle('hidden', !LEVELS[i].dash);
-  GAME.mode = 'play';
-  GAME.acc = 0; GAME.last = performance.now();
-  FX.p.length = 0; FX.shake = 0;
-  showScreen(null);
-  document.getElementById('hud').classList.remove('hidden');
-  hudUpdate();
-}
-function retryLevel(){
-  if (!GAME.w) return;
-  if (GAME.mode === 'pause') showScreen(null);
-  GAME.mode = 'play';
-  GAME.rec = [];
-  const w = GAME.w;
-  w.deaths++; contarMuerte();
-  resetAttempt(w);
-  FX.p.length = 0;
-  document.getElementById('hud').classList.remove('hidden');
-  hudUpdate();
-}
-function togglePause(){
-  if (GAME.mode === 'play'){ GAME.mode = 'pause'; showScreen('pause'); }
-  else if (GAME.mode === 'pause'){ GAME.mode = 'play'; GAME.last = performance.now(); showScreen(null); }
-}
-function quitToMenu(){
-  saveSave();
-  GAME.mode = 'menu'; GAME.w = null;
-  document.getElementById('hud').classList.add('hidden');
-  showScreen('levels'); renderLevels();
-}
-
-function handleEvents(w){
-  for (const e of w.events){
-    const p = w.p, cx = p.x + PW/2, cy = p.y + PH/2;
-    switch (e){
-      case 'jump':     SFX.jump(); fxDust(cx, p.y + PH, 0); break;
-      case 'walljump': SFX.wall(); fxBurst(cx + (p.face*-6), cy, 5, '#9fb4dd', 90); vibrate(8); break;
-      case 'land':     SFX.land(); fxDust(cx, p.y + PH, 0); break;
-      case 'dash':     SFX.dash(); fxBurst(cx, cy, 10, COL.crystal, 150, 60); FX.shake = 5; vibrate(12); break;
-      case 'spring':   SFX.spring(); fxBurst(cx, p.y + PH, 10, COL.spring, 160, 200); vibrate(14); break;
-      case 'crystal':  SFX.crystal(); fxBurst(cx, cy, 10, COL.crystal, 130, 0); break;
-      case 'crack':    fxDust(cx, p.y + PH, 0); break;
-      case 'crumble':  fxBurst(cx, p.y + PH + 6, 8, COL.crumb, 90, 500); break;
-      case 'star':     SFX.star(); fxBurst(cx, cy, 16, COL.star, 170, 40); FX.flash = .5; break;
-      case 'die':      SFX.die(); fxBurst(cx, cy, 26, COL.player, 210, 380); FX.shake = 10;
-                       vibrate(38); contarMuerte(); GAME.rec = []; break;
-      case 'goal':     onWin(); break;
-    }
-  }
-  if (w.shake){ FX.shake = Math.max(FX.shake, w.shake); w.shake = 0; }
-}
-
-// Una muerte se anota en el acto: es lo que destraba el nivel siguiente si
-// un nivel se te hace cuesta arriba (ver `unlocked`), y no se pierde si
-// cerrás el juego sin terminarlo.
-function contarMuerte(){
-  GAME.deaths++; SAVE.deaths++;
-  lvRec(GAME.idx).deaths++;
-  saveSave();
-}
-
-function onWin(){
-  const w = GAME.w, i = GAME.idx;
-  const frames = w.timer, time = frames/60;
-  const r = lvRec(i);
-  const prev = r.best;
-  const record = !prev || frames < prev;
-  const star = w.starGot.length ? Array.from(w.starGot).every(v => v) : false;
-  if (record) r.best = frames;
-  if (star) r.star = true;
-  if (GAME.deaths === 0) r.noDeath = true;
-  SAVE.frames += frames; SAVE.wins++;
-  saveSave();
-  if (record) ghostSave(i, GAME.rec);
-  GAME.lastResult = { i, frames, prev, record, star, deaths:GAME.deaths, medal:medalOf(i, frames) };
-  GAME.mode = 'win'; GAME.wonAt = performance.now();
-  SFX.goal(); FX.flash = .7; FX.shake = 6;
-  fxBurst(w.L.goal.x + TS/2, w.L.goal.y + TS/2, 30, COL.goal, 200, 120);
-}
-function medalOf(i, frames){
-  const par = LEVELS[i].par, t = frames/60;
-  if (t <= par[0]) return 3;
-  if (t <= par[1]) return 2;
-  if (t <= par[2]) return 1;
-  return 0;
-}
-const MEDAL_ICON = ['', '🥉', '🥈', '🥇'];
-function esc(t){
-  return String(t == null ? '' : t).replace(/[&<>"']/g, c =>
-    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
-}
-function fmtT(frames){
-  if (!frames) return '—';
-  const s = frames/60;
-  return (s < 60 ? s.toFixed(2) : Math.floor(s/60) + ':' + (s % 60).toFixed(2).padStart(5,'0'));
-}
-
-function hudUpdate(){
-  const w = GAME.w; if (!w) return;
-  const r = lvRec(GAME.idx);
-  document.getElementById('hudLv').textContent = (GAME.idx+1) + '. ' + LEVELS[GAME.idx].n;
-  document.getElementById('hudTime').textContent = fmtT(w.timer) === '—' ? '0.00' : fmtT(w.timer);
-  document.getElementById('hudBest').innerHTML = r.best
-    ? 'récord <span class="rec">' + fmtT(r.best) + '</span>' : 'sin récord';
-  document.getElementById('hudDeaths').textContent = '☠ ' + GAME.deaths;
-  const g = document.getElementById('goals');
-  if (g.dataset.lv !== String(GAME.idx)){
-    g.dataset.lv = String(GAME.idx);
-    const par = LEVELS[GAME.idx].par;
-    g.innerHTML = '<div class="g-lv">' + esc(LEVELS[GAME.idx].n) + '</div>' +
-      '🥇 <b>' + par[0].toFixed(1) + 's</b>  🥈 ' + par[1].toFixed(1) + 's  🥉 ' + par[2].toFixed(1) + 's' +
-      '<br>' + (r.best ? 'tu récord <b>' + fmtT(r.best) + '</b>' : 'todavía sin récord') +
-      (r.star ? '  ·  ★' : '') + '<br><span style="opacity:.7">' + esc(LEVELS[GAME.idx].hint) + '</span>';
-  }
-  document.getElementById('btnDash').classList.toggle('dim', !w.p.dashAvail);
-}
-
-// — Bucle principal: acumulador de paso fijo. La pantalla puede ir a 60,
-//   90 o 120 Hz; la simulación SIEMPRE avanza de a 1/60 s. —
-function frame(now){
-  requestAnimationFrame(frame);
-  const dt = Math.min(.25, (now - GAME.last)/1000);
-  GAME.last = now;
-  if (GAME.mode === 'play' && GAME.w){
-    GAME.acc += dt;
-    let n = 0;
-    while (GAME.acc >= DT && n < 6){
-      GAME.acc -= DT; n++;
-      const w = GAME.w, inp = pollInput();
-      if (!w.p.dead && !w.p.win) ghostRecord(GAME.rec, w.p);
-      stepWorld(w, inp);
-      handleEvents(w);
-      if (GAME.mode !== 'play') break;
-    }
-    if (GAME.hintT > 0) GAME.hintT--;
-    hudUpdate();
-  } else if (GAME.w && GAME.mode === 'win'){
-    GAME.w.p.win++;
-    if (performance.now() - GAME.wonAt > 420 && !document.getElementById('scr-win').dataset.on) showWin();
-  } else {
-    pollInput();
-  }
-  fxStep(dt);
-  if (GAME.w) drawWorld(GAME.w);
-  else drawMenuBG();
-}
-function drawMenuBG(){
-  ctx.setTransform(VIEW.s, 0, 0, VIEW.s, VIEW.ox, VIEW.oy);
-  drawBG();
-  ctx.setTransform(1, 0, 0, 1, 0, 0);
-}
-// ===== js/ui.js =====
-const SCREENS = ['menu','levels','win','pause','opts','stats','abil'];
-function $(id){ return document.getElementById(id); }
-function showScreen(name){
-  const box = $('screens');
-  for (const s of SCREENS){
-    const el = $('scr-' + s);
-    const on = (s === name);
-    el.classList.toggle('hidden', !on);
-    if (on) el.dataset.on = '1'; else delete el.dataset.on;
-  }
-  box.classList.toggle('on', !!name);
-  $('hud').classList.toggle('hidden', !(name === null && GAME.w));
-}
-function toast(msg){
-  const t = $('toast'); t.textContent = msg; t.classList.add('on');
-  clearTimeout(toast._t); toast._t = setTimeout(() => t.classList.remove('on'), 1600);
-}
-const MERCY = 40;   // muertes en un nivel tras las cuales el siguiente se abre igual
-function unlocked(i){
-  if (i === 0) return true;
-  const r = lvRec(i-1);
-  // Trabarse no puede ser el final del juego: si un nivel te comió 40
-  // intentos, el siguiente se abre solo. El récord te sigue esperando.
-  return !!r.best || r.deaths >= MERCY;
-}
-function nextLevel(){
-  const i = GAME.idx + 1;
-  if (i < LEVELS.length) startLevel(i);
-  else { toast('¡Terminaste FILO! Ahora vení por los tiempos.'); quitToMenu(); }
-}
-function uiEnter(){
-  if (!$('scr-abil').classList.contains('hidden')){ GAME._abShown = -1; startLevel(GAME.idx); return; }
-  if (GAME.mode === 'win') nextLevel();
-  else if (GAME.mode === 'pause') togglePause();
-  else if (!$('scr-menu').classList.contains('hidden')) playFromMenu();
-}
-function playFromMenu(){
-  let i = 0;
-  for (let k = 0; k < LEVELS.length; k++) if (unlocked(k)) i = k;
-  startLevel(i);
-}
-
-const WORLDS = [
-  { n:'MUNDO 1 · SUELO',   a:0,  b:5  },
-  { n:'MUNDO 2 · PAREDES', a:5,  b:10 },
-  { n:'MUNDO 3 · DASH',    a:10, b:15 },
-];
-function renderLevels(){
-  const box = $('lvWorlds');
-  let h = '';
-  for (const wd of WORLDS){
-    h += '<div class="world"><h3>' + wd.n + '</h3><div class="grid">';
-    for (let i = wd.a; i < Math.min(wd.b, LEVELS.length); i++){
-      const r = lvRec(i), open = unlocked(i), m = r.best ? medalOf(i, r.best) : 0;
-      const cls = ['cell'];
-      if (!open) cls.push('lock');
-      if (r.best) cls.push('done');
-      if (m === 3) cls.push('gold');
-      h += '<button class="' + cls.join(' ') + '" data-lv="' + i + '"' + (open ? '' : ' disabled') + '>' +
-        '<span class="m">' + (m ? MEDAL_ICON[m] : '') + '</span>' +
-        (r.star ? '<span class="st">★</span>' : '') +
-        '<span class="n">' + (open ? (i+1) : '🔒') + '</span>' +
-        '<span class="t">' + (open ? LEVELS[i].n : '') + '</span>' +
-        '<span class="t">' + (r.best ? fmtT(r.best) : '') + '</span>' +
-        '</button>';
-    }
-    h += '</div></div>';
-  }
-  box.innerHTML = h;
-  box.querySelectorAll('.cell').forEach(el => el.addEventListener('click', () => {
-    const i = +el.dataset.lv;
-    if (!unlocked(i)) return;
-    SFX.ui(); startLevel(i);
-  }));
-}
-function showWin(){
-  const R = GAME.lastResult; if (!R) return;
-  $('winLv').textContent = 'NIVEL ' + (R.i+1) + ' · ' + LEVELS[R.i].n;
-  $('winTime').textContent = fmtT(R.frames);
-  const d = $('winDelta');
-  if (R.record && R.prev){
-    d.className = 'delta good';
-    d.textContent = '¡RÉCORD!  −' + ((R.prev - R.frames)/60).toFixed(2) + ' s';
-  } else if (R.record){
-    d.className = 'delta good'; d.textContent = '¡PRIMER RÉCORD!';
-  } else {
-    d.className = 'delta bad';
-    d.textContent = 'récord ' + fmtT(R.prev) + '  (+' + ((R.frames - R.prev)/60).toFixed(2) + ' s)';
-  }
-  const par = LEVELS[R.i].par;
-  $('winMedals').innerHTML =
-    (R.medal ? '<b>' + MEDAL_ICON[R.medal] + ' medalla</b>' : '<span>sin medalla</span>') +
-    '<span>🥇 ' + par[0].toFixed(2) + 's</span><span>🥈 ' + par[1].toFixed(2) +
-    's</span><span>🥉 ' + par[2].toFixed(2) + 's</span>' +
-    (R.star ? '<b>★ estrella</b>' : '') +
-    '<span>☠ ' + R.deaths + '</span>';
-  $('winNext').textContent = (R.i + 1 < LEVELS.length) ? 'SIGUIENTE →' : 'VOLVER AL MENÚ';
-  showScreen('win');
-}
-function renderStats(){
-  let medals = 0, gold = 0, stars = 0, done = 0, best = 0;
-  for (let i = 0; i < LEVELS.length; i++){
-    const r = lvRec(i);
-    if (r.best){ done++; best += r.best; const m = medalOf(i, r.best); medals += m ? 1 : 0; if (m === 3) gold++; }
-    if (r.star) stars++;
-  }
-  const cards = [
-    ['NIVELES', done + '/' + LEVELS.length],
-    ['MEDALLAS', medals + '/' + LEVELS.length],
-    ['ORO', gold + '/' + LEVELS.length],
-    ['ESTRELLAS', stars + '/' + LEVELS.length],
-    ['MUERTES', SAVE.deaths],
-    ['SUMA DE RÉCORDS', done ? fmtT(best) : '—'],
-  ];
-  $('statGrid').innerHTML = cards.map(c =>
-    '<div class="stat"><div class="k">' + c[0] + '</div><div class="v">' + c[1] + '</div></div>').join('');
-  $('statHint').textContent = done < LEVELS.length
-    ? 'Cada nivel guarda tu mejor vuelta. El fantasma blanco es esa vuelta: si lo pasás, hiciste un récord.'
-    : 'Terminaste todos. Ahora la pelea es contra el reloj: 🥇 en los 15.';
-}
-function renderOpts(){
-  const on = v => v ? 'SÍ' : 'NO';
-  $('oGhost').textContent = on(OPTS.ghost);
-  $('oSound').textContent = on(OPTS.sound);
-  $('oVibe').textContent  = on(OPTS.vibe);
-  $('oShake').textContent = on(OPTS.shake);
-  $('oHints').textContent = on(OPTS.hints);
-  $('oSwap').textContent  = OPTS.swap ? 'ZURDO' : 'DIESTRO';
-  document.body.classList.toggle('swap', !!OPTS.swap);
-}
-function bindUI(){
-  const go = (id, fn) => $(id).addEventListener('click', () => { SFX.ui(); fn(); });
-  go('abGo',   () => { GAME._abShown = -1; startLevel(GAME.idx); });
-  go('mPlay',  playFromMenu);
-  go('mLevels',() => { renderLevels(); showScreen('levels'); });
-  go('mStats', () => { renderStats(); showScreen('stats'); });
-  go('mOpts',  () => { renderOpts(); showScreen('opts'); optsFrom = 'menu'; });
-  go('lvBack', () => showScreen('menu'));
-  go('sBack',  () => showScreen('menu'));
-  go('oBack',  () => showScreen(optsFrom === 'pause' ? 'pause' : 'menu'));
-  go('winNext',nextLevel);
-  go('winRetry',() => startLevel(GAME.idx));
-  go('winMenu', quitToMenu);
-  go('pResume', togglePause);
-  go('pRetry',  retryLevel);
-  go('pOpts',   () => { renderOpts(); showScreen('opts'); optsFrom = 'pause'; });
-  go('pMenu',   quitToMenu);
-  go('btnPause', togglePause);
-  go('btnRetry', retryLevel);
-  const tog = (id, key, after) => $(id).addEventListener('click', () => {
-    OPTS[key] = OPTS[key] ? 0 : 1; saveOpts(); renderOpts(); SFX.ui(); if (after) after();
-  });
-  tog('oGhost','ghost', () => { if (GAME.w) GAME.ghost = OPTS.ghost ? ghostLoad(GAME.idx) : null; });
-  tog('oSound','sound'); tog('oVibe','vibe'); tog('oShake','shake'); tog('oHints','hints');
-  tog('oSwap','swap');
-  $('oReset').addEventListener('click', () => {
-    if (!confirm('¿Borrar récords, medallas y fantasmas? No se puede deshacer.')) return;
-    wipeSave(); renderOpts(); toast('Progreso borrado'); showScreen('menu');
-  });
-  $('menuHint').innerHTML = document.body.classList.contains('touch')
-    ? 'Joystick a la izquierda · <b>SALTO</b> y <b>DASH</b> a la derecha.<br>' +
-      'Pegado a una pared: mantené la dirección y saltá.'
-    : '<kbd>← →</kbd> mover · <kbd>Espacio</kbd> saltar · <kbd>X</kbd> dash · ' +
-      '<kbd>R</kbd> reintentar · <kbd>Esc</kbd> pausa<br>' +
-      'También anda con joystick. Pegado a una pared: dirección + salto.';
-  $('pauseHint').innerHTML = 'Reintentar no penaliza: en este juego se muere para aprender.<br>' +
-    'Si un nivel se te resiste, después de un rato se abre el siguiente igual.';
-}
-
-// ===== js/core.js =====
-function boot(){
-  loadSave();
-  bindUI();
-  bindTouch();
-  renderOpts();
-  if (window.matchMedia && matchMedia('(pointer:coarse)').matches) document.body.classList.add('touch');
-  layout();
-  showScreen('menu');
-  requestAnimationFrame(t => { GAME.last = t; frame(t); });
-  addEventListener('pointerdown', () => audioResume(), { once:true });
-  addEventListener('visibilitychange', () => {
-    if (document.hidden && GAME.mode === 'play') togglePause();
-  });
-  // El navegador móvil no debe hacer zoom ni "pull to refresh" mientras jugás.
-  document.addEventListener('gesturestart', e => e.preventDefault());
-  document.addEventListener('contextmenu', e => { if (GAME.mode === 'play') e.preventDefault(); });
-  if ('serviceWorker' in navigator && location.protocol.startsWith('http'))
-    addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
-}
-if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-else boot();
-</script>
-</body>
-</html>

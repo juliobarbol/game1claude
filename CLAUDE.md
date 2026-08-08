@@ -1,12 +1,13 @@
 # FILO — Guía del proyecto (para Claude Code)
 
-> ⚠️ **Este repo tiene dos proyectos.** Esta guía es la del juego (`index.html`,
-> `sw.js`, `test/`, `tools/`). El curso de inglés vive en **`curso/`** y tiene
-> su propia guía: `curso/CLAUDE.md`. Si el trabajo es del curso, no hace falta
-> leer nada de acá.
+> ⚠️ **Este repo tiene dos proyectos.** Esta guía es la del juego, que vive
+> en **`juego/`** (+ `test/` y `tools/`) y se sirve en `/juego/`. El curso de
+> inglés vive en **`curso/`** + el `index.html` de la raíz, y tiene su propia
+> guía: `curso/CLAUDE.md`. Si el trabajo es del curso, no hace falta leer
+> nada de acá.
 
 > Juego de **plataformas de precisión** (PWA, se juega en el celu y en la
-> compu). Esta guía es el mapa: leela antes de tocar el `index.html`.
+> compu). Esta guía es el mapa: leela antes de tocar el `juego/index.html`.
 
 ## Qué es
 
@@ -25,7 +26,7 @@ servicio de eso.
 ## Arquitectura (importante)
 
 - **Sin build, sin frameworks: JavaScript vanilla.** Todo el juego (HTML +
-  CSS + JS) está en **un único `index.html`**. Es deliberado: un archivo,
+  CSS + JS) está en **un único `juego/index.html`**. Es deliberado: un archivo,
   deploy trivial, offline gratis.
 - El JS está en **un solo `<script>` en ámbito global** (las funciones se
   llaman entre sí y algunas se usan desde `onclick`/tests). **No pasarlo a
@@ -34,9 +35,9 @@ servicio de eso.
 
 ## Estructura de archivos
 
-- `index.html` — **todo el juego** (markup + `<style>` + `<script>`).
-- `sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v2`**.
-- `manifest.webmanifest`, `icon-*.png` — PWA (instalación, iconos).
+- `juego/index.html` — **todo el juego** (markup + `<style>` + `<script>`).
+- `juego/sw.js` — Service Worker (offline). **`CACHE` actual: `filo-v3`**.
+- `juego/manifest.webmanifest`, `juego/icon-*.png` — PWA (instalación, iconos).
 - `test/` — `_load.cjs` (carga el juego en node), `_bot.cjs` (el bot),
   `solver.test.cjs` (¿se pueden terminar los niveles?), `pwa.test.cjs`
   (navegador real: SW, offline, paridad de física, persistencia).
@@ -45,13 +46,13 @@ servicio de eso.
 - `tools/star-spots.cjs` — prueba posiciones para la estrella de un nivel.
 - `tools/make-icons.py` — genera los PNG de los iconos (sin dependencias).
 
-## Mapa del código dentro de `index.html`
+## Mapa del código dentro de `juego/index.html`
 
 Secciones marcadas con `// ===== js/<nombre>.js =====`. **Buscá esos
 marcadores**, no los números de línea:
 
 ```bash
-grep -n "===== js/" index.html
+grep -n "===== js/" juego/index.html
 ```
 
 | Sección | De qué se ocupa |
@@ -161,7 +162,7 @@ tiempo del bot.
 # 1) Sintaxis del <script> inline
 python3 - <<'PY'
 import re, subprocess, sys
-html = open('index.html', encoding='utf-8').read()
+html = open('juego/index.html', encoding='utf-8').read()
 js = "\n;\n".join(re.findall(r'<script(?![^>]*\bsrc=)[^>]*>(.*?)</script>', html, re.S))
 open('/tmp/filo_check.js','w',encoding='utf-8').write(js)
 sys.exit(subprocess.run(['node','--check','/tmp/filo_check.js']).returncode)
@@ -179,12 +180,13 @@ puede volver imposible un nivel del mundo 1 sin que se note jugando el 1.
 
 ## Deploy
 
-Assets estáticos en Cloudflare (`wrangler.jsonc`, `assets.directory: "."`):
-**mergear a `main` y listo**, Cloudflare despliega solo. La conexión del repo
+Assets estáticos en Cloudflare (`wrangler.jsonc`, `assets.directory: "."`).
+El juego se sirve en **`/juego/`**; la raíz del sitio es el curso.
+**Mergear a `main` y listo**, Cloudflare despliega solo. La conexión del repo
 con Cloudflare es un paso de una sola vez y está documentada en el README
 ("Publicar").
 
-Al publicar, **subir `CACHE` en `sw.js`** (`filo-vN`). Acá no es tan grave
+Al publicar, **subir `CACHE` en `juego/sw.js`** (`filo-vN`). Acá no es tan grave
 como en otras apps —el HTML va network-first y el juego entero ES el HTML—
 pero sin bump la cache vieja sigue sirviendo iconos y manifest.
 
@@ -197,6 +199,6 @@ tocaste `PHY` o niveles) + `test/pwa.test.cjs`.
 - No meter DOM ni `Math.random` en `js/physics.js`.
 - No cambiar las claves de `localStorage` (`LS`): se pierden récords y
   fantasmas ajenos.
-- No olvidar subir `CACHE` en `sw.js` al publicar.
+- No olvidar subir `CACHE` en `juego/sw.js` al publicar.
 - No penalizar la muerte (ni vidas, ni esperas, ni cortes): reintentar tiene
   que ser instantáneo.

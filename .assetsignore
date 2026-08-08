@@ -1,8 +1,12 @@
 # Lo que NO se sube a Cloudflare (sintaxis .gitignore).
-# El juego que se publica es index.html + sw.js + manifest + iconos.
+#
+# En la raíz se publica el CURSO (index.html + curso/*.html).
+# El juego se publica en /juego/ (index.html + sw.js + manifest + iconos).
 wrangler.jsonc
 .assetsignore
 README.md
 CLAUDE.md
+curso/CLAUDE.md
+curso/**/*.md
 test/
 tools/
