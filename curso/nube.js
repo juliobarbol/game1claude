@@ -1,7 +1,7 @@
 // ════════════════════════════════════════════════════════════════════
 // LA NUBE — borradores compartidos entre aparatos (Supabase)
 //
-// Reglas que no se negocian, iguales a las del juego:
+// Reglas que no se negocian:
 //   · La nube NUNCA hace falta. Sin internet o sin frase de acceso, el
 //     editor anda exactamente igual contra localStorage.
 //   · Nada de `await` en el camino de escribir: se guarda local primero

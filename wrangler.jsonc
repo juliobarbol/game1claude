@@ -6,7 +6,6 @@
   // Qué queda en qué URL:
   //   /                         → el curso de inglés (index.html de la raíz)
   //   /curso/nivel-1/parte-1/…  → el syllabus y las clases
-  //   /juego/                   → FILO, el juego (su propio index.html + sw.js)
   //
   // `not_found_handling` manda cualquier ruta desconocida al index de la raíz:
   // si alguien escribe mal una URL, cae en la portada del curso en vez de un 404.

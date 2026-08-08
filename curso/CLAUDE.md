@@ -1,7 +1,7 @@
 # Curso de inglés — Guía del proyecto (para Claude Code)
 
 > Material propio de ELT para adultos, y la plataforma para armarlo.
-> Nada que ver con el juego, que vive en `juego/` y se sirve en `/juego/`.
+> Es lo único que hay en este repo: el curso se sirve en la raíz del sitio.
 
 ## Qué se está construyendo
 
@@ -101,8 +101,7 @@ propósito: si no, podría quedar ciega y todo seguiría en verde.
 ## Borradores y la nube
 
 Lo que se edita se guarda **primero en este navegador** (instantáneo) y
-**después en la nube** (Supabase), sin bloquear. Las reglas son las mismas que
-las del juego:
+**después en la nube** (Supabase), sin bloquear. Las reglas:
 
 - **La nube nunca hace falta.** Sin internet o sin frase de acceso, el editor
   anda exactamente igual contra localStorage.
@@ -137,8 +136,7 @@ curso, no publica: para publicar hay que **Exportar archivo** y guardarlo en
 Las tablas `curso_acceso` y `curso_borradores` tienen RLS **sin ninguna
 política**: desde el navegador no se tocan nunca de forma directa. El único
 camino son las funciones `curso_listar / curso_leer / curso_guardar /
-curso_borrar`, que piden la frase de acceso. Es el mismo patrón que
-`enviar_record` para la tabla del juego.
+curso_borrar`, que piden la frase de acceso.
 
 De la frase solo se guarda el **hash** (bcrypt). `curso_ok`, que es la que
 compara, **no está expuesta**: si lo estuviera, sería el camino más barato
@@ -149,9 +147,10 @@ Supabase nunca**. El test lo verifica.
 
 ### El proyecto de Supabase
 
-Es el mismo del juego (`filo`), en la misma cuenta. La clave que está en
-`curso/nube.js` es la **publicable**, la que va en el HTML a propósito. **La
-clave de servicio no entra al repo jamás.**
+El proyecto se llama `filo` (quedó de un proyecto anterior que vivía en este
+mismo repo; el nombre es solo el del proyecto en Supabase, no hace falta
+cambiarlo). La clave que está en `curso/nube.js` es la **publicable**, la que
+va en el HTML a propósito. **La clave de servicio no entra al repo jamás.**
 
 ## Descartar
 
