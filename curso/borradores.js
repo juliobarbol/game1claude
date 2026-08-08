@@ -35,10 +35,35 @@
     } catch (e){ return null; }
   }
 
-  function guardar(id, clase){
+  // `sincronizado` es la marca de tiempo del servidor de la ÚLTIMA vez que
+  // este borrador y la nube estuvieron iguales. Es lo que permite saber si
+  // los cambios de un lado ya viajaron al otro — y por lo tanto, si hay un
+  // conflicto de verdad o simplemente hay que actualizar.
+  function sincronizado(id){
     try {
+      const crudo = localStorage.getItem(claveDe(id));
+      if (!crudo) return null;
+      return (JSON.parse(crudo) || {}).sincronizado || null;
+    } catch (e){ return null; }
+  }
+
+  function marcarSincronizado(id, cuandoServidor){
+    try {
+      const crudo = localStorage.getItem(claveDe(id));
+      if (!crudo) return false;
+      const sobre = JSON.parse(crudo);
+      sobre.sincronizado = cuandoServidor;
+      localStorage.setItem(claveDe(id), JSON.stringify(sobre));
+      return true;
+    } catch (e){ return false; }
+  }
+
+  function guardar(id, clase, cuandoServidor){
+    try {
+      const antes = sincronizado(id);
       localStorage.setItem(claveDe(id), JSON.stringify({
         cuando: new Date().toISOString(),
+        sincronizado: cuandoServidor || antes || null,
         clase: clase,
       }));
       return true;
@@ -113,8 +138,29 @@
     }
   }
 
+  // ─── ¿Quién cambió desde la última vez que estuvieron iguales? ─────
+  // Devuelve qué hay que hacer, sin decidir nada por su cuenta:
+  //   'nada'        los dos están igual
+  //   'subir'       cambió solo lo de acá
+  //   'actualizar'  cambió solo lo de la nube → se puede traer sin preguntar
+  //   'conflicto'   cambiaron LOS DOS → hay que preguntar
+  function comparar(id, fichaNube){
+    const sinc  = sincronizado(id);
+    const local = cuando(id);
+    const nube  = fichaNube ? fichaNube.actualizado : null;
+
+    const cambioAca  = !!local && (!sinc || new Date(local) > new Date(sinc));
+    const cambioNube = !!nube  && (!sinc || new Date(nube)  > new Date(sinc));
+
+    if (cambioAca && cambioNube) return 'conflicto';
+    if (cambioNube) return 'actualizar';
+    if (cambioAca)  return 'subir';
+    return 'nada';
+  }
+
   raiz.BORRADORES = {
     leer, guardar, borrar, hay, listar, cuando,
+    sincronizado, marcarSincronizado, comparar,
     comoArchivo, descargar, desdeTexto,
   };
 

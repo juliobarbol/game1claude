@@ -561,3 +561,8 @@ ul.problemas li b{color:var(--ink);}
 .aviso-guardado{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;}
 .aviso-guardado .cta-print{margin-left:auto;white-space:nowrap;}
 .aviso-guardado.con-nube{border-color:var(--vocab-line);background:var(--vocab-bg);}
+
+/* Dos bandas distintas: una avisa que ya se actualizó (y se va sola), la
+   otra pregunta porque hubo cambios de los dos lados (y se queda). */
+.banda-nube.al-dia{background:var(--vocab-bg);border-bottom-color:var(--vocab-line);color:var(--vocab);}
+.banda-nube.conflicto{background:var(--speak-bg);border-bottom-color:var(--speak-line);color:var(--ink);}

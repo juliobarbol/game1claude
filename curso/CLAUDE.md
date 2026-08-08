@@ -107,9 +107,23 @@ las del juego:
 - **La nube nunca hace falta.** Sin internet o sin frase de acceso, el editor
   anda exactamente igual contra localStorage.
 - **Nada de `await` en el camino de escribir.**
-- **La nube NUNCA pisa lo local sin preguntar.** Si del otro lado hay algo más
-  nuevo, se avisa con una banda que dice de quién y de cuándo, y decide la
-  persona.
+- **Se actualiza sola cuando no hay nada que preguntar** — que es casi siempre.
+  Se guarda, junto a cada borrador, la marca de tiempo de la última vez que
+  los dos lados estuvieron iguales (`sincronizado`). Con eso se sabe quién
+  cambió desde entonces:
+
+  | Cambió | Qué hace |
+  |---|---|
+  | nadie | nada |
+  | solo acá | sube |
+  | solo la nube | **trae y avisa**, sin preguntar |
+  | **los dos** | **pregunta** |
+
+  Preguntar cuando no hay conflicto es hacer trabajar a la persona al pedo.
+  Preguntar cuando sí lo hay es lo único que evita perderle trabajo.
+- **Nunca se pisa lo que está escribiendo.** Si el foco está en un campo del
+  formulario, la actualización automática se saltea y se reintenta después.
+- El editor revisa cada 20 s, así también alcanza a quien lo dejó abierto.
 
 Un borrador **pisa** a la clase publicada cuando existe, así se corrige y se
 ve el cambio al instante. `clase.html` lo avisa con una banda arriba.

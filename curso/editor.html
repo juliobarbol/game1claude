@@ -453,44 +453,98 @@
     subirPronto = setTimeout(async () => {
       const cuando = await NUBE.guardar(idActual, modelo);
       const e = document.getElementById('estado');
-      if (cuando) e.textContent = 'guardado · en la nube';
-      else if (e.textContent.indexOf('nube') < 0) e.textContent += ' · nube sin conexión';
+      if (cuando){
+        BORRADORES.marcarSincronizado(idActual, cuando);
+        e.textContent = 'guardado · en la nube';
+      } else if (e.textContent.indexOf('nube') < 0){
+        e.textContent += ' · nube sin conexión';
+      }
     }, 1500);
   }
 
-  // Al abrir: ¿hay algo más nuevo del otro lado? Se avisa, no se pisa.
-  async function mirarLaNube(){
-    const banda = document.getElementById('bandaNube');
-    banda.hidden = true;
-    if (!NUBE.conectada()) return;
-
-    const alla = await NUBE.ficha(idActual);
-    if (!alla) return;
-
-    const aca = BORRADORES.cuando(idActual);
-    if (aca && new Date(aca) >= new Date(alla.actualizado)) return;
-
-    const cuando = new Date(alla.actualizado).toLocaleString('es-AR',
-      { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
-    banda.innerHTML =
-      `En la nube hay una versión <b>más nueva</b> de esta clase` +
-      (alla.quien ? `, de <b>${esc(alla.quien)}</b>` : '') +
-      ` (${esc(cuando)}). ` +
-      `<button type="button" class="btn" id="traerNube">Traerla</button>` +
-      `<button type="button" class="btn" id="ignorarNube">Seguir con la mía</button>`;
-    banda.hidden = false;
-
-    document.getElementById('ignorarNube').addEventListener('click', () => { banda.hidden = true; });
-    document.getElementById('traerNube').addEventListener('click', async () => {
-      const datos = await NUBE.leer(idActual);
-      if (!datos){ alert('No se pudo traer. Probá de nuevo.'); return; }
-      modelo = ESQUEMA.molde(idActual, datos);
-      BORRADORES.guardar(idActual, modelo);
-      banda.hidden = true;
-      dibujarFormulario();
-      refrescar();
-    });
+  // Trae lo de la nube y lo deja puesto.
+  async function traerDeLaNube(alla){
+    const datos = await NUBE.leer(idActual);
+    if (!datos) return false;
+    modelo = ESQUEMA.molde(idActual, datos);
+    BORRADORES.guardar(idActual, modelo, alla.actualizado);
+    dibujarFormulario();
+    refrescar();
+    return true;
   }
+
+  function avisar(texto){
+    const banda = document.getElementById('bandaNube');
+    banda.className = 'banda-nube al-dia';
+    banda.innerHTML = texto;
+    banda.hidden = false;
+    clearTimeout(avisar._t);
+    avisar._t = setTimeout(() => { banda.hidden = true; }, 6000);
+  }
+
+  const cuandoLindo = (iso) => new Date(iso).toLocaleString('es-AR',
+    { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+
+  // El corazón de la sincronización.
+  //
+  // Se actualiza SOLA cuando no hay nada que preguntar, que es casi siempre:
+  // si de este lado no hay cambios sin subir, lo de la nube es simplemente
+  // más nuevo y se trae. Solo se pregunta cuando cambiaron los dos lados
+  // desde la última vez que estuvieron iguales — ahí sí hay dos versiones
+  // distintas y elegir por ella sería perderle trabajo.
+  let mirando = false;
+  async function mirarLaNube(){
+    if (!NUBE.conectada() || mirando) return;
+    mirando = true;
+    try {
+      const alla = await NUBE.ficha(idActual);
+      const que = BORRADORES.comparar(idActual, alla);
+
+      if (que === 'actualizar'){
+        // Si está escribiendo justo ahora, no le movemos el piso: se reintenta
+        // en la próxima vuelta.
+        const escribiendo = document.activeElement &&
+          /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) &&
+          document.getElementById('form').contains(document.activeElement);
+        if (escribiendo) return;
+
+        if (await traerDeLaNube(alla))
+          avisar('✓ Actualizado con lo último' +
+            (alla.quien ? ' de <b>' + esc(alla.quien) + '</b>' : '') +
+            ' (' + esc(cuandoLindo(alla.actualizado)) + ').');
+        return;
+      }
+
+      if (que === 'subir'){ subirANube(); return; }
+
+      if (que === 'conflicto'){
+        const banda = document.getElementById('bandaNube');
+        banda.className = 'banda-nube conflicto';
+        banda.innerHTML =
+          '<b>Ojo:</b> esta clase se editó en dos lados a la vez' +
+          (alla.quien ? ' — la otra versión es de <b>' + esc(alla.quien) + '</b>' : '') +
+          ' (' + esc(cuandoLindo(alla.actualizado)) + '). ¿Con cuál seguimos? ' +
+          '<button type="button" class="btn" id="traerNube">Con la de la nube</button>' +
+          '<button type="button" class="btn" id="ignorarNube">Con la de esta computadora</button>';
+        banda.hidden = false;
+
+        document.getElementById('traerNube').addEventListener('click', async () => {
+          if (await traerDeLaNube(alla)){
+            banda.hidden = true;
+            avisar('✓ Listo, seguimos con la de la nube.');
+          } else alert('No se pudo traer. Probá de nuevo en un momento.');
+        });
+        document.getElementById('ignorarNube').addEventListener('click', () => {
+          banda.hidden = true;
+          // Gana la de acá: se sube y las dos quedan iguales otra vez.
+          subirANube();
+        });
+      }
+    } finally { mirando = false; }
+  }
+
+  // Si deja el editor abierto y edita en otra computadora, esto lo alcanza.
+  setInterval(() => { if (idActual) mirarLaNube(); }, 20000);
 
   // ─── Arranque ─────────────────────────────────────────────────────
   function llenarSelector(id){

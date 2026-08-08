@@ -176,22 +176,55 @@ function armarDoble(){
   await a2.p.click('#nubeEntrar');
   await a2.p.waitForTimeout(2000);
 
+  // Lo importante: acá NO hay nada que preguntar. El aparato 2 no tenía
+  // cambios propios, así que lo de la nube es simplemente lo más nuevo.
+  check('el aparato 2 se actualiza SOLO, sin preguntar nada',
+    (await a2.p.$eval('input[data-ruta=\'["titulo"]\']', e => e.value)) === 'Clase sincronizada');
+
   const banda = await a2.p.$eval('#bandaNube', e => e.hidden ? '' : e.textContent).catch(() => '');
-  check('avisa que hay algo más nuevo en la nube', /más nuev[oa]/.test(banda), banda.trim().slice(0, 70));
-  check('y dice quién lo hizo', /Vicky/.test(banda));
-  check('NO pisó lo local por su cuenta',
-    (await a2.p.$eval('input[data-ruta=\'["titulo"]\']', e => e.value)) === "Hi, I'm…");
+  check('avisa discretamente que se actualizó', /actualizado/i.test(banda), banda.trim().slice(0, 70));
+  check('y dice de quién era', /Vicky/.test(banda));
+  check('NO le pregunta con cuál seguir', !/con cuál|Con la de/i.test(banda));
+
+  // ─── El único caso en que SÍ hay que preguntar ──────────────────────
+  // El aparato 2 escribe algo propio, y mientras tanto el 1 escribe otra cosa.
+  // Ahí hay dos versiones distintas y elegir por ella sería perderle trabajo.
+  await a2.p.fill('input[data-ruta=\'["titulo"]\']', 'Lo que escribió Julio');
+  await a2.p.waitForTimeout(700);
+  await a2.p.evaluate(() => window.__pausa = true);      // simula quedarse sin señal
+  await a2.p.route(SUPA + '/rest/v1/rpc/curso_guardar', r => r.abort());
+
+  await a1.p.fill('input[data-ruta=\'["titulo"]\']', 'Lo que escribió Vicky');
+  await a1.p.waitForTimeout(2600);
+
+  await a2.p.unroute(SUPA + '/rest/v1/rpc/curso_guardar');
+  if (doble) await a2.p.route(SUPA + '/rest/v1/rpc/*', doble);
+  await a2.p.reload({ waitUntil: 'load' });
+  await a2.p.waitForSelector('details.caja');
+  await a2.p.waitForTimeout(2500);
+
+  const banda2 = await a2.p.$eval('#bandaNube', e => e.hidden ? '' : e.textContent).catch(() => '');
+  check('con cambios de los dos lados, SÍ pregunta', /con cuál seguimos/i.test(banda2),
+    banda2.trim().slice(0, 90));
+  check('y no pisó nada solo',
+    (await a2.p.$eval('input[data-ruta=\'["titulo"]\']', e => e.value)) === 'Lo que escribió Julio');
 
   await a2.p.click('#traerNube');
-  await a2.p.waitForTimeout(800);
-  check('al traerla, llega lo del aparato 1',
-    (await a2.p.$eval('input[data-ruta=\'["titulo"]\']', e => e.value)) === 'Clase sincronizada');
-  check('y el aviso desaparece', await a2.p.$eval('#bandaNube', e => e.hidden));
+  await a2.p.waitForTimeout(1200);
+  check('si elige la de la nube, la trae',
+    (await a2.p.$eval('input[data-ruta=\'["titulo"]\']', e => e.value)) === 'Lo que escribió Vicky');
+
+  // Y a partir de ahí vuelve a estar todo al día: no debe volver a preguntar.
+  await a2.p.reload({ waitUntil: 'load' });
+  await a2.p.waitForSelector('details.caja');
+  await a2.p.waitForTimeout(2000);
+  const banda3 = await a2.p.$eval('#bandaNube', e => e.hidden ? '' : e.textContent).catch(() => '');
+  check('resuelto una vez, no vuelve a preguntar', !/con cuál seguimos/i.test(banda3), banda3.slice(0, 60));
 
   await a2.p.goto(`${base}/curso/clase.html?u=${id}`, { waitUntil: 'load' });
   await a2.p.waitForSelector('.card');
   check('la clase muestra lo traído',
-    (await a2.p.$eval('header.top h1 .en', e => e.textContent)) === 'Clase sincronizada');
+    (await a2.p.$eval('header.top h1 .en', e => e.textContent)) === 'Lo que escribió Vicky');
 
   // ─── Un alumno: ni ve borradores ni toca la red ─────────────────────
   const a3 = await nuevoAparato();
